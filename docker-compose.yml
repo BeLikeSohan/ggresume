@@ -1,0 +1,38 @@
+services:
+  # RustFS: High-performance S3-compatible object storage for JSON resumes
+  rustfs:
+    image: rustfs/rustfs:latest
+    container_name: ggresume_rustfs
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - RUSTFS_ROOT_USER=rustfsadmin
+      - RUSTFS_ROOT_PASSWORD=rustfsadmin
+    volumes:
+      - rustfs_data:/data
+
+  # GGResume Frontend: Next.js Web App & PDF Export Service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ggresume_app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+      - RUSTFS_ENDPOINT=http://rustfs:9000
+      - RUSTFS_ACCESS_KEY=rustfsadmin
+      - RUSTFS_SECRET_KEY=rustfsadmin
+      - RUSTFS_BUCKET=resumes
+    depends_on:
+      - rustfs
+
+volumes:
+  rustfs_data:
+    driver: local

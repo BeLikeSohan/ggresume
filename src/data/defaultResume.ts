@@ -1,0 +1,174 @@
+import { ResumeData } from '../types/resume';
+
+export const defaultResumeData: ResumeData = {
+  personal: {
+    fullName: 'Washiul Alam Shohan',
+    email: 'hello@washiul.com',
+    phone: '+1 (555) 123-1234',
+    location: 'Dhaka, Bangladesh',
+    website: 'washiul.com',
+    github: 'github.com/belikesohan',
+    linkedin: 'linkedin.com/in/washiul-alam',
+    customLinks: [],
+  },
+  profile:
+    'Backend Software Engineer with 3+ years of experience designing and scaling distributed systems and web APIs. Proficient in **Go**, **Java/Spring Boot**, **TypeScript/Node.js**, **REST & gRPC APIs**, **PostgreSQL**, **Redis**, **Docker**, and **AWS**, with a focus on database performance, high availability, and clean modular architecture.',
+  skills: [
+    {
+      id: 'skill-1',
+      category: 'Frameworks',
+      items: '**Spring Boot**, **NestJS**, **Gin**, FastAPI, Express, **React**, Next.js',
+    },
+    {
+      id: 'skill-2',
+      category: 'Databases',
+      items: '**PostgreSQL**, **Redis**, **MySQL**, MongoDB, Elasticsearch',
+    },
+    {
+      id: 'skill-3',
+      category: 'Cloud & DevOps',
+      items: '**Docker**, Kubernetes, **GitHub Actions**, Terraform, **AWS (EC2, S3, RDS)**',
+    },
+    {
+      id: 'skill-4',
+      category: 'Languages',
+      items: '**Go**, **Java**, **TypeScript**, Python, SQL, C++',
+    },
+  ],
+  experiences: [
+    {
+      id: 'exp-1',
+      role: 'Senior Backend Engineer',
+      company: 'ABC Systems',
+      location: 'San Francisco, CA',
+      startDate: '2023',
+      endDate: 'Present',
+      isCurrent: true,
+      highlights: [
+        'Architected and deployed backend microservices in **Go** and **PostgreSQL**, processing over **15M requests daily** with 99.99% uptime.',
+        'Engineered a distributed caching layer with **Redis Cluster**, reducing database read load by **45%** and decreasing p95 latency from 180ms to **35ms**.',
+        'Led migration of monolithic legacy modules into containerized services deployed with **Docker** and automated CI/CD pipelines.',
+      ],
+    },
+    {
+      id: 'exp-2',
+      role: 'Software Engineer',
+      company: 'XYZ Technologies',
+      location: 'San Francisco, CA',
+      startDate: '2021',
+      endDate: '2023',
+      highlights: [
+        'Developed resilient **RESTful APIs and event-driven workers** using **Node.js/TypeScript** supporting 100,000+ daily active users.',
+        'Automated CI/CD deployment pipelines using **GitHub Actions**, reducing release delivery cycle times by **40%**.',
+        'Collaborated across cross-functional engineering teams to implement real-time analytics and telemetry workflows.',
+      ],
+    },
+  ],
+  projects: [
+    {
+      id: 'proj-1',
+      title: 'CloudPulse',
+      subtitle: 'Distributed Metrics & Tracing Engine',
+      technologies: 'Go, Redis, PostgreSQL, Prometheus, Docker',
+      link: 'https://github.com/example/cloudpulse',
+      highlights: [
+        'Built a high-throughput monitoring daemon in **Go** collecting system telemetry and distributed traces with sub-millisecond collection overhead.',
+        'Integrated real-time alerting rules and automated webhook notifications for incident management workflows.',
+      ],
+    },
+    {
+      id: 'proj-2',
+      title: 'DataSync Pro',
+      subtitle: 'High-Performance ETL Pipeline',
+      technologies: 'Python, Apache Kafka, PostgreSQL, Docker',
+      link: 'https://github.com/example/datasync',
+      highlights: [
+        'Engineered an asynchronous ETL data pipeline ingesting **500k+ records per hour** from heterogeneous sources into PostgreSQL.',
+        'Implemented comprehensive schema validation, rate-limiting, and error-recovery mechanisms to ensure data integrity.',
+      ],
+    },
+    {
+      id: 'proj-3',
+      title: 'CloudPulse',
+      subtitle: 'Distributed Metrics & Tracing Engine',
+      technologies: 'Go, Redis, PostgreSQL, Prometheus, Docker',
+      link: 'https://github.com/example/cloudpulse',
+      highlights: [
+        'Built a high-throughput monitoring daemon in **Go** collecting system telemetry and distributed traces with sub-millisecond collection overhead.',
+        'Integrated real-time alerting rules and automated webhook notifications for incident management workflows.',
+      ],
+    },
+  ],
+  educations: [
+    {
+      id: 'edu-1',
+      degree: 'B.S. in Computer Science',
+      institution: 'University of California, Berkeley',
+      location: 'Berkeley, CA',
+      startDate: '2017',
+      endDate: '2021',
+      details: 'Dean’s Honor List. Specialization in Distributed Systems and Software Architecture.',
+    },
+  ],
+  references: [
+    {
+      id: 'ref-1',
+      name: 'Dr. Sarah Jenkins',
+      role: 'Professor of Computer Science',
+      organization: 'University of California, Berkeley',
+      contact: 's.jenkins@berkeley.edu',
+    },
+    {
+      id: 'ref-2',
+      name: 'David Miller',
+      role: 'Director of Engineering',
+      organization: 'Acme Cloud Systems',
+      contact: 'david.miller@example.com',
+    },
+  ],
+  customSections: [],
+  settings: {
+    fontSize: 'standard',
+    lineSpacing: 'standard',
+    pageMargin: 'standard',
+    fontFamily: 'source-sans',
+    bulletStyle: 'square',
+    dividerThickness: 1.5,
+    accentColor: '#000000',
+    sectionOrder: ['profile', 'skills', 'experiences', 'projects', 'educations', 'references'],
+    hiddenSections: [],
+    pageBreakBefore: [],
+  },
+};
+
+export const emptyResumeData: ResumeData = {
+  personal: {
+    fullName: '',
+    email: '',
+    phone: '',
+    location: '',
+    website: '',
+    github: '',
+    linkedin: '',
+    customLinks: [],
+  },
+  profile: '',
+  skills: [],
+  experiences: [],
+  projects: [],
+  educations: [],
+  references: [],
+  customSections: [],
+  settings: {
+    fontSize: 'standard',
+    lineSpacing: 'standard',
+    pageMargin: 'standard',
+    fontFamily: 'source-sans',
+    bulletStyle: 'square',
+    dividerThickness: 1.5,
+    accentColor: '#000000',
+    sectionOrder: ['profile', 'skills', 'experiences', 'projects', 'educations', 'references'],
+    hiddenSections: [],
+    pageBreakBefore: [],
+  },
+};
