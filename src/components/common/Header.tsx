@@ -4,10 +4,8 @@ import React, { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Download,
-  Printer,
   Upload,
   FileDown,
-  Sparkles,
   Eye,
   Edit3,
   Loader2,
@@ -25,8 +23,6 @@ export interface HeaderProps {
   onUpdateTitle?: (newTitle: string) => void;
   onDuplicate?: () => void;
   onDownloadPdf: () => void;
-  onPrint: () => void;
-  onLoadSample: () => void;
   onClear: () => void;
   onExportJson: () => void;
   onImportJson: (jsonData: string) => void;
@@ -40,8 +36,6 @@ export const Header: React.FC<HeaderProps> = ({
   onUpdateTitle,
   onDuplicate,
   onDownloadPdf,
-  onPrint,
-  onLoadSample,
   onClear,
   onExportJson,
   onImportJson,
@@ -208,16 +202,6 @@ export const Header: React.FC<HeaderProps> = ({
           <Button
             size="sm"
             variant="ghost"
-            icon={<Sparkles size={14} className="text-amber-500" />}
-            onClick={onLoadSample}
-            title="Reload Original Sample Resume"
-          >
-            Sample
-          </Button>
-
-          <Button
-            size="sm"
-            variant="ghost"
             icon={<Trash2 size={14} />}
             onClick={onClear}
             title="Clear all fields"
@@ -245,18 +229,6 @@ export const Header: React.FC<HeaderProps> = ({
             Export
           </Button>
         </div>
-
-        {/* Print / Save PDF Button */}
-        <Button
-          size="sm"
-          variant="outline"
-          icon={<Printer size={14} />}
-          onClick={onPrint}
-          className="hidden sm:inline-flex"
-          title="Print or Save as PDF with native browser engine"
-        >
-          Print / PDF
-        </Button>
 
         {/* Primary Download Button */}
         <Button

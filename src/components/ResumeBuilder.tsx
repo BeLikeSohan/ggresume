@@ -9,7 +9,7 @@ import { ResumeEditor } from '@/components/editor/ResumeEditor';
 import { ResumePreview } from '@/components/preview/ResumePreview';
 import { PreviewToolbar } from '@/components/preview/PreviewToolbar';
 import { DownloadToast } from '@/components/common/DownloadToast';
-import { exportResumeToPdf, printResume } from '@/lib/pdfExport';
+import { exportResumeToPdf } from '@/lib/pdfExport';
 
 interface ResumeBuilderProps {
   resumeId?: string;
@@ -23,7 +23,6 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
     setResumeTitle,
     resumeData,
     setResumeData,
-    resetToSample,
     clearAll,
     exportJson,
     importJson,
@@ -59,16 +58,11 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
       setTimeout(() => setDownloadStatus(null), 3500);
     } catch (error) {
       console.error(error);
-      alert('Could not export PDF. You can also use the "Print / PDF" button to save directly!');
+      alert('Could not export PDF. Please try again!');
       setDownloadStatus(null);
     } finally {
       setIsDownloading(false);
     }
-  };
-
-  // Browser Native Print
-  const handlePrint = () => {
-    printResume();
   };
 
   // Duplicate current resume and transition to the new copy
@@ -89,8 +83,6 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
         onUpdateTitle={setResumeTitle}
         onDuplicate={handleDuplicate}
         onDownloadPdf={handleDownloadPdf}
-        onPrint={handlePrint}
-        onLoadSample={resetToSample}
         onClear={clearAll}
         onExportJson={exportJson}
         onImportJson={importJson}

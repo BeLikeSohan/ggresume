@@ -333,11 +333,17 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
     }[pageMargin];
 
     const fontFamilies = {
-      'source-sans': '"Source Sans 3", "Source Sans Pro", -apple-system, BlinkMacSystemFont, sans-serif',
-      inter: '"Inter", -apple-system, sans-serif',
-      roboto: '"Roboto", sans-serif',
-      merriweather: '"Merriweather", serif',
-    }[fontFamily];
+      'source-sans': 'var(--font-source-sans), "Source Sans 3", "Source Sans Pro", -apple-system, BlinkMacSystemFont, sans-serif',
+      inter: 'var(--font-inter), "Inter", -apple-system, BlinkMacSystemFont, sans-serif',
+      roboto: 'var(--font-roboto), "Roboto", -apple-system, BlinkMacSystemFont, sans-serif',
+      'open-sans': 'var(--font-open-sans), "Open Sans", -apple-system, BlinkMacSystemFont, sans-serif',
+      lato: 'var(--font-lato), "Lato", -apple-system, BlinkMacSystemFont, sans-serif',
+      'plus-jakarta-sans': 'var(--font-plus-jakarta-sans), "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif',
+      literata: 'var(--font-literata), "Literata", Georgia, serif',
+      merriweather: 'var(--font-merriweather), "Merriweather", Georgia, serif',
+      lora: 'var(--font-lora), "Lora", Georgia, serif',
+      'eb-garamond': 'var(--font-eb-garamond), "EB Garamond", "Garamond", Georgia, serif',
+    }[fontFamily as string] || 'var(--font-source-sans), "Source Sans 3", sans-serif';
 
     // Helper to render section title with solid, non-collapsible divider line
     const renderSectionTitle = (title: string, isFirstOnPage = false) => (

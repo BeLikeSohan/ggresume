@@ -82,12 +82,18 @@ export const SettingsEditor: React.FC<SettingsEditorProps> = ({
         <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
           Font Family
         </label>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
           {[
-            { id: 'source-sans', label: 'Source Sans 3', sub: '(Original)' },
+            { id: 'source-sans', label: 'Source Sans 3', sub: 'Original' },
             { id: 'inter', label: 'Inter', sub: 'Modern' },
             { id: 'roboto', label: 'Roboto', sub: 'Clean' },
-            { id: 'merriweather', label: 'Merriweather', sub: 'Serif' },
+            { id: 'open-sans', label: 'Open Sans', sub: 'Neutral' },
+            { id: 'lato', label: 'Lato', sub: 'Balanced' },
+            { id: 'plus-jakarta-sans', label: 'Plus Jakarta', sub: 'Contemporary' },
+            { id: 'literata', label: 'Literata', sub: 'Editorial Serif' },
+            { id: 'merriweather', label: 'Merriweather', sub: 'Classic Serif' },
+            { id: 'lora', label: 'Lora', sub: 'Elegant Serif' },
+            { id: 'eb-garamond', label: 'EB Garamond', sub: 'Academic Serif' },
           ].map((f) => (
             <button
               key={f.id}
@@ -96,11 +102,15 @@ export const SettingsEditor: React.FC<SettingsEditorProps> = ({
               className={`p-2.5 rounded-lg border text-left transition ${
                 settings.fontFamily === f.id
                   ? 'border-slate-900 bg-slate-900 text-white shadow-xs'
-                  : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                  : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
               }`}
             >
-              <div className="text-xs font-bold">{f.label}</div>
-              <div className={`text-[10px] ${settings.fontFamily === f.id ? 'text-slate-300' : 'text-slate-400'}`}>
+              <div className="text-xs font-bold leading-tight">{f.label}</div>
+              <div
+                className={`text-[10px] mt-0.5 ${
+                  settings.fontFamily === f.id ? 'text-slate-300' : 'text-slate-400'
+                }`}
+              >
                 {f.sub}
               </div>
             </button>

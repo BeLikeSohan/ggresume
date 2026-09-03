@@ -138,27 +138,6 @@ export function useResumeData(targetResumeId?: string) {
     setResumeTitleState(title);
   }, []);
 
-  const resetToSample = useCallback(async () => {
-    if (
-      typeof window !== 'undefined' &&
-      window.confirm(
-        'Reset resume to the original sample resume? Any unsaved edits will be replaced.'
-      )
-    ) {
-      setResumeData(defaultResumeData);
-      if (currentId) {
-        try {
-          const updated = await updateResumeInRustFS(currentId, {
-            data: defaultResumeData,
-          });
-          setLastSaved(updated.updatedAt);
-        } catch (err: any) {
-          console.error('Failed to reset resume in RustFS:', err);
-        }
-      }
-    }
-  }, [currentId]);
-
   const clearAll = useCallback(async () => {
     if (
       typeof window !== 'undefined' &&
@@ -239,7 +218,6 @@ export function useResumeData(targetResumeId?: string) {
     isInitialized,
     lastSaved,
     error,
-    resetToSample,
     clearAll,
     duplicateCurrent,
     exportJson,

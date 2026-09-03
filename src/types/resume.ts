@@ -71,11 +71,23 @@ export interface CustomSection {
   items: CustomSectionItem[];
 }
 
+export type FontFamily =
+  | 'source-sans'
+  | 'inter'
+  | 'roboto'
+  | 'open-sans'
+  | 'lato'
+  | 'plus-jakarta-sans'
+  | 'literata'
+  | 'merriweather'
+  | 'lora'
+  | 'eb-garamond';
+
 export interface ResumeSettings {
   fontSize: 'compact' | 'standard' | 'spacious';
   lineSpacing: 'compact' | 'standard' | 'relaxed';
   pageMargin: 'compact' | 'standard' | 'relaxed';
-  fontFamily: 'source-sans' | 'inter' | 'roboto' | 'merriweather';
+  fontFamily: FontFamily | string;
   bulletStyle: 'square' | 'disc' | 'dash';
   dividerThickness: number; // in px e.g. 1.5
   accentColor: string; // e.g. #000000
