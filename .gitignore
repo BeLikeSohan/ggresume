@@ -74,7 +74,6 @@ ehthumbs.db
 
 # Generated PDFs / Export files
 *.pdf
-*.png
 /dist
 /dist
 /node_modules
