@@ -120,7 +120,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           {/* Header */}
           <div className="text-center space-y-2 pt-1">
             <div className="flex justify-center">
-              <GGLogo size="md" showWordmark={true} />
+              <GGLogo size="md" showWordmark={false} />
             </div>
             <h2 className="text-xl font-bold text-slate-950 tracking-tight">
               {mode === 'signin' ? 'Welcome back' : 'Create your account'}
