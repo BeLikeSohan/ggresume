@@ -38,7 +38,11 @@ export const ResumeRow: React.FC<ResumeRowProps> = ({
     'Software Engineer';
 
   return (
-    <div className="group flex items-center justify-between px-5 sm:px-6 py-4 bg-white hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-b-0 text-sm">
+    <div
+      className={`group flex items-center justify-between px-5 sm:px-6 py-4 bg-white hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-b-0 text-sm ${
+        menuOpen ? 'relative z-30' : 'relative z-0'
+      }`}
+    >
       {/* Title & icon */}
       <div className="flex items-center gap-3.5 min-w-0 flex-1">
         <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 group-hover:text-slate-900 group-hover:bg-slate-200 transition flex-shrink-0">

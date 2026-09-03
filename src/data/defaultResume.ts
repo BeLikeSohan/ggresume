@@ -118,13 +118,6 @@ export const defaultResumeData: ResumeData = {
       organization: 'University of California, Berkeley',
       contact: 's.jenkins@berkeley.edu',
     },
-    {
-      id: 'ref-2',
-      name: 'David Miller',
-      role: 'Director of Engineering',
-      organization: 'Acme Cloud Systems',
-      contact: 'david.miller@example.com',
-    },
   ],
   customSections: [],
   settings: {

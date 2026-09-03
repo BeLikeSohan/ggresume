@@ -42,11 +42,15 @@ export const ResumeCard: React.FC<ResumeCardProps> = ({
     'Engineering leader with expertise building high-performance systems.';
 
   return (
-    <div className="group relative bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all duration-200 flex flex-col overflow-hidden shadow-2xs">
+    <div
+      className={`group relative bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all duration-200 flex flex-col shadow-2xs ${
+        menuOpen ? 'z-30' : 'z-0'
+      }`}
+    >
       {/* Document Sheet Preview */}
       <Link
         href={`/editor/${id}`}
-        className="relative bg-slate-50/90 border-b border-slate-100 p-5 flex items-center justify-center cursor-pointer select-none overflow-hidden group-hover:bg-slate-100/60 transition-colors"
+        className="relative bg-slate-50/90 border-b border-slate-100 p-5 flex items-center justify-center cursor-pointer select-none rounded-t-xl overflow-hidden group-hover:bg-slate-100/60 transition-colors"
       >
         {/* Crisp miniature paper preview */}
         <div className="w-full max-w-[240px] h-[175px] bg-white rounded-md border border-slate-200 shadow-xs p-4 flex flex-col justify-between transition-transform duration-150 group-hover:scale-[1.02]">

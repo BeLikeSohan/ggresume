@@ -358,8 +358,8 @@ export const DashboardView: React.FC = () => {
           </div>
         ) : (
           /* List View (Table rows) */
-          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm divide-y divide-slate-100">
-            <div className="flex items-center justify-between px-5 py-3 bg-slate-50/80 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">
+          <div className="bg-white border border-slate-200 rounded-xl shadow-sm divide-y divide-slate-100">
+            <div className="flex items-center justify-between px-5 py-3 bg-slate-50/80 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200 rounded-t-xl">
               <span className="flex-1">Title</span>
               <span className="hidden sm:block w-56">Candidate / Role</span>
               <span className="w-32 text-right sm:text-left">Edited</span>
