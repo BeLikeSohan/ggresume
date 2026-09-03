@@ -15,6 +15,20 @@ export const SettingsEditor: React.FC<SettingsEditorProps> = ({
   onChange,
   sectionNames,
 }) => {
+  const currentOrder = settings.sectionOrder || [
+    'profile',
+    'skills',
+    'experiences',
+    'projects',
+    'educations',
+    'references',
+  ];
+  // Include any custom section id in sectionNames that might not yet be in sectionOrder
+  const missingKeys = Object.keys(sectionNames).filter(
+    (k) => !currentOrder.includes(k)
+  );
+  const effectiveSectionOrder = [...currentOrder, ...missingKeys];
+
   const handleUpdate = <K extends keyof ResumeSettings>(key: K, value: ResumeSettings[K]) => {
     onChange({
       ...settings,
@@ -24,18 +38,19 @@ export const SettingsEditor: React.FC<SettingsEditorProps> = ({
 
   const handleMoveSection = (index: number, direction: 'up' | 'down') => {
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= settings.sectionOrder.length) return;
-    const newOrder = [...settings.sectionOrder];
+    if (targetIndex < 0 || targetIndex >= effectiveSectionOrder.length) return;
+    const newOrder = [...effectiveSectionOrder];
     const [moved] = newOrder.splice(index, 1);
     newOrder.splice(targetIndex, 0, moved);
     handleUpdate('sectionOrder', newOrder);
   };
 
   const toggleSectionVisibility = (sectionKey: string) => {
-    const isHidden = settings.hiddenSections.includes(sectionKey);
+    const hidden = settings.hiddenSections || [];
+    const isHidden = hidden.includes(sectionKey);
     const newHidden = isHidden
-      ? settings.hiddenSections.filter((k) => k !== sectionKey)
-      : [...settings.hiddenSections, sectionKey];
+      ? hidden.filter((k) => k !== sectionKey)
+      : [...hidden, sectionKey];
     handleUpdate('hiddenSections', newHidden);
   };
 
@@ -232,8 +247,8 @@ export const SettingsEditor: React.FC<SettingsEditorProps> = ({
         </p>
 
         <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 overflow-hidden shadow-xs">
-          {settings.sectionOrder.map((secKey, index) => {
-            const isHidden = settings.hiddenSections.includes(secKey);
+          {effectiveSectionOrder.map((secKey, index) => {
+            const isHidden = (settings.hiddenSections || []).includes(secKey);
             const title = sectionNames[secKey] || secKey;
 
             return (
@@ -293,7 +308,7 @@ export const SettingsEditor: React.FC<SettingsEditorProps> = ({
                   <button
                     type="button"
                     onClick={() => handleMoveSection(index, 'down')}
-                    disabled={index === settings.sectionOrder.length - 1}
+                    disabled={index === effectiveSectionOrder.length - 1}
                     className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-20 transition"
                     title="Move down"
                   >

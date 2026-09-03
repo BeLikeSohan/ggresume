@@ -69,8 +69,23 @@ function estimateSectionHeight(key: string, data: ResumeData): number {
     case 'references':
       if (!data.references || data.references.length === 0) return 0;
       return TITLE_HEIGHT + data.references.length * 36 + 12;
-    default:
-      return 60;
+    default: {
+      const customSec = (data.customSections || []).find((c) => c.id === key);
+      if (!customSec || !customSec.items || customSec.items.length === 0) return 0;
+      return (
+        TITLE_HEIGHT +
+        customSec.items.reduce((acc, item) => {
+          const titleLine = 22;
+          const descLines = item.description
+            ? Math.max(1, Math.ceil(item.description.length / 80)) * 18
+            : 0;
+          const highlightLines = (item.highlights || []).reduce((hAcc, h) => {
+            return hAcc + Math.max(1, Math.ceil(h.length / 80)) * 18;
+          }, 0);
+          return acc + titleLine + descLines + highlightLines + 12;
+        }, 0)
+      );
+    }
   }
 }
 
@@ -169,7 +184,21 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
       }[pageMargin] || 111.33;
     const usablePageHeight = A4_HEIGHT_PX - verticalPaddingPx;
 
-    const visibleSections = sectionOrder.filter((key) => {
+    const allCustomSections = customSections || [];
+    const baseSectionOrder = settings.sectionOrder || [
+      'profile',
+      'skills',
+      'experiences',
+      'projects',
+      'educations',
+      'references',
+    ];
+    const missingCustomIds = allCustomSections
+      .map((s) => s.id)
+      .filter((id) => !baseSectionOrder.includes(id));
+    const effectiveSectionOrder = [...baseSectionOrder, ...missingCustomIds];
+
+    const visibleSections = effectiveSectionOrder.filter((key) => {
       if (hiddenSections.includes(key)) return false;
       switch (key) {
         case 'profile':
@@ -184,9 +213,21 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
           return Boolean(educations && educations.length > 0);
         case 'references':
           return Boolean(references && references.length > 0);
-        default:
-          const custom = customSections?.find((c) => c.id === key);
-          return Boolean(custom && custom.items && custom.items.length > 0);
+        default: {
+          const custom = allCustomSections.find((c) => c.id === key);
+          return Boolean(
+            custom &&
+              custom.items &&
+              custom.items.length > 0 &&
+              custom.items.some(
+                (it) =>
+                  Boolean(it.title && it.title.trim()) ||
+                  Boolean(it.subtitle && it.subtitle.trim()) ||
+                  Boolean(it.description && it.description.trim()) ||
+                  Boolean(it.highlights && it.highlights.length > 0)
+              )
+          );
+        }
       }
     });
 
@@ -560,56 +601,76 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
 
         default: {
           // Custom sections
-          const customSec = customSections.find((c) => c.id === sectionKey);
+          const customSec = (customSections || []).find((c) => c.id === sectionKey);
           if (!customSec || !customSec.items || customSec.items.length === 0) return null;
 
           return (
             <div key={customSec.id} data-resume-section={customSec.id} className="resume-section w-full">
-              {renderSectionTitle(customSec.title, isFirstOnPage)}
+              {renderSectionTitle(customSec.title || 'Custom Section', isFirstOnPage)}
               <div className="flex flex-col gap-[8.4pt]">
-                {customSec.items.map((item) => (
-                  <div key={item.id} className="custom-item w-full">
-                    <div className="flex justify-between items-baseline">
+                {customSec.items.map((item) => {
+                  if (
+                    !item.title &&
+                    !item.subtitle &&
+                    !item.description &&
+                    (!item.highlights || item.highlights.length === 0)
+                  ) {
+                    return null;
+                  }
+
+                  return (
+                    <div key={item.id} className="custom-item w-full">
+                      {/* Top right date & location floated */}
+                      {(item.date || item.location) && (
+                        <div
+                          className={`float-right text-right ml-4 mb-0.5 ${fontSizeClasses.subtext} ${lineSpacingClasses} text-black select-none`}
+                        >
+                          {item.date && <div className="whitespace-nowrap">{item.date}</div>}
+                          {item.location && <div className="whitespace-nowrap">{item.location}</div>}
+                        </div>
+                      )}
+
+                      {/* Title & Subtitle */}
                       <div className={`${fontSizeClasses.itemTitle} ${lineSpacingClasses}`}>
-                        <span className="font-bold text-black">{item.title}</span>
+                        {item.title && <span className="font-bold text-black">{item.title}</span>}
                         {item.subtitle && (
                           <>
-                            <span className="text-black">, </span>
+                            {item.title && <span className="text-black">, </span>}
                             <span className="italic text-black font-normal">{item.subtitle}</span>
                           </>
                         )}
                       </div>
-                      {(item.date || item.location) && (
-                        <div className={`text-right flex-shrink-0 ml-4 ${fontSizeClasses.subtext} ${lineSpacingClasses} text-black`}>
-                          {item.date && <span className="block">{item.date}</span>}
-                          {item.location && <span className="block">{item.location}</span>}
-                        </div>
+
+                      {/* Description */}
+                      {item.description && (
+                        <p className={`${fontSizeClasses.body} ${lineSpacingClasses} text-black mt-[1pt] text-justify`}>
+                          <FormattedText text={item.description} />
+                        </p>
                       )}
-                    </div>
 
-                    {item.description && (
-                      <p className={`${fontSizeClasses.body} ${lineSpacingClasses} text-black`}>
-                        <FormattedText text={item.description} />
-                      </p>
-                    )}
-
-                    {item.highlights && item.highlights.length > 0 && (
-                      <div className="flex flex-col mt-[1pt]">
-                        {item.highlights.map((h, i) => (
-                          <div
-                            key={i}
-                            className={`flex items-start ${fontSizeClasses.body} ${lineSpacingClasses} text-black`}
-                          >
-                            {renderBullet()}
-                            <div className="flex-1 text-justify">
+                      {/* Bullets (Highlights) */}
+                      {item.highlights && item.highlights.length > 0 && (
+                        <div className="mt-[1pt]">
+                          {item.highlights.map((h, i) => (
+                            <div
+                              key={i}
+                              className={`${fontSizeClasses.body} ${lineSpacingClasses} text-black text-justify pl-[10pt] -indent-[10pt]`}
+                            >
+                              <BulletMarker
+                                style={bulletStyle}
+                                accentColor={accentColor}
+                                isInline={true}
+                              />
                               <FormattedText text={h} />
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="clear-both" />
+                    </div>
+                  );
+                })}
               </div>
             </div>
           );

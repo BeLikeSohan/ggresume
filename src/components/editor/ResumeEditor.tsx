@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ResumeData } from '@/types/resume';
+import { CustomSection, CustomSectionItem, ResumeData } from '@/types/resume';
 import { PersonalInfoEditor } from './PersonalInfoEditor';
 import { ProfileEditor } from './ProfileEditor';
 import { SkillsEditor } from './SkillsEditor';
@@ -50,6 +50,8 @@ interface NavItem {
 export const ResumeEditor: React.FC<ResumeEditorProps> = ({ data, onChange }) => {
   const [activeTab, setActiveTab] = useState<TabType>('personal');
 
+  const customSections = data.customSections || [];
+
   // Friendly names for all sections (standard + custom)
   const sectionNames: Record<string, string> = {
     profile: 'Profile / Summary',
@@ -58,38 +60,89 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({ data, onChange }) =>
     projects: 'Projects',
     educations: 'Education',
     references: 'References',
-    ...Object.fromEntries(data.customSections.map((s) => [s.id, s.title])),
+    ...Object.fromEntries(customSections.map((s) => [s.id, s.title || 'Untitled Section'])),
   };
 
   const navItems: NavItem[] = [
     { id: 'personal', label: 'Personal', icon: User },
     { id: 'profile', label: 'Profile', icon: FileText },
-    { id: 'skills', label: 'Skills', icon: Cpu, badge: data.skills.length },
-    { id: 'experiences', label: 'Experience', icon: Briefcase, badge: data.experiences.length },
-    { id: 'projects', label: 'Projects', icon: FolderGit2, badge: data.projects.length },
-    { id: 'educations', label: 'Education', icon: GraduationCap, badge: data.educations.length },
-    { id: 'references', label: 'References', icon: Users, badge: data.references.length },
-    { id: 'custom', label: 'Custom', icon: Layers, badge: data.customSections.length || undefined },
+    { id: 'skills', label: 'Skills', icon: Cpu, badge: data.skills?.length },
+    { id: 'experiences', label: 'Experience', icon: Briefcase, badge: data.experiences?.length },
+    { id: 'projects', label: 'Projects', icon: FolderGit2, badge: data.projects?.length },
+    { id: 'educations', label: 'Education', icon: GraduationCap, badge: data.educations?.length },
+    { id: 'references', label: 'References', icon: Users, badge: data.references?.length },
+    { id: 'custom', label: 'Custom', icon: Layers, badge: customSections.length || undefined },
     { id: 'settings', label: 'Styling', icon: Settings },
   ];
 
-  const handleAddSectionToOrder = (sectionId: string) => {
+  const handleCreateCustomSection = (
+    title: string,
+    initialItems?: CustomSectionItem[]
+  ) => {
+    const newSecId = `custom-${Date.now()}`;
+    const newSec: CustomSection = {
+      id: newSecId,
+      title: title.trim(),
+      items:
+        initialItems && initialItems.length > 0
+          ? initialItems
+          : [
+              {
+                id: `item-${Date.now()}`,
+                title: 'Item Title / Award / Certification',
+                subtitle: 'Issuing Organization',
+                date: '2024',
+                description: 'Description of key achievements or scope.',
+                highlights: [],
+              },
+            ],
+    };
+
+    const currentSections = data.customSections || [];
+    const currentOrder = data.settings?.sectionOrder || [
+      'profile',
+      'skills',
+      'experiences',
+      'projects',
+      'educations',
+      'references',
+    ];
+    const newOrder = currentOrder.includes(newSecId)
+      ? currentOrder
+      : [...currentOrder, newSecId];
+
     onChange({
       ...data,
+      customSections: [...currentSections, newSec],
       settings: {
         ...data.settings,
-        sectionOrder: [...data.settings.sectionOrder, sectionId],
+        sectionOrder: newOrder,
       },
     });
   };
 
-  const handleRemoveSectionFromOrder = (sectionId: string) => {
+  const handleDeleteCustomSection = (id: string) => {
+    const currentSections = data.customSections || [];
+    const currentOrder = data.settings?.sectionOrder || [];
+    const currentHidden = data.settings?.hiddenSections || [];
+    const currentBreaks = data.settings?.pageBreakBefore || [];
+
     onChange({
       ...data,
+      customSections: currentSections.filter((s) => s.id !== id),
       settings: {
         ...data.settings,
-        sectionOrder: data.settings.sectionOrder.filter((id) => id !== sectionId),
+        sectionOrder: currentOrder.filter((secId) => secId !== id),
+        hiddenSections: currentHidden.filter((secId) => secId !== id),
+        pageBreakBefore: currentBreaks.filter((secId) => secId !== id),
       },
+    });
+  };
+
+  const handleUpdateCustomSections = (newCustomSections: CustomSection[]) => {
+    onChange({
+      ...data,
+      customSections: newCustomSections,
     });
   };
 
@@ -185,10 +238,10 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({ data, onChange }) =>
 
         {activeTab === 'custom' && (
           <CustomSectionsEditor
-            customSections={data.customSections}
-            onChange={(customSections) => onChange({ ...data, customSections })}
-            onAddSectionToOrder={handleAddSectionToOrder}
-            onRemoveSectionFromOrder={handleRemoveSectionFromOrder}
+            customSections={customSections}
+            onCreateSection={handleCreateCustomSection}
+            onDeleteSection={handleDeleteCustomSection}
+            onUpdateCustomSections={handleUpdateCustomSections}
           />
         )}
 

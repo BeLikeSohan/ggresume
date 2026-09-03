@@ -53,10 +53,24 @@ export function useResumeData(targetResumeId?: string) {
         }
 
         if (!isCancelled && targetDoc) {
+          // Normalize docData
+          const docData = targetDoc.data || { ...defaultResumeData };
+          if (!Array.isArray(docData.customSections)) {
+            docData.customSections = [];
+          }
+          if (!docData.settings) {
+            docData.settings = { ...defaultResumeData.settings };
+          }
+          if (!Array.isArray(docData.settings.sectionOrder)) {
+            docData.settings.sectionOrder = [...defaultResumeData.settings.sectionOrder];
+          }
+          if (!Array.isArray(docData.settings.hiddenSections)) {
+            docData.settings.hiddenSections = [];
+          }
+
           // Clean legacy default pageBreakBefore: ['educations']
-          const docData = targetDoc.data;
           if (
-            docData?.settings?.pageBreakBefore &&
+            docData.settings.pageBreakBefore &&
             docData.settings.pageBreakBefore.length === 1 &&
             docData.settings.pageBreakBefore[0] === 'educations'
           ) {
@@ -197,6 +211,9 @@ export function useResumeData(targetResumeId?: string) {
         const mergedData: ResumeData = {
           ...defaultResumeData,
           ...parsed,
+          customSections: Array.isArray(parsed.customSections)
+            ? parsed.customSections
+            : [],
           settings: { ...defaultResumeData.settings, ...(parsed.settings || {}) },
         };
         setResumeData(mergedData);
