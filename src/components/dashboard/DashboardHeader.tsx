@@ -39,10 +39,10 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
       <div className="flex items-center gap-3">
         <Link
           href="/"
-          className="flex items-center gap-2.5 group select-none"
-          title="GGResume"
+          className="flex items-center group select-none"
+          title="GGResume Home"
         >
-          <GGLogo size="md" showWordmark={true} />
+          <GGLogo size="md" variant="big" showWordmark={false} />
         </Link>
       </div>
 

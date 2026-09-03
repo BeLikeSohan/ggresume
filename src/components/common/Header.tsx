@@ -93,11 +93,10 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center gap-2 md:gap-3">
         <Link
           href="/"
-          className="flex items-center gap-2 select-none group mr-0.5"
+          className="flex items-center select-none group mr-0.5"
           title="Back to GGResume Dashboard"
         >
-          <GGLogo size="sm" showWordmark={true} className="hidden sm:inline-flex" />
-          <GGLogo size="sm" showWordmark={false} className="sm:hidden" />
+          <GGLogo size="sm" variant="big" showWordmark={false} />
         </Link>
 
         <div className="h-5 w-[1px] bg-slate-200 hidden sm:block" />

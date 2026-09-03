@@ -1,80 +1,78 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 
 interface GGLogoProps {
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
   showWordmark?: boolean;
   className?: string;
+  variant?: 'small' | 'big' | 'full';
+  imageWidth?: number;
+  imageHeight?: number;
+  boxClassName?: string;
 }
 
 export const GGLogo: React.FC<GGLogoProps> = ({
   size = 'md',
   showWordmark = false,
   className = '',
+  variant = 'big',
+  imageWidth,
+  imageHeight,
+  boxClassName,
 }) => {
-  const iconDimensions = {
-    sm: { box: 'w-8 h-8 rounded-lg', svg: 20 },
-    md: { box: 'w-9 h-9 rounded-xl', svg: 22 },
-    lg: { box: 'w-11 h-11 rounded-2xl', svg: 26 },
-  }[size];
+  const isSmallVariant = variant === 'small';
+  const imageSrc = isSmallVariant ? '/ggresume-logo-small.png' : '/ggresume-logo.png';
+
+  // True aspect ratio presets:
+  // big logo is 2078x757 (~2.74:1)
+  // small logo is 754x560 (~1.35:1)
+  const dimensions = isSmallVariant
+    ? {
+        sm: { width: 36, height: 27, box: 'h-7 w-auto' },
+        md: { width: 48, height: 36, box: 'h-9 w-auto' },
+        lg: { width: 72, height: 54, box: 'h-12 w-auto' },
+        xl: { width: 96, height: 71, box: 'h-16 w-auto' },
+        '2xl': { width: 128, height: 95, box: 'h-20 w-auto' },
+      }[size]
+    : {
+        sm: { width: 96, height: 35, box: 'h-8 w-auto' },
+        md: { width: 120, height: 44, box: 'h-10 w-auto' },
+        lg: { width: 150, height: 55, box: 'h-11 sm:h-12 w-auto' },
+        xl: { width: 180, height: 66, box: 'h-12 sm:h-13 w-auto' },
+        '2xl': { width: 220, height: 80, box: 'h-16 w-auto' },
+      }[size];
 
   const textSizes = {
     sm: 'text-sm',
     md: 'text-base',
     lg: 'text-lg',
+    xl: 'text-xl',
+    '2xl': 'text-2xl',
   }[size];
+
+  const finalWidth = imageWidth || dimensions.width;
+  const finalHeight = imageHeight || dimensions.height;
+  const finalBoxClass = boxClassName || dimensions.box;
 
   return (
     <div className={`inline-flex items-center gap-2.5 select-none ${className}`}>
-      {/* Icon Mark: Geometric 'gg' tile */}
       <div
-        className={`${iconDimensions.box} bg-gradient-to-b from-slate-900 to-black text-white flex items-center justify-center shadow-xs ring-1 ring-white/15 group-hover:ring-white/25 transition-all duration-150 flex-shrink-0`}
+        className={`${finalBoxClass} relative flex items-center justify-center flex-shrink-0`}
         aria-label="GGResume logo"
       >
-        <svg
-          width={iconDimensions.svg}
-          height={iconDimensions.svg}
-          viewBox="0 0 32 32"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="transform -translate-y-[0.5px]"
-        >
-          {/* Left 'g' */}
-          <circle
-            cx="10.5"
-            cy="12.5"
-            r="4.5"
-            stroke="white"
-            strokeWidth="2.5"
-          />
-          <path
-            d="M15 8v11.5c0 3.2-2.4 5-5.5 5-2.2 0-4-1-4.8-2.2"
-            stroke="white"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-
-          {/* Right 'g' */}
-          <circle
-            cx="21.5"
-            cy="12.5"
-            r="4.5"
-            stroke="white"
-            strokeWidth="2.5"
-          />
-          <path
-            d="M26 8v11.5c0 3.2-2.4 5-5.5 5-2.2 0-4-1-4.8-2.2"
-            stroke="white"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <Image
+          src={imageSrc}
+          alt="GGResume"
+          width={finalWidth}
+          height={finalHeight}
+          className="h-full w-auto max-h-full object-contain drop-shadow-xs"
+          priority
+        />
       </div>
 
-      {/* Wordmark */}
+      {/* Optional Wordmark */}
       {showWordmark && (
         <span
           className={`${textSizes} font-bold tracking-tight text-slate-900 leading-none`}
