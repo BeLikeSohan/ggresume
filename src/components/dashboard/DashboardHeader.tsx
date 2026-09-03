@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Upload } from 'lucide-react';
+import { Plus, Upload, LogOut, User as UserIcon } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { GGLogo } from '@/components/common/GGLogo';
+import { useAuth } from '@/hooks/useAuth';
 
 interface DashboardHeaderProps {
   onCreateNew: () => void;
@@ -16,6 +17,8 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   onImportJson,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user, signOut } = useAuth();
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -54,7 +57,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         className="hidden"
       />
 
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-2 sm:gap-3">
         <Button
           size="sm"
           variant="outline"
@@ -75,6 +78,41 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         >
           <span>New Resume</span>
         </Button>
+
+        {user && (
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="flex items-center gap-1.5 p-1.5 rounded-lg hover:bg-slate-100 transition text-slate-700"
+              title={user.email}
+            >
+              <div className="w-7 h-7 rounded-full bg-slate-900 text-white text-xs font-bold flex items-center justify-center uppercase">
+                {user.name ? user.name.charAt(0) : user.email.charAt(0)}
+              </div>
+            </button>
+
+            {showUserMenu && (
+              <div className="absolute right-0 mt-1.5 w-48 bg-white rounded-xl shadow-lg border border-slate-200 py-1.5 z-40 text-xs">
+                <div className="px-3 py-2 border-b border-slate-100">
+                  <p className="font-semibold text-slate-900 truncate">{user.name || 'User'}</p>
+                  <p className="text-slate-500 truncate text-[11px]">{user.email}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    signOut();
+                  }}
+                  className="w-full text-left px-3 py-2 text-red-600 hover:bg-red-50 flex items-center gap-2 transition font-medium"
+                >
+                  <LogOut size={13} />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </header>
   );

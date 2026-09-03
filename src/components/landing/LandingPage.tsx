@@ -3,11 +3,13 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, Sparkles, LayoutDashboard, LogOut } from 'lucide-react';
 import { GGLogo } from '@/components/common/GGLogo';
 import { AuthModal } from './AuthModal';
+import { useAuth } from '@/hooks/useAuth';
 
 export const LandingPage: React.FC = () => {
+  const { user, signOut, isLoading } = useAuth();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
 
@@ -35,19 +37,41 @@ export const LandingPage: React.FC = () => {
         </Link>
 
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => openAuth('signin')}
-            className="text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-950 px-3 py-1.5 rounded-lg transition"
-          >
-            Sign In
-          </button>
-          <Link
-            href="/about-us"
-            className="text-xs sm:text-sm font-semibold text-slate-700 hover:text-slate-950 px-3 py-1.5 rounded-lg hover:bg-slate-100/80 transition inline-flex items-center gap-1.5"
-          >
-            <span>About Us</span>
-          </Link>
+          {user ? (
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Link
+                href="/dashboard"
+                className="text-xs sm:text-sm font-semibold text-slate-900 hover:text-slate-700 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 transition inline-flex items-center gap-1.5"
+              >
+                <LayoutDashboard size={14} />
+                <span>Dashboard</span>
+              </Link>
+              <button
+                type="button"
+                onClick={signOut}
+                className="text-xs sm:text-sm font-medium text-slate-500 hover:text-red-600 px-2 py-1.5 rounded-lg transition"
+                title="Sign out"
+              >
+                <LogOut size={15} />
+              </button>
+            </div>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => openAuth('signin')}
+                className="text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-950 px-3 py-1.5 rounded-lg transition"
+              >
+                Sign In
+              </button>
+              <Link
+                href="/about-us"
+                className="text-xs sm:text-sm font-semibold text-slate-700 hover:text-slate-950 px-3 py-1.5 rounded-lg hover:bg-slate-100/80 transition inline-flex items-center gap-1.5"
+              >
+                <span>About Us</span>
+              </Link>
+            </>
+          )}
         </div>
       </header>
 
@@ -82,17 +106,30 @@ export const LandingPage: React.FC = () => {
 
         {/* CTA Action Button */}
         <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3 w-full max-w-xs">
-          <button
-            type="button"
-            onClick={() => openAuth('signup')}
-            className="w-full py-3.5 px-6 rounded-xl bg-slate-950 hover:bg-slate-800 text-white font-semibold text-sm sm:text-base transition-all duration-150 shadow-md hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2 group cursor-pointer"
-          >
-            <span>Get Started</span>
-            <ArrowRight
-              size={16}
-              className="group-hover:translate-x-1 transition-transform"
-            />
-          </button>
+          {user ? (
+            <Link
+              href="/dashboard"
+              className="w-full py-3.5 px-6 rounded-xl bg-slate-950 hover:bg-slate-800 text-white font-semibold text-sm sm:text-base transition-all duration-150 shadow-md hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2 group cursor-pointer"
+            >
+              <span>Go to Dashboard</span>
+              <ArrowRight
+                size={16}
+                className="group-hover:translate-x-1 transition-transform"
+              />
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => openAuth('signup')}
+              className="w-full py-3.5 px-6 rounded-xl bg-slate-950 hover:bg-slate-800 text-white font-semibold text-sm sm:text-base transition-all duration-150 shadow-md hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2 group cursor-pointer"
+            >
+              <span>Get Started</span>
+              <ArrowRight
+                size={16}
+                className="group-hover:translate-x-1 transition-transform"
+              />
+            </button>
+          )}
         </div>
       </main>
 

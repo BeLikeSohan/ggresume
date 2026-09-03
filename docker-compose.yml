@@ -1,7 +1,7 @@
 services:
-  # PostgreSQL: Relational database for resumes, users, and metadata
+  # PostgreSQL: Direct relational & JSONB database for resumes, users, and settings
   postgres:
-    image: postgres:18-alpine
+    image: postgres:16-alpine
     container_name: ggresume_postgres
     restart: unless-stopped
     ports:
@@ -19,20 +19,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-
-  # RustFS: High-performance S3-compatible object storage
-  rustfs:
-    image: rustfs/rustfs:latest
-    container_name: ggresume_rustfs
-    restart: unless-stopped
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      - RUSTFS_ROOT_USER=rustfsadmin
-      - RUSTFS_ROOT_PASSWORD=rustfsadmin
-    volumes:
-      - rustfs_data:/data
 
   # GGResume Web App & Serverless API
   app:
@@ -53,18 +39,13 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - POSTGRES_DB=${POSTGRES_DB:-ggresume}
-      - RUSTFS_ENDPOINT=http://rustfs:9000
-      - RUSTFS_ACCESS_KEY=rustfsadmin
-      - RUSTFS_SECRET_KEY=rustfsadmin
-      - RUSTFS_BUCKET=resumes
+      - AUTH_LOCAL_MODE=${AUTH_LOCAL_MODE:-true}
+      - NEXT_PUBLIC_AUTH_LOCAL_MODE=${NEXT_PUBLIC_AUTH_LOCAL_MODE:-true}
+      - AUTH_SECRET=${AUTH_SECRET:-ggresume-secret-key-32-chars-minimum}
     depends_on:
       postgres:
         condition: service_healthy
-      rustfs:
-        condition: service_started
 
 volumes:
   postgres_data:
-    driver: local
-  rustfs_data:
     driver: local

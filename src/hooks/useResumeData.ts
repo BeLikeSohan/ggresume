@@ -4,11 +4,11 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { ResumeData, ResumeDocument } from '@/types/resume';
 import { defaultResumeData, emptyResumeData } from '@/data/defaultResume';
 import {
-  fetchResumesFromRustFS,
-  fetchResumeByIdFromRustFS,
-  updateResumeInRustFS,
-  createResumeInRustFS,
-  duplicateResumeInRustFS,
+  fetchResumesFromDB,
+  fetchResumeByIdFromDB,
+  updateResumeInDB,
+  createResumeInDB,
+  duplicateResumeInDB,
 } from '@/lib/resumeStorage';
 
 export function useResumeData(targetResumeId?: string) {
@@ -22,11 +22,11 @@ export function useResumeData(targetResumeId?: string) {
   const isInitialMount = useRef(true);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Initialize and load the resume directly from RustFS
+  // Initialize and load the resume directly from PostgreSQL
   useEffect(() => {
     let isCancelled = false;
 
-    async function loadFromRustFS() {
+    async function loadFromDB() {
       setIsInitialized(false);
       setError(null);
 
@@ -34,19 +34,19 @@ export function useResumeData(targetResumeId?: string) {
         let targetDoc: ResumeDocument | null = null;
 
         if (targetResumeId) {
-          targetDoc = await fetchResumeByIdFromRustFS(targetResumeId);
+          targetDoc = await fetchResumeByIdFromDB(targetResumeId);
         }
 
         if (!targetDoc) {
-          const allResumes = await fetchResumesFromRustFS();
+          const allResumes = await fetchResumesFromDB();
           if (allResumes.length > 0) {
             targetDoc = allResumes[0];
           }
         }
 
         if (!targetDoc) {
-          // Create initial resume directly in RustFS
-          targetDoc = await createResumeInRustFS({
+          // Create initial resume directly in PostgreSQL
+          targetDoc = await createResumeInDB({
             title: 'Software Engineer Resume',
             template: 'sample',
           });
@@ -84,8 +84,8 @@ export function useResumeData(targetResumeId?: string) {
         }
       } catch (err: any) {
         if (!isCancelled) {
-          console.error('Failed to load resume from RustFS:', err);
-          setError(err.message || 'Could not connect to RustFS');
+          console.error('Failed to load resume from database:', err);
+          setError(err.message || 'Could not connect to database');
         }
       } finally {
         if (!isCancelled) {
@@ -95,7 +95,7 @@ export function useResumeData(targetResumeId?: string) {
       }
     }
 
-    loadFromRustFS();
+    loadFromDB();
 
     return () => {
       isCancelled = true;
@@ -105,7 +105,7 @@ export function useResumeData(targetResumeId?: string) {
     };
   }, [targetResumeId]);
 
-  // Direct auto-save to RustFS (debounced 400ms)
+  // Direct auto-save to PostgreSQL (debounced 400ms)
   useEffect(() => {
     if (!isInitialized || isInitialMount.current || !currentId) return;
 
@@ -115,15 +115,15 @@ export function useResumeData(targetResumeId?: string) {
 
     saveTimeoutRef.current = setTimeout(async () => {
       try {
-        const updated = await updateResumeInRustFS(currentId, {
+        const updated = await updateResumeInDB(currentId, {
           title: resumeTitle,
           data: resumeData,
         });
         setLastSaved(updated.updatedAt);
         setError(null);
       } catch (err: any) {
-        console.error('Failed to auto-save to RustFS:', err);
-        setError(err.message || 'Failed to save to RustFS');
+        console.error('Failed to auto-save to database:', err);
+        setError(err.message || 'Failed to save to database');
       }
     }, 400);
 
@@ -146,12 +146,12 @@ export function useResumeData(targetResumeId?: string) {
       setResumeData(emptyResumeData);
       if (currentId) {
         try {
-          const updated = await updateResumeInRustFS(currentId, {
+          const updated = await updateResumeInDB(currentId, {
             data: emptyResumeData,
           });
           setLastSaved(updated.updatedAt);
         } catch (err: any) {
-          console.error('Failed to clear resume in RustFS:', err);
+          console.error('Failed to clear resume in database:', err);
         }
       }
     }
@@ -160,9 +160,9 @@ export function useResumeData(targetResumeId?: string) {
   const duplicateCurrent = useCallback(async (): Promise<ResumeDocument | null> => {
     if (!currentId) return null;
     try {
-      return await duplicateResumeInRustFS(currentId);
+      return await duplicateResumeInDB(currentId);
     } catch (err) {
-      console.error('Failed to duplicate in RustFS:', err);
+      console.error('Failed to duplicate in database:', err);
       return null;
     }
   }, [currentId]);
@@ -197,12 +197,12 @@ export function useResumeData(targetResumeId?: string) {
         };
         setResumeData(mergedData);
         if (currentId) {
-          const updated = await updateResumeInRustFS(currentId, {
+          const updated = await updateResumeInDB(currentId, {
             data: mergedData,
           });
           setLastSaved(updated.updatedAt);
         }
-        alert('Resume data imported and saved directly to RustFS!');
+        alert('Resume data imported and saved directly to PostgreSQL!');
       }
     } catch (e) {
       alert('Could not read JSON file. Please ensure it is a valid resume configuration.');

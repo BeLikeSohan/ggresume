@@ -77,12 +77,13 @@ export async function ensureDatabaseSchema(): Promise<void> {
           id VARCHAR(255) PRIMARY KEY,
           email VARCHAR(255) UNIQUE NOT NULL,
           password_hash VARCHAR(255),
-          name VARCHAR(255),
           provider VARCHAR(50) DEFAULT 'email',
+          email_verified BOOLEAN DEFAULT FALSE,
           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
 
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE;
         CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
       `);
       schemaEnsured = true;
@@ -206,3 +207,91 @@ export async function deleteResumeFromDB(id: string): Promise<boolean> {
   const res = await pool.query('DELETE FROM resumes WHERE id = $1', [id]);
   return (res.rowCount ?? 0) > 0;
 }
+
+export interface DBUser {
+  id: string;
+  email: string;
+  password_hash: string | null;
+  provider: string;
+  email_verified: boolean;
+  created_at: Date;
+  updated_at: Date;
+}
+
+/**
+ * Find user by email in PostgreSQL
+ */
+export async function getUserByEmailFromDB(email: string): Promise<DBUser | null> {
+  await ensureDatabaseSchema();
+  const normalizedEmail = email.trim().toLowerCase();
+  const res = await pool.query('SELECT * FROM users WHERE LOWER(email) = $1 LIMIT 1', [
+    normalizedEmail,
+  ]);
+  if (res.rows.length === 0) return null;
+  const row = res.rows[0];
+  return {
+    id: row.id,
+    email: row.email,
+    password_hash: row.password_hash,
+    provider: row.provider || 'email',
+    email_verified: !!row.email_verified,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
+/**
+ * Find user by ID in PostgreSQL
+ */
+export async function getUserByIdFromDB(id: string): Promise<DBUser | null> {
+  await ensureDatabaseSchema();
+  const res = await pool.query('SELECT * FROM users WHERE id = $1 LIMIT 1', [id]);
+  if (res.rows.length === 0) return null;
+  const row = res.rows[0];
+  return {
+    id: row.id,
+    email: row.email,
+    password_hash: row.password_hash,
+    provider: row.provider || 'email',
+    email_verified: !!row.email_verified,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
+/**
+ * Create a new user in PostgreSQL
+ */
+export async function createUserInDB(params: {
+  id?: string;
+  email: string;
+  passwordHash?: string | null;
+  provider?: string;
+  emailVerified?: boolean;
+}): Promise<DBUser> {
+  await ensureDatabaseSchema();
+  const id = params.id || `usr_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  const email = params.email.trim().toLowerCase();
+  const passwordHash = params.passwordHash || null;
+  const provider = params.provider || 'email';
+  const emailVerified = params.emailVerified ?? false;
+
+  const res = await pool.query(
+    `INSERT INTO users (id, email, password_hash, provider, email_verified)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING id, email, password_hash, provider, email_verified, created_at, updated_at`,
+    [id, email, passwordHash, provider, emailVerified]
+  );
+
+  const row = res.rows[0];
+  return {
+    id: row.id,
+    email: row.email,
+    password_hash: row.password_hash,
+    provider: row.provider,
+    email_verified: !!row.email_verified,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+

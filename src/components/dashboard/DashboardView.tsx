@@ -13,11 +13,11 @@ import {
 } from 'lucide-react';
 import { ResumeDocument, ResumeData } from '@/types/resume';
 import {
-  fetchResumesFromRustFS,
-  createResumeInRustFS,
-  duplicateResumeInRustFS,
-  updateResumeInRustFS,
-  deleteResumeFromRustFS,
+  fetchResumesFromDB,
+  createResumeInDB,
+  duplicateResumeInDB,
+  updateResumeInDB,
+  deleteResumeFromDB,
 } from '@/lib/resumeStorage';
 import { defaultResumeData } from '@/data/defaultResume';
 import { DashboardHeader } from './DashboardHeader';
@@ -52,18 +52,18 @@ export const DashboardView: React.FC = () => {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  // Load resumes directly from RustFS
+  // Load resumes directly from Database
   const loadResumes = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await fetchResumesFromRustFS();
+      const data = await fetchResumesFromDB();
       setResumes(data);
     } catch (err: any) {
-      console.error('Failed to load resumes from RustFS:', err);
+      console.error('Failed to load resumes from database:', err);
       setError(
         err.message ||
-          'Unable to connect to RustFS object storage. Please ensure RustFS is running via "docker compose up -d".'
+          'Unable to connect to PostgreSQL database. Please ensure PostgreSQL container is running via "docker compose up -d".'
       );
     } finally {
       setIsLoading(false);
@@ -112,48 +112,48 @@ export const DashboardView: React.FC = () => {
     return result;
   }, [resumes, searchQuery, sortBy]);
 
-  // Actions directly on RustFS
+  // Actions directly on Database
   const handleCreate = async (title: string, template: 'sample' | 'blank') => {
     try {
-      const newResume = await createResumeInRustFS({ title, template });
+      const newResume = await createResumeInDB({ title, template });
       setIsCreateOpen(false);
       router.push(`/editor/${newResume.id}`);
     } catch (e: any) {
-      alert(e.message || 'Failed to create resume in RustFS.');
+      alert(e.message || 'Failed to create resume in database.');
     }
   };
 
   const handleDuplicate = async (id: string) => {
     try {
-      const duplicated = await duplicateResumeInRustFS(id);
+      const duplicated = await duplicateResumeInDB(id);
       await loadResumes();
-      showToast(`Duplicated as "${duplicated.title}" in RustFS`);
+      showToast(`Duplicated as "${duplicated.title}"`);
     } catch (e: any) {
-      alert(e.message || 'Failed to duplicate resume in RustFS.');
+      alert(e.message || 'Failed to duplicate resume in database.');
     }
   };
 
   const handleRename = async (newTitle: string) => {
     if (!renameTarget) return;
     try {
-      await updateResumeInRustFS(renameTarget.id, { title: newTitle });
+      await updateResumeInDB(renameTarget.id, { title: newTitle });
       await loadResumes();
-      showToast('Renamed in RustFS');
+      showToast('Renamed');
       setRenameTarget(null);
     } catch (e: any) {
-      alert(e.message || 'Failed to rename resume in RustFS.');
+      alert(e.message || 'Failed to rename resume in database.');
     }
   };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
     try {
-      await deleteResumeFromRustFS(deleteTarget.id);
+      await deleteResumeFromDB(deleteTarget.id);
       await loadResumes();
-      showToast('Deleted from RustFS');
+      showToast('Deleted');
       setDeleteTarget(null);
     } catch (e: any) {
-      alert(e.message || 'Failed to delete resume from RustFS.');
+      alert(e.message || 'Failed to delete resume from database.');
     }
   };
 
@@ -186,7 +186,7 @@ export const DashboardView: React.FC = () => {
         const title = mergedData.personal?.fullName?.trim()
           ? `${mergedData.personal.fullName.trim()} - Imported`
           : 'Imported Resume';
-        const newDoc = await createResumeInRustFS({
+        const newDoc = await createResumeInDB({
           title,
           data: mergedData,
         });
@@ -200,14 +200,14 @@ export const DashboardView: React.FC = () => {
 
   const handleRestoreSample = async () => {
     try {
-      await createResumeInRustFS({
+      await createResumeInDB({
         title: 'Software Engineer Resume (Sample)',
         template: 'sample',
       });
       await loadResumes();
-      showToast('Sample restored in RustFS');
+      showToast('Sample restored in database');
     } catch (e: any) {
-      alert(e.message || 'Failed to restore sample in RustFS.');
+      alert(e.message || 'Failed to restore sample in database.');
     }
   };
 
@@ -223,16 +223,16 @@ export const DashboardView: React.FC = () => {
 
       {/* Main Workspace */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 space-y-6">
-        {/* Error notification banner if RustFS connection fails */}
+        {/* Error notification banner if Database connection fails */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start justify-between gap-3 text-sm text-red-700 shadow-2xs">
             <div className="flex items-start gap-2.5">
               <AlertCircle size={18} className="text-red-500 mt-0.5 flex-shrink-0" />
               <div>
-                <p className="font-semibold text-red-900">RustFS Connection Error</p>
+                <p className="font-semibold text-red-900">Database Connection Error</p>
                 <p className="text-xs text-red-700 mt-0.5">{error}</p>
                 <p className="text-xs text-red-600 mt-1">
-                  Start RustFS with: <code className="bg-red-100 px-1 py-0.5 rounded font-mono">docker compose up -d</code>
+                  Start PostgreSQL with: <code className="bg-red-100 px-1 py-0.5 rounded font-mono">docker compose up -d</code>
                 </p>
               </div>
             </div>
@@ -326,7 +326,7 @@ export const DashboardView: React.FC = () => {
         {isLoading ? (
           <div className="bg-white rounded-xl border border-slate-200 p-16 text-center max-w-sm mx-auto my-12 flex flex-col items-center justify-center space-y-3">
             <div className="w-6 h-6 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
-            <p className="text-xs text-slate-500 font-medium">Loading resumes directly from RustFS...</p>
+            <p className="text-xs text-slate-500 font-medium">Loading resumes directly from database...</p>
           </div>
         ) : resumes.length === 0 && !error ? (
           /* Empty state */
@@ -335,9 +335,9 @@ export const DashboardView: React.FC = () => {
               <FileText size={22} />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-900">No resumes in RustFS</h3>
+              <h3 className="text-sm font-bold text-slate-900">No resumes in database</h3>
               <p className="text-xs text-slate-500 mt-1">
-                Create a new resume from scratch or load the standard template into RustFS.
+                Create a new resume from scratch or load the standard template into PostgreSQL.
               </p>
             </div>
             <div className="flex items-center justify-center gap-2 pt-1">

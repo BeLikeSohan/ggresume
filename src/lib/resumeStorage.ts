@@ -13,9 +13,9 @@ export function deepClone<T>(obj: T): T {
 }
 
 /**
- * Fetch all resumes directly from RustFS
+ * Fetch all resumes directly from PostgreSQL via API
  */
-export async function fetchResumesFromRustFS(): Promise<ResumeDocument[]> {
+export async function fetchResumesFromDB(): Promise<ResumeDocument[]> {
   const res = await fetch('/api/resumes', {
     method: 'GET',
     headers: { 'Accept': 'application/json' },
@@ -24,16 +24,16 @@ export async function fetchResumesFromRustFS(): Promise<ResumeDocument[]> {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || `RustFS returned status ${res.status}`);
+    throw new Error(err.error || `Database returned status ${res.status}`);
   }
 
   return res.json();
 }
 
 /**
- * Fetch a specific resume directly from RustFS by ID
+ * Fetch a specific resume directly by ID
  */
-export async function fetchResumeByIdFromRustFS(id: string): Promise<ResumeDocument | null> {
+export async function fetchResumeByIdFromDB(id: string): Promise<ResumeDocument | null> {
   const res = await fetch(`/api/resumes/${encodeURIComponent(id)}`, {
     method: 'GET',
     headers: { 'Accept': 'application/json' },
@@ -46,16 +46,16 @@ export async function fetchResumeByIdFromRustFS(id: string): Promise<ResumeDocum
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || `RustFS returned status ${res.status}`);
+    throw new Error(err.error || `Database returned status ${res.status}`);
   }
 
   return res.json();
 }
 
 /**
- * Create a new resume directly in RustFS as a JSON file
+ * Create a new resume directly in PostgreSQL
  */
-export async function createResumeInRustFS(options?: {
+export async function createResumeInDB(options?: {
   title?: string;
   template?: 'sample' | 'blank';
   data?: ResumeData;
@@ -93,23 +93,23 @@ export async function createResumeInRustFS(options?: {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || `Failed to create resume in RustFS (status ${res.status})`);
+    throw new Error(err.error || `Failed to create resume in database (status ${res.status})`);
   }
 
   return res.json();
 }
 
 /**
- * Update an existing resume directly in RustFS
+ * Update an existing resume directly in PostgreSQL
  */
-export async function updateResumeInRustFS(
+export async function updateResumeInDB(
   id: string,
   updates: { title?: string; data?: ResumeData }
 ): Promise<ResumeDocument> {
   // Fetch existing document to merge updates
-  const existing = await fetchResumeByIdFromRustFS(id);
+  const existing = await fetchResumeByIdFromDB(id);
   if (!existing) {
-    throw new Error(`Resume "${id}" does not exist in RustFS`);
+    throw new Error(`Resume "${id}" does not exist in database`);
   }
 
   const updated: ResumeDocument = {
@@ -130,19 +130,19 @@ export async function updateResumeInRustFS(
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || `Failed to update resume in RustFS (status ${res.status})`);
+    throw new Error(err.error || `Failed to update resume in database (status ${res.status})`);
   }
 
   return res.json();
 }
 
 /**
- * Duplicate a resume directly in RustFS
+ * Duplicate a resume directly in PostgreSQL
  */
-export async function duplicateResumeInRustFS(id: string): Promise<ResumeDocument> {
-  const original = await fetchResumeByIdFromRustFS(id);
+export async function duplicateResumeInDB(id: string): Promise<ResumeDocument> {
+  const original = await fetchResumeByIdFromDB(id);
   if (!original) {
-    throw new Error(`Cannot duplicate: Resume "${id}" not found in RustFS`);
+    throw new Error(`Cannot duplicate: Resume "${id}" not found in database`);
   }
 
   const duplicateDoc: ResumeDocument = {
@@ -164,28 +164,35 @@ export async function duplicateResumeInRustFS(id: string): Promise<ResumeDocumen
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || 'Failed to save duplicated resume in RustFS');
+    throw new Error(err.error || 'Failed to save duplicated resume in database');
   }
 
   return res.json();
 }
 
 /**
- * Delete a resume directly from RustFS
+ * Delete a resume directly from PostgreSQL
  */
-export async function deleteResumeFromRustFS(id: string): Promise<boolean> {
+export async function deleteResumeFromDB(id: string): Promise<boolean> {
   const res = await fetch(`/api/resumes/${encodeURIComponent(id)}`, {
     method: 'DELETE',
   });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || `Failed to delete resume from RustFS (status ${res.status})`);
+    throw new Error(err.error || `Failed to delete resume from database (status ${res.status})`);
   }
 
   return true;
 }
 
+// Aliases for seamless compatibility
+export const fetchResumesFromRustFS = fetchResumesFromDB;
+export const fetchResumeByIdFromRustFS = fetchResumeByIdFromDB;
+export const createResumeInRustFS = createResumeInDB;
+export const updateResumeInRustFS = updateResumeInDB;
+export const duplicateResumeInRustFS = duplicateResumeInDB;
+export const deleteResumeFromRustFS = deleteResumeFromDB;
 
 /**
  * Formats a timestamp into human-readable relative time (e.g. "5m ago", "Yesterday")
