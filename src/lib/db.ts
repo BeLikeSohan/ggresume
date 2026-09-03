@@ -85,6 +85,16 @@ export async function ensureDatabaseSchema(): Promise<void> {
 
         ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE;
         CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+
+        CREATE TABLE IF NOT EXISTS verification_tokens (
+          token VARCHAR(255) PRIMARY KEY,
+          user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          email VARCHAR(255) NOT NULL,
+          expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_verification_tokens_user_id ON verification_tokens(user_id);
       `);
       schemaEnsured = true;
     } finally {
@@ -293,5 +303,86 @@ export async function createUserInDB(params: {
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
+}
+
+export interface DBVerificationToken {
+  token: string;
+  user_id: string;
+  email: string;
+  expires_at: Date;
+  created_at: Date;
+}
+
+/**
+ * Save an email verification token
+ */
+export async function createVerificationTokenInDB(params: {
+  userId: string;
+  email: string;
+  token: string;
+  expiresAt: Date;
+}): Promise<DBVerificationToken> {
+  await ensureDatabaseSchema();
+  // Clean up any old tokens for this user first
+  await pool.query('DELETE FROM verification_tokens WHERE user_id = $1 OR email = $2', [
+    params.userId,
+    params.email.trim().toLowerCase(),
+  ]);
+
+  const res = await pool.query(
+    `INSERT INTO verification_tokens (token, user_id, email, expires_at)
+     VALUES ($1, $2, $3, $4)
+     RETURNING token, user_id, email, expires_at, created_at`,
+    [params.token, params.userId, params.email.trim().toLowerCase(), params.expiresAt]
+  );
+
+  const row = res.rows[0];
+  return {
+    token: row.token,
+    user_id: row.user_id,
+    email: row.email,
+    expires_at: new Date(row.expires_at),
+    created_at: new Date(row.created_at),
+  };
+}
+
+/**
+ * Find verification token
+ */
+export async function getVerificationTokenFromDB(token: string): Promise<DBVerificationToken | null> {
+  await ensureDatabaseSchema();
+  const res = await pool.query(
+    'SELECT token, user_id, email, expires_at, created_at FROM verification_tokens WHERE token = $1 LIMIT 1',
+    [token]
+  );
+  if (res.rows.length === 0) return null;
+  const row = res.rows[0];
+  return {
+    token: row.token,
+    user_id: row.user_id,
+    email: row.email,
+    expires_at: new Date(row.expires_at),
+    created_at: new Date(row.created_at),
+  };
+}
+
+/**
+ * Delete verification token
+ */
+export async function deleteVerificationTokenFromDB(token: string): Promise<void> {
+  await ensureDatabaseSchema();
+  await pool.query('DELETE FROM verification_tokens WHERE token = $1', [token]);
+}
+
+/**
+ * Mark user's email as verified in PostgreSQL
+ */
+export async function markUserEmailVerifiedInDB(userId: string): Promise<boolean> {
+  await ensureDatabaseSchema();
+  const res = await pool.query(
+    'UPDATE users SET email_verified = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id',
+    [userId]
+  );
+  return (res.rowCount ?? 0) > 0;
 }
 

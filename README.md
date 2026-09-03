@@ -113,8 +113,11 @@ npm run start
 | `POSTGRES_DB` | `ggresume` | PostgreSQL database name |
 | `POSTGRES_HOST` | `postgres` (Docker) / `localhost` (Dev) | PostgreSQL host |
 | `POSTGRES_PORT` | `5432` | PostgreSQL port |
-| `AUTH_LOCAL_MODE` | `true` | When `true`, email verification is skipped and Google OAuth is hidden (ideal for Docker/local) |
+| `AUTH_LOCAL_MODE` | `true` | When `true`, email verification is bypassed (instant sign up for local/Docker dev) |
 | `AUTH_SECRET` | `secret` | Secret key for signing session tokens |
+| `RESEND_API_KEY` | `(optional)` | Resend API key for sending verification emails |
+| `EMAIL_FROM` | `GGResume <noreply@ggresume.com>` | Sender address for transactional emails |
+| `APP_URL` | `http://localhost:3000` | Application base URL used in verification email links |
 | `PORT` | `3000` | Port for the Next.js frontend service |
 | `PUPPETEER_EXECUTABLE_PATH` | `/usr/bin/chromium` (Docker container) | Custom path to Chromium executable |
 

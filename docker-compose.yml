@@ -42,6 +42,9 @@ services:
       - AUTH_LOCAL_MODE=${AUTH_LOCAL_MODE:-true}
       - NEXT_PUBLIC_AUTH_LOCAL_MODE=${NEXT_PUBLIC_AUTH_LOCAL_MODE:-true}
       - AUTH_SECRET=${AUTH_SECRET:-ggresume-secret-key-32-chars-minimum}
+      - APP_URL=${APP_URL:-http://localhost:3000}
+      - EMAIL_FROM=${EMAIL_FROM:-GGResume <noreply@ggresume.com>}
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
     depends_on:
       postgres:
         condition: service_healthy

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserByEmailFromDB, createUserInDB } from '@/lib/db';
+import crypto from 'crypto';
+import { getUserByEmailFromDB, createUserInDB, createVerificationTokenInDB } from '@/lib/db';
 import {
   hashPassword,
   createSessionToken,
@@ -7,6 +8,7 @@ import {
   SESSION_COOKIE_NAME,
   UserSession,
 } from '@/lib/auth';
+import { sendVerificationEmail } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,8 +31,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     // Check if user already exists
-    const existing = await getUserByEmailFromDB(email);
+    const existing = await getUserByEmailFromDB(normalizedEmail);
     if (existing) {
       return NextResponse.json(
         { error: 'An account with this email already exists. Please sign in instead.' },
@@ -40,20 +44,63 @@ export async function POST(req: NextRequest) {
 
     const passwordHash = hashPassword(password);
     const requireVerification = isEmailVerificationRequired();
-    const emailVerified = !requireVerification; // In local mode, immediately verified
 
+    if (requireVerification) {
+      // Create user with unverified email
+      const user = await createUserInDB({
+        email: normalizedEmail,
+        passwordHash,
+        provider: 'email',
+        emailVerified: false,
+      });
+
+      // Generate verification token
+      const verificationToken = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+
+      await createVerificationTokenInDB({
+        userId: user.id,
+        email: user.email,
+        token: verificationToken,
+        expiresAt,
+      });
+
+      const origin =
+        process.env.APP_URL ||
+        process.env.NEXTAUTH_URL ||
+        req.nextUrl.origin ||
+        'http://localhost:3000';
+
+      const verificationUrl = `${origin}/api/auth/verify-email?token=${verificationToken}`;
+
+      await sendVerificationEmail({
+        email: user.email,
+        verificationUrl,
+      });
+
+      return NextResponse.json(
+        {
+          message: 'Verification email sent. Please check your inbox.',
+          requiresVerification: true,
+          email: user.email,
+        },
+        { status: 201 }
+      );
+    }
+
+    // Local mode: immediate verification and session issue
     const user = await createUserInDB({
-      email,
+      email: normalizedEmail,
       passwordHash,
       provider: 'email',
-      emailVerified,
+      emailVerified: true,
     });
 
     const userSession: UserSession = {
       id: user.id,
       email: user.email,
       provider: user.provider,
-      emailVerified: user.email_verified,
+      emailVerified: true,
     };
 
     const token = createSessionToken(userSession);
@@ -62,12 +109,11 @@ export async function POST(req: NextRequest) {
       {
         message: 'Account created successfully',
         user: userSession,
-        emailVerified: user.email_verified,
+        emailVerified: true,
       },
       { status: 201 }
     );
 
-    // Set secure HTTP session cookie
     response.cookies.set({
       name: SESSION_COOKIE_NAME,
       value: token,
@@ -82,7 +128,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('Error during sign up:', error);
     return NextResponse.json(
-      { error: error.message || 'Internal server error during registration.' },
+      { error: error.message || 'Internal server error during sign up.' },
       { status: 500 }
     );
   }

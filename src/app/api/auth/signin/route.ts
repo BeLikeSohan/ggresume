@@ -41,7 +41,11 @@ export async function POST(req: NextRequest) {
     const requireVerification = isEmailVerificationRequired();
     if (requireVerification && !user.email_verified) {
       return NextResponse.json(
-        { error: 'Please verify your email before signing in.' },
+        {
+          error: 'Please verify your email address before signing in.',
+          requiresVerification: true,
+          email: user.email,
+        },
         { status: 403 }
       );
     }

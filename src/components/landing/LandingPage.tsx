@@ -1,17 +1,39 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Sparkles, LayoutDashboard, LogOut } from 'lucide-react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { ArrowRight, LayoutDashboard, LogOut, CheckCircle2 } from 'lucide-react';
 import { GGLogo } from '@/components/common/GGLogo';
 import { AuthModal } from './AuthModal';
 import { useAuth } from '@/hooks/useAuth';
 
-export const LandingPage: React.FC = () => {
+function LandingPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, signOut, isLoading } = useAuth();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
+  const [verifiedBanner, setVerifiedBanner] = useState(false);
+
+  // Auto redirect authenticated users to dashboard
+  useEffect(() => {
+    if (!isLoading && user) {
+      router.replace('/dashboard');
+    }
+  }, [user, isLoading, router]);
+
+  useEffect(() => {
+    const authParam = searchParams.get('auth');
+    if (authParam === 'signin' || authParam === 'signup') {
+      setAuthMode(authParam);
+      setIsAuthOpen(true);
+    }
+    if (searchParams.get('verified') === 'true') {
+      setVerifiedBanner(true);
+    }
+  }, [searchParams]);
 
   const openAuth = (mode: 'signin' | 'signup' = 'signup') => {
     setAuthMode(mode);
@@ -74,6 +96,16 @@ export const LandingPage: React.FC = () => {
           )}
         </div>
       </header>
+
+      {/* Verified Banner if redirected from email link */}
+      {verifiedBanner && (
+        <div className="max-w-md mx-auto px-4 z-20 animate-in slide-in-from-top-4 duration-300">
+          <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs flex items-center gap-2 shadow-xs">
+            <CheckCircle2 size={16} className="text-emerald-600 flex-shrink-0" />
+            <span>Email successfully verified! You are now signed in.</span>
+          </div>
+        </div>
+      )}
 
       {/* Centered Hero Content */}
       <main className="flex-1 flex flex-col items-center justify-center text-center px-4 sm:px-6 py-12 max-w-3xl mx-auto z-10 space-y-8">
@@ -145,5 +177,13 @@ export const LandingPage: React.FC = () => {
         initialMode={authMode}
       />
     </div>
+  );
+}
+
+export const LandingPage: React.FC = () => {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white" />}>
+      <LandingPageContent />
+    </Suspense>
   );
 };

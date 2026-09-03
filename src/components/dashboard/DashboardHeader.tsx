@@ -88,14 +88,14 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               title={user.email}
             >
               <div className="w-7 h-7 rounded-full bg-slate-900 text-white text-xs font-bold flex items-center justify-center uppercase">
-                {user.name ? user.name.charAt(0) : user.email.charAt(0)}
+                {user.email.charAt(0)}
               </div>
             </button>
 
             {showUserMenu && (
               <div className="absolute right-0 mt-1.5 w-48 bg-white rounded-xl shadow-lg border border-slate-200 py-1.5 z-40 text-xs">
                 <div className="px-3 py-2 border-b border-slate-100">
-                  <p className="font-semibold text-slate-900 truncate">{user.name || 'User'}</p>
+                  <p className="font-semibold text-slate-900 truncate">{user.email.split('@')[0]}</p>
                   <p className="text-slate-500 truncate text-[11px]">{user.email}</p>
                 </div>
                 <button
