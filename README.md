@@ -115,6 +115,11 @@ npm run start
 
 | Variable | Default (Local / Docker) | Description |
 | :--- | :--- | :--- |
+| `DATABASE_URL` | `postgresql://postgres:postgres@localhost:5432/ggresume` | Full PostgreSQL connection string |
+| `POSTGRES_USER` | `postgres` | PostgreSQL username |
+| `POSTGRES_PASSWORD` | `postgres` | PostgreSQL password |
+| `POSTGRES_DB` | `ggresume` | PostgreSQL database name |
+| `POSTGRES_PORT` | `5432` | PostgreSQL port |
 | `PORT` | `3000` | Port for the Next.js frontend service |
 | `RUSTFS_ENDPOINT` | `http://rustfs:9000` (Docker) / `http://localhost:9000` (Dev) | RustFS S3-compatible endpoint |
 | `RUSTFS_ACCESS_KEY` | `rustfsadmin` | Root user / access key for RustFS |

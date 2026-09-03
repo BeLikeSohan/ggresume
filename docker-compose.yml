@@ -1,5 +1,26 @@
 services:
-  # RustFS: High-performance S3-compatible object storage for JSON resumes
+  # PostgreSQL: Relational database for resumes, users, and metadata
+  postgres:
+    image: postgres:18-alpine
+    container_name: ggresume_postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-ggresume}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-ggresume}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # RustFS: High-performance S3-compatible object storage
   rustfs:
     image: rustfs/rustfs:latest
     container_name: ggresume_rustfs
@@ -13,7 +34,7 @@ services:
     volumes:
       - rustfs_data:/data
 
-  # GGResume Frontend: Next.js Web App & PDF Export Service
+  # GGResume Web App & Serverless API
   app:
     build:
       context: .
@@ -26,13 +47,24 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - HOSTNAME=0.0.0.0
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-ggresume}
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-ggresume}
       - RUSTFS_ENDPOINT=http://rustfs:9000
       - RUSTFS_ACCESS_KEY=rustfsadmin
       - RUSTFS_SECRET_KEY=rustfsadmin
       - RUSTFS_BUCKET=resumes
     depends_on:
-      - rustfs
+      postgres:
+        condition: service_healthy
+      rustfs:
+        condition: service_started
 
 volumes:
+  postgres_data:
+    driver: local
   rustfs_data:
     driver: local
