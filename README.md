@@ -1,6 +1,6 @@
 <div align="center">
-
-# GGResume
+  
+<img src="https://raw.githubusercontent.com/BeLikeSohan/ggresume/refs/heads/main/public/ggresume-logo.png" width="350">
 
 High-performance, ATS-optimized software engineering resume builder.
 
@@ -18,8 +18,6 @@ High-performance, ATS-optimized software engineering resume builder.
 ![GGResume Screenshot](docs/screenshot-1.png)
 
 </div>
-
----
 
 ## Overview
 
