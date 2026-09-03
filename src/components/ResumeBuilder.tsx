@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResumeData } from '@/hooks/useResumeData';
 import { useResumeZoom } from '@/hooks/useResumeZoom';
@@ -10,6 +10,7 @@ import { ResumePreview } from '@/components/preview/ResumePreview';
 import { PreviewToolbar } from '@/components/preview/PreviewToolbar';
 import { DownloadToast } from '@/components/common/DownloadToast';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { UnsavedChangesModal } from '@/components/common/UnsavedChangesModal';
 import { exportResumeToPdf } from '@/lib/pdfExport';
 
 interface ResumeBuilderProps {
@@ -25,6 +26,10 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
     resumeData,
     setResumeData,
     isInitialized,
+    isSaving,
+    hasUnsavedChanges,
+    saveResume,
+    discardChanges,
     clearAll,
     exportJson,
     importJson,
@@ -36,8 +41,45 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadStatus, setDownloadStatus] = useState<string | null>(null);
   const [mobileView, setMobileView] = useState<'editor' | 'preview'>('editor');
+  const [isUnsavedModalOpen, setIsUnsavedModalOpen] = useState(false);
 
   const previewRef = useRef<HTMLDivElement>(null);
+
+  // Manual save handler from Header
+  const handleSave = async () => {
+    const success = await saveResume();
+    if (success) {
+      setDownloadStatus('Changes saved');
+      setTimeout(() => setDownloadStatus(null), 2500);
+    } else {
+      setDownloadStatus('Failed to save changes');
+      setTimeout(() => setDownloadStatus(null), 3000);
+    }
+  };
+
+  // Back button handler: intercept if dirty
+  const handleBack = useCallback(() => {
+    if (hasUnsavedChanges) {
+      setIsUnsavedModalOpen(true);
+    } else {
+      router.push('/dashboard');
+    }
+  }, [hasUnsavedChanges, router]);
+
+  // Modal actions
+  const handleDiscardAndExit = useCallback(() => {
+    discardChanges();
+    setIsUnsavedModalOpen(false);
+    router.push('/dashboard');
+  }, [discardChanges, router]);
+
+  const handleSaveAndExit = useCallback(async () => {
+    const success = await saveResume();
+    if (success) {
+      setIsUnsavedModalOpen(false);
+      router.push('/dashboard');
+    }
+  }, [saveResume, router]);
 
   // PDF Export
   const handleDownloadPdf = async () => {
@@ -99,10 +141,23 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
         isDownloading={isDownloading}
         mobileView={mobileView}
         setMobileView={setMobileView}
+        hasUnsavedChanges={hasUnsavedChanges}
+        isSaving={isSaving}
+        onSave={handleSave}
+        onBack={handleBack}
       />
 
       {/* Notification Toast */}
       <DownloadToast message={downloadStatus} />
+
+      {/* Unsaved Changes Confirmation Modal */}
+      <UnsavedChangesModal
+        isOpen={isUnsavedModalOpen}
+        isSaving={isSaving}
+        onClose={() => setIsUnsavedModalOpen(false)}
+        onDiscard={handleDiscardAndExit}
+        onSaveAndExit={handleSaveAndExit}
+      />
 
       {/* Main Split Body: Left Editor / Right Preview */}
       <main className="flex-1 flex overflow-hidden relative">

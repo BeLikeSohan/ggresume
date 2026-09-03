@@ -14,6 +14,7 @@ import {
   Copy,
   Check,
   Edit2,
+  Save,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { GGLogo } from '@/components/common/GGLogo';
@@ -29,6 +30,10 @@ export interface HeaderProps {
   isDownloading: boolean;
   mobileView: 'editor' | 'preview';
   setMobileView: (view: 'editor' | 'preview') => void;
+  hasUnsavedChanges?: boolean;
+  isSaving?: boolean;
+  onSave?: () => void;
+  onBack?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -42,6 +47,10 @@ export const Header: React.FC<HeaderProps> = ({
   isDownloading,
   mobileView,
   setMobileView,
+  hasUnsavedChanges = false,
+  isSaving = false,
+  onSave,
+  onBack,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -87,28 +96,37 @@ export const Header: React.FC<HeaderProps> = ({
     e.target.value = '';
   };
 
+  const handleBackNavigation = (e: React.MouseEvent) => {
+    if (onBack) {
+      e.preventDefault();
+      onBack();
+    }
+  };
+
   return (
     <header className="app-header no-print h-16 bg-white border-b border-slate-200 px-3 md:px-6 flex items-center justify-between z-30 sticky top-0 shadow-xs flex-shrink-0">
       {/* Left: Brand Logo, Back to Dashboard, and Resume Title */}
       <div className="flex items-center gap-2 md:gap-3">
-        <Link
-          href="/"
-          className="flex items-center select-none group mr-0.5"
+        <button
+          type="button"
+          onClick={handleBackNavigation}
+          className="flex items-center select-none group mr-0.5 cursor-pointer bg-transparent border-0 p-0"
           title="Back to GGResume Dashboard"
         >
           <GGLogo size="sm" variant="big" showWordmark={false} />
-        </Link>
+        </button>
 
         <div className="h-5 w-[1px] bg-slate-200 hidden sm:block" />
 
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-100 transition"
+        <button
+          type="button"
+          onClick={handleBackNavigation}
+          className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-100 transition cursor-pointer bg-transparent border-0"
           title="All Resumes"
         >
           <ArrowLeft size={13} />
           <span className="hidden md:inline">All Resumes</span>
-        </Link>
+        </button>
 
         <div className="h-5 w-[1px] bg-slate-200 hidden sm:block" />
 
@@ -139,10 +157,20 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
-          {/* Auto-saved badge */}
-          <span className="hidden xl:inline-flex items-center gap-1 text-[11px] text-slate-400 font-medium">
-            <Check size={12} className="text-emerald-500" /> Saved
-          </span>
+          {/* Unsaved / Saved indicator dot */}
+          {hasUnsavedChanges ? (
+            <span
+              className="hidden lg:inline-flex items-center gap-1.5 text-[11px] text-amber-600 font-medium bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200"
+              title="You have unsaved changes in memory"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+              Unsaved
+            </span>
+          ) : (
+            <span className="hidden lg:inline-flex items-center gap-1 text-[11px] text-slate-400 font-medium">
+              <Check size={12} className="text-emerald-500" /> Saved
+            </span>
+          )}
         </div>
       </div>
 
@@ -229,10 +257,37 @@ export const Header: React.FC<HeaderProps> = ({
           </Button>
         </div>
 
+        {/* Save Button */}
+        {onSave && (
+          <Button
+            size="sm"
+            variant={hasUnsavedChanges ? 'primary' : 'outline'}
+            icon={
+              isSaving ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : hasUnsavedChanges ? (
+                <Save size={14} />
+              ) : (
+                <Check size={14} className="text-emerald-500" />
+              )
+            }
+            onClick={onSave}
+            disabled={isSaving || !hasUnsavedChanges}
+            className={`font-semibold transition ${
+              hasUnsavedChanges
+                ? 'shadow-xs'
+                : 'text-slate-500 border-slate-200 opacity-80'
+            }`}
+            title={hasUnsavedChanges ? 'Save changes' : 'All changes saved'}
+          >
+            {isSaving ? 'Saving...' : hasUnsavedChanges ? 'Save' : 'Saved'}
+          </Button>
+        )}
+
         {/* Primary Download Button */}
         <Button
           size="sm"
-          variant="primary"
+          variant="outline"
           icon={
             isDownloading ? (
               <Loader2 size={14} className="animate-spin" />
@@ -242,7 +297,7 @@ export const Header: React.FC<HeaderProps> = ({
           }
           onClick={onDownloadPdf}
           disabled={isDownloading}
-          className="font-semibold shadow-md"
+          className="font-semibold bg-white hover:bg-slate-50 border-slate-200 text-slate-800"
         >
           {isDownloading ? 'Generating...' : 'Download PDF'}
         </Button>

@@ -16,11 +16,12 @@ export function useResumeData(targetResumeId?: string) {
   const [resumeTitle, setResumeTitleState] = useState<string>('Software Engineer Resume');
   const [resumeData, setResumeData] = useState<ResumeData>(defaultResumeData);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const isInitialMount = useRef(true);
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Keep a snapshot string of the saved state to accurately track unsaved changes
+  const [savedSnapshot, setSavedSnapshot] = useState<string>('');
 
   // Initialize and load the resume directly from PostgreSQL
   useEffect(() => {
@@ -81,6 +82,12 @@ export function useResumeData(targetResumeId?: string) {
           setResumeTitleState(targetDoc.title);
           setResumeData(docData);
           setLastSaved(targetDoc.updatedAt);
+          setSavedSnapshot(
+            JSON.stringify({
+              title: targetDoc.title,
+              data: docData,
+            })
+          );
         }
       } catch (err: any) {
         if (!isCancelled) {
@@ -90,7 +97,6 @@ export function useResumeData(targetResumeId?: string) {
       } finally {
         if (!isCancelled) {
           setIsInitialized(true);
-          isInitialMount.current = false;
         }
       }
     }
@@ -99,73 +105,111 @@ export function useResumeData(targetResumeId?: string) {
 
     return () => {
       isCancelled = true;
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
     };
   }, [targetResumeId]);
 
-  // Direct auto-save to PostgreSQL (debounced 400ms)
+  // Compute if there are unsaved changes
+  const currentSnapshot = isInitialized
+    ? JSON.stringify({
+        title: resumeTitle,
+        data: resumeData,
+      })
+    : '';
+
+  const hasUnsavedChanges =
+    isInitialized && savedSnapshot !== '' && currentSnapshot !== savedSnapshot;
+
+  // Warn user on browser reload / tab close if unsaved changes exist
   useEffect(() => {
-    if (!isInitialized || isInitialMount.current || !currentId) return;
-
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-
-    saveTimeoutRef.current = setTimeout(async () => {
-      try {
-        const updated = await updateResumeInDB(currentId, {
-          title: resumeTitle,
-          data: resumeData,
-        });
-        setLastSaved(updated.updatedAt);
-        setError(null);
-      } catch (err: any) {
-        console.error('Failed to auto-save to database:', err);
-        setError(err.message || 'Failed to save to database');
-      }
-    }, 400);
-
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
       }
     };
-  }, [resumeData, resumeTitle, currentId, isInitialized]);
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [hasUnsavedChanges]);
+
+  // Explicit Save function
+  const saveResume = useCallback(async (): Promise<boolean> => {
+    if (!currentId || !isInitialized) return false;
+
+    setIsSaving(true);
+    setError(null);
+
+    try {
+      const updated = await updateResumeInDB(currentId, {
+        title: resumeTitle,
+        data: resumeData,
+      });
+
+      setLastSaved(updated.updatedAt);
+      setSavedSnapshot(
+        JSON.stringify({
+          title: resumeTitle,
+          data: resumeData,
+        })
+      );
+      return true;
+    } catch (err: any) {
+      console.error('Failed to save resume to database:', err);
+      setError(err.message || 'Failed to save to database');
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  }, [currentId, isInitialized, resumeTitle, resumeData]);
 
   const setResumeTitle = useCallback((title: string) => {
     setResumeTitleState(title);
   }, []);
 
-  const clearAll = useCallback(async () => {
+  const clearAll = useCallback(() => {
     if (
       typeof window !== 'undefined' &&
       window.confirm('Clear all resume fields to start from a blank slate?')
     ) {
       setResumeData(emptyResumeData);
-      if (currentId) {
-        try {
-          const updated = await updateResumeInDB(currentId, {
-            data: emptyResumeData,
-          });
-          setLastSaved(updated.updatedAt);
-        } catch (err: any) {
-          console.error('Failed to clear resume in database:', err);
-        }
-      }
     }
-  }, [currentId]);
+  }, []);
+
+  const discardChanges = useCallback(() => {
+    if (!savedSnapshot) return;
+    try {
+      const parsed = JSON.parse(savedSnapshot);
+      if (parsed.title) setResumeTitleState(parsed.title);
+      if (parsed.data) setResumeData(parsed.data);
+    } catch (e) {
+      console.error('Failed to discard changes:', e);
+    }
+  }, [savedSnapshot]);
 
   const duplicateCurrent = useCallback(async (): Promise<ResumeDocument | null> => {
     if (!currentId) return null;
     try {
+      // If there are unsaved changes, save first before duplicating
+      if (hasUnsavedChanges) {
+        await updateResumeInDB(currentId, {
+          title: resumeTitle,
+          data: resumeData,
+        });
+        setSavedSnapshot(
+          JSON.stringify({
+            title: resumeTitle,
+            data: resumeData,
+          })
+        );
+      }
       return await duplicateResumeInDB(currentId);
     } catch (err) {
       console.error('Failed to duplicate in database:', err);
       return null;
     }
-  }, [currentId]);
+  }, [currentId, hasUnsavedChanges, resumeTitle, resumeData]);
 
   const exportJson = useCallback(() => {
     const dataStr =
@@ -183,7 +227,7 @@ export function useResumeData(targetResumeId?: string) {
     downloadAnchor.remove();
   }, [resumeData, resumeTitle]);
 
-  const importJson = useCallback(async (jsonString: string) => {
+  const importJson = useCallback((jsonString: string) => {
     try {
       const parsed = JSON.parse(jsonString);
       if (parsed && typeof parsed === 'object') {
@@ -196,18 +240,11 @@ export function useResumeData(targetResumeId?: string) {
           settings: { ...defaultResumeData.settings, ...(parsed.settings || {}) },
         };
         setResumeData(mergedData);
-        if (currentId) {
-          const updated = await updateResumeInDB(currentId, {
-            data: mergedData,
-          });
-          setLastSaved(updated.updatedAt);
-        }
-        alert('Resume data imported and saved directly to PostgreSQL!');
       }
     } catch (e) {
       alert('Could not read JSON file. Please ensure it is a valid resume configuration.');
     }
-  }, [currentId]);
+  }, []);
 
   return {
     resumeId: currentId,
@@ -216,8 +253,12 @@ export function useResumeData(targetResumeId?: string) {
     resumeData,
     setResumeData,
     isInitialized,
+    isSaving,
+    hasUnsavedChanges,
     lastSaved,
     error,
+    saveResume,
+    discardChanges,
     clearAll,
     duplicateCurrent,
     exportJson,
