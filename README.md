@@ -12,6 +12,11 @@ High-performance, ATS-optimized software engineering resume builder.
 
 [Features](#features) • [Quick Start (Docker)](#quick-start-with-docker-compose) • [Local Development](#local-development) • [Environment Variables](#environment-variables)
 
+<br />
+<br />
+
+![GGResume Screenshot](docs/screenshot-1.png)
+
 </div>
 
 ---
