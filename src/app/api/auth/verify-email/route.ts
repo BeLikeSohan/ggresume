@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    if (new Date() > new Date(record.expires_at)) {
+    if (record.isExpired || new Date() > new Date(record.expiresAt)) {
       await deleteVerificationTokenFromDB(token);
       return NextResponse.redirect(
         `${origin}/?auth=signin&error=token_expired`
@@ -37,10 +37,10 @@ export async function GET(req: NextRequest) {
     }
 
     // Verify user in DB
-    await markUserEmailVerifiedInDB(record.user_id);
+    await markUserEmailVerifiedInDB(record.userId);
     await deleteVerificationTokenFromDB(token);
 
-    const user = await getUserByIdFromDB(record.user_id);
+    const user = await getUserByIdFromDB(record.userId);
     if (!user) {
       return NextResponse.redirect(`${origin}/?auth=signin&verified=true`);
     }

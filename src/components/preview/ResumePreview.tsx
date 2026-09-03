@@ -356,6 +356,10 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
       />
     );
 
+    const getSectionTitle = (sectionKey: string, fallback: string) => {
+      return settings.sectionTitles?.[sectionKey] || fallback;
+    };
+
     // Render bullet marker
     const renderBullet = () => (
       <BulletMarker style={bulletStyle} accentColor={accentColor} />
@@ -370,7 +374,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
           if (!profile) return null;
           return (
             <div key="profile" data-resume-section="profile" className="resume-section w-full">
-              {renderSectionTitle('Profile', isFirstOnPage)}
+              {renderSectionTitle(getSectionTitle('profile', 'Profile'), isFirstOnPage)}
               <p className={`${fontSizeClasses.body} ${lineSpacingClasses} text-black text-justify`}>
                 <FormattedText text={profile} />
               </p>
@@ -381,7 +385,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
           if (!skills || skills.length === 0) return null;
           return (
             <div key="skills" data-resume-section="skills" className="resume-section w-full">
-              {renderSectionTitle('Skills', isFirstOnPage)}
+              {renderSectionTitle(getSectionTitle('skills', 'Skills'), isFirstOnPage)}
               <div className="flex flex-col gap-0">
                 {skills.map((s) => (
                   <div key={s.id} className={`${fontSizeClasses.body} ${lineSpacingClasses} text-black`}>
@@ -398,7 +402,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
           if (!experiences || experiences.length === 0) return null;
           return (
             <div key="experiences" data-resume-section="experiences" className="resume-section w-full">
-              {renderSectionTitle('Professional Experience', isFirstOnPage)}
+              {renderSectionTitle(getSectionTitle('experiences', 'Professional Experience'), isFirstOnPage)}
               <div className="flex flex-col gap-[8.4pt]">
                 {experiences.map((exp) => (
                   <div key={exp.id} className="experience-item w-full">
@@ -460,7 +464,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
           if (!projects || projects.length === 0) return null;
           return (
             <div key="projects" data-resume-section="projects" className="resume-section w-full">
-              {renderSectionTitle('Projects', isFirstOnPage)}
+              {renderSectionTitle(getSectionTitle('projects', 'Projects'), isFirstOnPage)}
               <div className="flex flex-col gap-[8.4pt]">
                 {projects.map((proj) => (
                   <div key={proj.id} className="project-item w-full">
@@ -524,7 +528,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
           if (!educations || educations.length === 0) return null;
           return (
             <div key="educations" data-resume-section="educations" className="resume-section w-full">
-              {renderSectionTitle('Education', isFirstOnPage)}
+              {renderSectionTitle(getSectionTitle('educations', 'Education'), isFirstOnPage)}
               <div className="flex flex-col gap-[8.4pt]">
                 {educations.map((edu) => (
                   <div key={edu.id} className="education-item w-full">
@@ -566,7 +570,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
           if (!references || references.length === 0) return null;
           return (
             <div key="references" data-resume-section="references" className="resume-section w-full">
-              {renderSectionTitle('References', isFirstOnPage)}
+              {renderSectionTitle(getSectionTitle('references', 'References'), isFirstOnPage)}
               <div className="flex flex-col gap-[5.4pt]">
                 {references.map((refItem) => (
                   <div key={refItem.id} className="reference-item w-full">

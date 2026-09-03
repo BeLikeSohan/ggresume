@@ -5,13 +5,21 @@ import { Education } from '@/types/resume';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { GraduationCap, Plus, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
+import { SectionHeaderWithTitle } from './SectionTitleInput';
 
 export interface EducationEditorProps {
   educations: Education[];
+  title?: string;
+  onTitleChange?: (title: string) => void;
   onChange: (educations: Education[]) => void;
 }
 
-export const EducationEditor: React.FC<EducationEditorProps> = ({ educations, onChange }) => {
+export const EducationEditor: React.FC<EducationEditorProps> = ({
+  educations,
+  title,
+  onTitleChange,
+  onChange,
+}) => {
   const handleAddEducation = () => {
     const newEdu: Education = {
       id: `edu-${Date.now()}`,
@@ -46,20 +54,18 @@ export const EducationEditor: React.FC<EducationEditorProps> = ({ educations, on
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-sm font-semibold text-slate-800 mb-1 flex items-center gap-2">
-            <GraduationCap size={16} className="text-slate-500" />
-            Education
-          </h3>
-          <p className="text-xs text-slate-500">
-            Degrees, academic background, and relevant coursework.
-          </p>
-        </div>
-        <Button size="sm" variant="outline" icon={<Plus size={14} />} onClick={handleAddEducation}>
-          Add Education
-        </Button>
-      </div>
+      <SectionHeaderWithTitle
+        icon={GraduationCap}
+        defaultTitle="Education"
+        value={title}
+        onChange={onTitleChange}
+        description="Degrees, academic background, and relevant coursework."
+        rightAction={
+          <Button size="sm" variant="outline" icon={<Plus size={14} />} onClick={handleAddEducation}>
+            Add Education
+          </Button>
+        }
+      />
 
       <div className="space-y-3">
         {educations.map((edu, index) => (
@@ -119,13 +125,13 @@ export const EducationEditor: React.FC<EducationEditorProps> = ({ educations, on
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <Input
                 label="Start Date"
-                placeholder="e.g. 2017"
+                placeholder="e.g. 2019"
                 value={edu.startDate}
                 onChange={(e) => handleUpdate(edu.id, 'startDate', e.target.value)}
               />
               <Input
                 label="End Date"
-                placeholder="e.g. 2021"
+                placeholder="e.g. 2023"
                 value={edu.endDate}
                 onChange={(e) => handleUpdate(edu.id, 'endDate', e.target.value)}
               />
@@ -138,8 +144,8 @@ export const EducationEditor: React.FC<EducationEditorProps> = ({ educations, on
             </div>
 
             <Input
-              label="Specialization / Minor / Details (Optional)"
-              placeholder="e.g. Specialization in Distributed Systems and Software Architecture"
+              label="Details / Honors / GPA"
+              placeholder="e.g. GPA: 3.85 / 4.0 • Dean's Honors List • Algorithms TA"
               value={edu.details || ''}
               onChange={(e) => handleUpdate(edu.id, 'details', e.target.value)}
             />

@@ -63,16 +63,6 @@ export async function ensureDatabaseSchema(): Promise<void> {
     const client = await pool.connect();
     try {
       await client.query(`
-        CREATE TABLE IF NOT EXISTS resumes (
-          id VARCHAR(255) PRIMARY KEY,
-          title VARCHAR(255) NOT NULL,
-          data JSONB NOT NULL,
-          created_at BIGINT NOT NULL,
-          updated_at BIGINT NOT NULL
-        );
-
-        CREATE INDEX IF NOT EXISTS idx_resumes_updated_at ON resumes(updated_at DESC);
-
         CREATE TABLE IF NOT EXISTS users (
           id VARCHAR(255) PRIMARY KEY,
           email VARCHAR(255) UNIQUE NOT NULL,
@@ -95,6 +85,20 @@ export async function ensureDatabaseSchema(): Promise<void> {
         );
 
         CREATE INDEX IF NOT EXISTS idx_verification_tokens_user_id ON verification_tokens(user_id);
+
+        CREATE TABLE IF NOT EXISTS resumes (
+          id VARCHAR(255) PRIMARY KEY,
+          user_id VARCHAR(255) REFERENCES users(id) ON DELETE CASCADE,
+          title VARCHAR(255) NOT NULL,
+          data JSONB NOT NULL,
+          created_at BIGINT NOT NULL,
+          updated_at BIGINT NOT NULL
+        );
+
+        ALTER TABLE resumes ADD COLUMN IF NOT EXISTS user_id VARCHAR(255) REFERENCES users(id) ON DELETE CASCADE;
+        CREATE INDEX IF NOT EXISTS idx_resumes_user_id ON resumes(user_id);
+        CREATE INDEX IF NOT EXISTS idx_resumes_updated_at ON resumes(updated_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_resumes_user_id_updated_at ON resumes(user_id, updated_at DESC);
       `);
       schemaEnsured = true;
     } finally {
@@ -107,17 +111,19 @@ export async function ensureDatabaseSchema(): Promise<void> {
 }
 
 /**
- * List all resumes stored in PostgreSQL
+ * List resumes stored in PostgreSQL for a specific user
  */
-export async function listResumesFromDB(): Promise<ResumeDocument[]> {
+export async function listResumesFromDB(userId: string): Promise<ResumeDocument[]> {
   await ensureDatabaseSchema();
 
   const res = await pool.query(
-    'SELECT id, title, data, created_at, updated_at FROM resumes ORDER BY updated_at DESC'
+    'SELECT id, user_id, title, data, created_at, updated_at FROM resumes WHERE user_id = $1 ORDER BY updated_at DESC',
+    [userId]
   );
 
   const resumes: ResumeDocument[] = res.rows.map((row) => ({
     id: row.id,
+    userId: row.user_id,
     title: row.title,
     createdAt: Number(row.created_at),
     updatedAt: Number(row.updated_at),
@@ -128,14 +134,17 @@ export async function listResumesFromDB(): Promise<ResumeDocument[]> {
 }
 
 /**
- * Retrieve a specific resume by ID from PostgreSQL
+ * Retrieve a specific resume by ID from PostgreSQL, strictly verifying user ownership
  */
-export async function getResumeFromDB(id: string): Promise<ResumeDocument | null> {
+export async function getResumeFromDB(
+  id: string,
+  userId: string
+): Promise<ResumeDocument | null> {
   await ensureDatabaseSchema();
 
   const res = await pool.query(
-    'SELECT id, title, data, created_at, updated_at FROM resumes WHERE id = $1',
-    [id]
+    'SELECT id, user_id, title, data, created_at, updated_at FROM resumes WHERE id = $1 AND user_id = $2',
+    [id, userId]
   );
 
   if (res.rows.length === 0) {
@@ -145,6 +154,7 @@ export async function getResumeFromDB(id: string): Promise<ResumeDocument | null
   const row = res.rows[0];
   return {
     id: row.id,
+    userId: row.user_id,
     title: row.title,
     createdAt: Number(row.created_at),
     updatedAt: Number(row.updated_at),
@@ -153,13 +163,24 @@ export async function getResumeFromDB(id: string): Promise<ResumeDocument | null
 }
 
 /**
- * Insert or update (UPSERT) a resume document into PostgreSQL
+ * Insert or update a resume document into PostgreSQL, scoped to the authenticated user
  */
 export async function saveResumeToDB(
   id: string,
-  resume: ResumeDocument
+  resume: ResumeDocument,
+  userId: string
 ): Promise<ResumeDocument> {
   await ensureDatabaseSchema();
+
+  // Check if resume exists and if it belongs to someone else
+  const existingRes = await pool.query('SELECT user_id FROM resumes WHERE id = $1', [id]);
+  if (existingRes.rows.length > 0) {
+    const existingUserId = existingRes.rows[0].user_id;
+    // If it has an owner and the owner is different, disallow access
+    if (existingUserId && existingUserId !== userId) {
+      throw new Error('Forbidden: You do not have permission to modify this resume.');
+    }
+  }
 
   const now = Date.now();
   const createdAt = resume.createdAt || now;
@@ -168,26 +189,34 @@ export async function saveResumeToDB(
   const data = resume.data || defaultResumeData;
 
   const query = `
-    INSERT INTO resumes (id, title, data, created_at, updated_at)
-    VALUES ($1, $2, $3, $4, $5)
+    INSERT INTO resumes (id, user_id, title, data, created_at, updated_at)
+    VALUES ($1, $2, $3, $4, $5, $6)
     ON CONFLICT (id) DO UPDATE SET
       title = EXCLUDED.title,
       data = EXCLUDED.data,
-      updated_at = EXCLUDED.updated_at
-    RETURNING id, title, data, created_at, updated_at;
+      updated_at = EXCLUDED.updated_at,
+      user_id = EXCLUDED.user_id
+    WHERE resumes.user_id = EXCLUDED.user_id OR resumes.user_id IS NULL
+    RETURNING id, user_id, title, data, created_at, updated_at;
   `;
 
   const res = await pool.query(query, [
     id,
+    userId,
     title,
     JSON.stringify(data),
     createdAt,
     updatedAt,
   ]);
 
+  if (res.rows.length === 0) {
+    throw new Error('Forbidden: Could not update resume belonging to another user.');
+  }
+
   const row = res.rows[0];
   return {
     id: row.id,
+    userId: row.user_id,
     title: row.title,
     createdAt: Number(row.created_at),
     updatedAt: Number(row.updated_at),
@@ -196,12 +225,15 @@ export async function saveResumeToDB(
 }
 
 /**
- * Delete a resume by ID from PostgreSQL
+ * Delete a resume by ID from PostgreSQL strictly scoped to the authenticated user
  */
-export async function deleteResumeFromDB(id: string): Promise<boolean> {
+export async function deleteResumeFromDB(id: string, userId: string): Promise<boolean> {
   await ensureDatabaseSchema();
 
-  const res = await pool.query('DELETE FROM resumes WHERE id = $1', [id]);
+  const res = await pool.query('DELETE FROM resumes WHERE id = $1 AND user_id = $2', [
+    id,
+    userId,
+  ]);
   return (res.rowCount ?? 0) > 0;
 }
 
@@ -292,84 +324,80 @@ export async function createUserInDB(params: {
   };
 }
 
-export interface DBVerificationToken {
-  token: string;
-  user_id: string;
-  email: string;
-  expires_at: Date;
-  created_at: Date;
-}
-
 /**
- * Save an email verification token
- */
-export async function createVerificationTokenInDB(params: {
-  userId: string;
-  email: string;
-  token: string;
-  expiresAt: Date;
-}): Promise<DBVerificationToken> {
-  await ensureDatabaseSchema();
-  // Clean up any old tokens for this user first
-  await pool.query('DELETE FROM verification_tokens WHERE user_id = $1 OR email = $2', [
-    params.userId,
-    params.email.trim().toLowerCase(),
-  ]);
-
-  const res = await pool.query(
-    `INSERT INTO verification_tokens (token, user_id, email, expires_at)
-     VALUES ($1, $2, $3, $4)
-     RETURNING token, user_id, email, expires_at, created_at`,
-    [params.token, params.userId, params.email.trim().toLowerCase(), params.expiresAt]
-  );
-
-  const row = res.rows[0];
-  return {
-    token: row.token,
-    user_id: row.user_id,
-    email: row.email,
-    expires_at: new Date(row.expires_at),
-    created_at: new Date(row.created_at),
-  };
-}
-
-/**
- * Find verification token
- */
-export async function getVerificationTokenFromDB(token: string): Promise<DBVerificationToken | null> {
-  await ensureDatabaseSchema();
-  const res = await pool.query(
-    'SELECT token, user_id, email, expires_at, created_at FROM verification_tokens WHERE token = $1 LIMIT 1',
-    [token]
-  );
-  if (res.rows.length === 0) return null;
-  const row = res.rows[0];
-  return {
-    token: row.token,
-    user_id: row.user_id,
-    email: row.email,
-    expires_at: new Date(row.expires_at),
-    created_at: new Date(row.created_at),
-  };
-}
-
-/**
- * Delete verification token
- */
-export async function deleteVerificationTokenFromDB(token: string): Promise<void> {
-  await ensureDatabaseSchema();
-  await pool.query('DELETE FROM verification_tokens WHERE token = $1', [token]);
-}
-
-/**
- * Mark user's email as verified in PostgreSQL
+ * Mark a user's email as verified
  */
 export async function markUserEmailVerifiedInDB(userId: string): Promise<boolean> {
   await ensureDatabaseSchema();
   const res = await pool.query(
-    'UPDATE users SET email_verified = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id',
+    'UPDATE users SET email_verified = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
     [userId]
   );
   return (res.rowCount ?? 0) > 0;
 }
 
+/**
+ * Create a verification token for email verification
+ */
+export async function createVerificationTokenInDB(params: {
+  userId: string;
+  email: string;
+  token: string;
+  expiresInHours?: number;
+  expiresAt?: Date;
+}): Promise<{ token: string; expiresAt: Date }> {
+  await ensureDatabaseSchema();
+  const { userId, email, token, expiresInHours = 24, expiresAt: customExpiresAt } = params;
+  const expiresAt = customExpiresAt || new Date(Date.now() + expiresInHours * 60 * 60 * 1000);
+
+  // Delete any existing tokens for this user
+  await pool.query('DELETE FROM verification_tokens WHERE user_id = $1', [userId]);
+
+  await pool.query(
+    `INSERT INTO verification_tokens (token, user_id, email, expires_at)
+     VALUES ($1, $2, $3, $4)`,
+    [token, userId, email, expiresAt]
+  );
+
+  return { token, expiresAt };
+}
+
+/**
+ * Find and validate a verification token
+ */
+export async function getVerificationTokenFromDB(token: string): Promise<{
+  token: string;
+  userId: string;
+  email: string;
+  expiresAt: Date;
+  isExpired: boolean;
+} | null> {
+  await ensureDatabaseSchema();
+  const res = await pool.query(
+    'SELECT token, user_id, email, expires_at FROM verification_tokens WHERE token = $1 LIMIT 1',
+    [token]
+  );
+
+  if (res.rows.length === 0) return null;
+
+  const row = res.rows[0];
+  const expiresAt = new Date(row.expires_at);
+  const isExpired = expiresAt.getTime() < Date.now();
+
+  return {
+    token: row.token,
+    userId: row.user_id,
+    email: row.email,
+    expiresAt,
+    isExpired,
+  };
+}
+
+/**
+ * Delete a verification token after use
+ */
+export async function deleteVerificationTokenFromDB(token: string): Promise<boolean> {
+  await ensureDatabaseSchema();
+  const res = await pool.query('DELETE FROM verification_tokens WHERE token = $1', [token]);
+  return (res.rowCount ?? 0) > 0;
+}

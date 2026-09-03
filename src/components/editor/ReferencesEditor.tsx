@@ -5,13 +5,21 @@ import { Reference } from '@/types/resume';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Users, Plus, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
+import { SectionHeaderWithTitle } from './SectionTitleInput';
 
 export interface ReferencesEditorProps {
   references: Reference[];
+  title?: string;
+  onTitleChange?: (title: string) => void;
   onChange: (references: Reference[]) => void;
 }
 
-export const ReferencesEditor: React.FC<ReferencesEditorProps> = ({ references, onChange }) => {
+export const ReferencesEditor: React.FC<ReferencesEditorProps> = ({
+  references,
+  title,
+  onTitleChange,
+  onChange,
+}) => {
   const handleAddReference = () => {
     const newRef: Reference = {
       id: `ref-${Date.now()}`,
@@ -44,20 +52,18 @@ export const ReferencesEditor: React.FC<ReferencesEditorProps> = ({ references, 
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-sm font-semibold text-slate-800 mb-1 flex items-center gap-2">
-            <Users size={16} className="text-slate-500" />
-            References
-          </h3>
-          <p className="text-xs text-slate-500">
-            Professional and academic mentors who can vouch for your expertise.
-          </p>
-        </div>
-        <Button size="sm" variant="outline" icon={<Plus size={14} />} onClick={handleAddReference}>
-          Add Reference
-        </Button>
-      </div>
+      <SectionHeaderWithTitle
+        icon={Users}
+        defaultTitle="References"
+        value={title}
+        onChange={onTitleChange}
+        description="Professional and academic mentors who can vouch for your expertise."
+        rightAction={
+          <Button size="sm" variant="outline" icon={<Plus size={14} />} onClick={handleAddReference}>
+            Add Reference
+          </Button>
+        }
+      />
 
       <div className="space-y-3">
         {references.map((refItem, index) => (
@@ -122,7 +128,7 @@ export const ReferencesEditor: React.FC<ReferencesEditorProps> = ({ references, 
                 onChange={(e) => handleUpdate(refItem.id, 'organization', e.target.value)}
               />
               <Input
-                label="Email / Contact Info"
+                label="Contact (Email or Phone)"
                 placeholder="e.g. s.jenkins@berkeley.edu"
                 value={refItem.contact}
                 onChange={(e) => handleUpdate(refItem.id, 'contact', e.target.value)}

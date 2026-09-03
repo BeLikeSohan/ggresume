@@ -51,29 +51,48 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({ data, onChange }) =>
   const [activeTab, setActiveTab] = useState<TabType>('personal');
 
   const customSections = data.customSections || [];
+  const customTitles = data.settings?.sectionTitles || {};
 
-  // Friendly names for all sections (standard + custom)
+  // Friendly display names for all sections (standard + custom)
   const sectionNames: Record<string, string> = {
-    profile: 'Profile / Summary',
-    skills: 'Technical Skills',
-    experiences: 'Professional Experience',
-    projects: 'Projects',
-    educations: 'Education',
-    references: 'References',
+    profile: customTitles.profile || 'Profile',
+    skills: customTitles.skills || 'Skills',
+    experiences: customTitles.experiences || 'Professional Experience',
+    projects: customTitles.projects || 'Projects',
+    educations: customTitles.educations || 'Education',
+    references: customTitles.references || 'References',
     ...Object.fromEntries(customSections.map((s) => [s.id, s.title || 'Untitled Section'])),
   };
 
   const navItems: NavItem[] = [
     { id: 'personal', label: 'Personal', icon: User },
-    { id: 'profile', label: 'Profile', icon: FileText },
-    { id: 'skills', label: 'Skills', icon: Cpu, badge: data.skills?.length },
-    { id: 'experiences', label: 'Experience', icon: Briefcase, badge: data.experiences?.length },
-    { id: 'projects', label: 'Projects', icon: FolderGit2, badge: data.projects?.length },
-    { id: 'educations', label: 'Education', icon: GraduationCap, badge: data.educations?.length },
-    { id: 'references', label: 'References', icon: Users, badge: data.references?.length },
+    { id: 'profile', label: sectionNames.profile || 'Profile', icon: FileText },
+    { id: 'skills', label: sectionNames.skills || 'Skills', icon: Cpu, badge: data.skills?.length },
+    {
+      id: 'experiences',
+      label: customTitles.experiences ? (customTitles.experiences.length > 12 ? 'Experience' : customTitles.experiences) : 'Experience',
+      icon: Briefcase,
+      badge: data.experiences?.length,
+    },
+    { id: 'projects', label: sectionNames.projects || 'Projects', icon: FolderGit2, badge: data.projects?.length },
+    { id: 'educations', label: sectionNames.educations || 'Education', icon: GraduationCap, badge: data.educations?.length },
+    { id: 'references', label: sectionNames.references || 'References', icon: Users, badge: data.references?.length },
     { id: 'custom', label: 'Custom', icon: Layers, badge: customSections.length || undefined },
     { id: 'settings', label: 'Styling', icon: Settings },
   ];
+
+  const handleUpdateSectionTitle = (sectionKey: string, newTitle: string) => {
+    onChange({
+      ...data,
+      settings: {
+        ...data.settings,
+        sectionTitles: {
+          ...(data.settings?.sectionTitles || {}),
+          [sectionKey]: newTitle,
+        },
+      },
+    });
+  };
 
   const handleCreateCustomSection = (
     title: string,
@@ -167,7 +186,7 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({ data, onChange }) =>
                 }`}
               >
                 <Icon size={14} className={isActive ? 'text-slate-900' : 'text-slate-500'} />
-                <span>{item.label}</span>
+                <span className="truncate max-w-[120px]">{item.label}</span>
                 {item.badge !== undefined && (
                   <span
                     className={`ml-1 text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
@@ -197,6 +216,8 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({ data, onChange }) =>
         {activeTab === 'profile' && (
           <ProfileEditor
             value={data.profile}
+            title={data.settings?.sectionTitles?.profile}
+            onTitleChange={(t) => handleUpdateSectionTitle('profile', t)}
             onChange={(profile) => onChange({ ...data, profile })}
           />
         )}
@@ -204,6 +225,8 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({ data, onChange }) =>
         {activeTab === 'skills' && (
           <SkillsEditor
             skills={data.skills}
+            title={data.settings?.sectionTitles?.skills}
+            onTitleChange={(t) => handleUpdateSectionTitle('skills', t)}
             onChange={(skills) => onChange({ ...data, skills })}
           />
         )}
@@ -211,6 +234,8 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({ data, onChange }) =>
         {activeTab === 'experiences' && (
           <ExperienceEditor
             experiences={data.experiences}
+            title={data.settings?.sectionTitles?.experiences}
+            onTitleChange={(t) => handleUpdateSectionTitle('experiences', t)}
             onChange={(experiences) => onChange({ ...data, experiences })}
           />
         )}
@@ -218,6 +243,8 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({ data, onChange }) =>
         {activeTab === 'projects' && (
           <ProjectsEditor
             projects={data.projects}
+            title={data.settings?.sectionTitles?.projects}
+            onTitleChange={(t) => handleUpdateSectionTitle('projects', t)}
             onChange={(projects) => onChange({ ...data, projects })}
           />
         )}
@@ -225,6 +252,8 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({ data, onChange }) =>
         {activeTab === 'educations' && (
           <EducationEditor
             educations={data.educations}
+            title={data.settings?.sectionTitles?.educations}
+            onTitleChange={(t) => handleUpdateSectionTitle('educations', t)}
             onChange={(educations) => onChange({ ...data, educations })}
           />
         )}
@@ -232,6 +261,8 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({ data, onChange }) =>
         {activeTab === 'references' && (
           <ReferencesEditor
             references={data.references}
+            title={data.settings?.sectionTitles?.references}
+            onTitleChange={(t) => handleUpdateSectionTitle('references', t)}
             onChange={(references) => onChange({ ...data, references })}
           />
         )}

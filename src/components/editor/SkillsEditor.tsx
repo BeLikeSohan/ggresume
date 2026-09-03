@@ -4,13 +4,21 @@ import React from 'react';
 import { SkillCategory } from '@/types/resume';
 import { Button } from '@/components/ui/Button';
 import { Cpu, Plus, Trash2, ArrowUp, ArrowDown, Bold } from 'lucide-react';
+import { SectionHeaderWithTitle } from './SectionTitleInput';
 
 export interface SkillsEditorProps {
   skills: SkillCategory[];
+  title?: string;
+  onTitleChange?: (title: string) => void;
   onChange: (skills: SkillCategory[]) => void;
 }
 
-export const SkillsEditor: React.FC<SkillsEditorProps> = ({ skills, onChange }) => {
+export const SkillsEditor: React.FC<SkillsEditorProps> = ({
+  skills,
+  title,
+  onTitleChange,
+  onChange,
+}) => {
   const handleAddCategory = () => {
     const newCategory: SkillCategory = {
       id: `skill-${Date.now()}`,
@@ -61,20 +69,18 @@ export const SkillsEditor: React.FC<SkillsEditorProps> = ({ skills, onChange }) 
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-sm font-semibold text-slate-800 mb-1 flex items-center gap-2">
-            <Cpu size={16} className="text-slate-500" />
-            Skills
-          </h3>
-          <p className="text-xs text-slate-500">
-            Categorized technical and functional skill lists separated by commas.
-          </p>
-        </div>
-        <Button size="sm" variant="outline" icon={<Plus size={14} />} onClick={handleAddCategory}>
-          Add Category
-        </Button>
-      </div>
+      <SectionHeaderWithTitle
+        icon={Cpu}
+        defaultTitle="Skills"
+        value={title}
+        onChange={onTitleChange}
+        description="Categorized technical and functional skill lists separated by commas."
+        rightAction={
+          <Button size="sm" variant="outline" icon={<Plus size={14} />} onClick={handleAddCategory}>
+            Add Category
+          </Button>
+        }
+      />
 
       <div className="space-y-3">
         {skills.map((skill, index) => {
@@ -123,27 +129,23 @@ export const SkillsEditor: React.FC<SkillsEditorProps> = ({ skills, onChange }) 
                 </div>
               </div>
 
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-slate-500 font-medium">Items (Comma separated)</span>
-                  <button
-                    type="button"
-                    onClick={() => handleBoldSelection(skill.id, inputId)}
-                    className="flex items-center gap-1 text-[11px] text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded transition"
-                    title="Make selected skill bold"
-                  >
-                    <Bold size={11} className="stroke-[2.5]" />
-                    <span>Bold</span>
-                  </button>
-                </div>
+              <div className="relative">
                 <input
                   id={inputId}
                   type="text"
                   value={skill.items}
                   onChange={(e) => handleUpdate(skill.id, 'items', e.target.value)}
-                  placeholder="e.g. **Spring Boot**, **NestJS**, Gin, FastAPI, React"
-                  className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent font-mono"
+                  placeholder="Java, Go, Python, TypeScript, Spring Boot, Docker"
+                  className="w-full text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 pr-10 focus:bg-white focus:border-slate-900 focus:outline-none transition-colors font-mono"
                 />
+                <button
+                  type="button"
+                  onClick={() => handleBoldSelection(skill.id, inputId)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-900 hover:bg-slate-200/60 rounded transition"
+                  title="Make selected skill bold (**skill**)"
+                >
+                  <Bold size={13} />
+                </button>
               </div>
             </div>
           );

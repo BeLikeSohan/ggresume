@@ -5,13 +5,21 @@ import { Experience } from '@/types/resume';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Briefcase, Plus, Trash2, ArrowUp, ArrowDown, ChevronDown, ChevronUp, Bold } from 'lucide-react';
+import { SectionHeaderWithTitle } from './SectionTitleInput';
 
 export interface ExperienceEditorProps {
   experiences: Experience[];
+  title?: string;
+  onTitleChange?: (title: string) => void;
   onChange: (experiences: Experience[]) => void;
 }
 
-export const ExperienceEditor: React.FC<ExperienceEditorProps> = ({ experiences, onChange }) => {
+export const ExperienceEditor: React.FC<ExperienceEditorProps> = ({
+  experiences,
+  title,
+  onTitleChange,
+  onChange,
+}) => {
   const [expandedId, setExpandedId] = useState<string | null>(
     experiences.length > 0 ? experiences[0].id : null
   );
@@ -108,20 +116,18 @@ export const ExperienceEditor: React.FC<ExperienceEditorProps> = ({ experiences,
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-sm font-semibold text-slate-800 mb-1 flex items-center gap-2">
-            <Briefcase size={16} className="text-slate-500" />
-            Professional Experience
-          </h3>
-          <p className="text-xs text-slate-500">
-            Work history, freelance roles, and measurable contributions.
-          </p>
-        </div>
-        <Button size="sm" variant="outline" icon={<Plus size={14} />} onClick={handleAddExperience}>
-          Add Experience
-        </Button>
-      </div>
+      <SectionHeaderWithTitle
+        icon={Briefcase}
+        defaultTitle="Professional Experience"
+        value={title}
+        onChange={onTitleChange}
+        description="Work history, freelance roles, and measurable contributions."
+        rightAction={
+          <Button size="sm" variant="outline" icon={<Plus size={14} />} onClick={handleAddExperience}>
+            Add Experience
+          </Button>
+        }
+      />
 
       <div className="space-y-3">
         {experiences.map((exp, index) => {
@@ -241,45 +247,41 @@ export const ExperienceEditor: React.FC<ExperienceEditorProps> = ({ experiences,
                     </div>
 
                     <div className="space-y-2">
-                      {exp.highlights.map((bullet, bIndex) => {
-                        const inputId = `exp-bullet-${exp.id}-${bIndex}`;
+                      {exp.highlights.map((highlight, hIndex) => {
+                        const inputId = `exp-${exp.id}-h-${hIndex}`;
                         return (
-                          <div key={bIndex} className="bg-white p-2.5 rounded-lg border border-slate-200 space-y-1.5">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[11px] text-slate-400 font-medium">
-                                Bullet #{bIndex + 1}
-                              </span>
-                              <div className="flex items-center gap-1">
-                                <button
-                                  type="button"
-                                  onClick={() => handleBoldHighlight(exp.id, bIndex, inputId)}
-                                  className="flex items-center gap-1 text-[11px] text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-1.5 py-0.5 rounded transition"
-                                  title="Wrap selected text in **bold**"
-                                >
-                                  <Bold size={11} className="stroke-[2.5]" />
-                                  <span>Bold</span>
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteHighlight(exp.id, bIndex)}
-                                  className="p-1 text-slate-400 hover:text-red-600 transition"
-                                  title="Delete bullet"
-                                >
-                                  <Trash2 size={13} />
-                                </button>
-                              </div>
+                          <div key={hIndex} className="relative flex items-center gap-1.5">
+                            <span className="text-xs text-slate-400 font-mono w-4 text-right flex-shrink-0">
+                              •
+                            </span>
+                            <div className="relative flex-1">
+                              <textarea
+                                id={inputId}
+                                rows={2}
+                                value={highlight}
+                                onChange={(e) =>
+                                  handleUpdateHighlight(exp.id, hIndex, e.target.value)
+                                }
+                                placeholder="Engineered scalable service reducing p99 latency by 35% using Go and Redis..."
+                                className="w-full text-xs text-slate-800 bg-white border border-slate-200 rounded-lg p-2 pr-8 focus:border-slate-900 focus:outline-none transition resize-none"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleBoldHighlight(exp.id, hIndex, inputId)}
+                                className="absolute right-2 top-2 p-1 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded transition"
+                                title="Make selected text bold (**bold**)"
+                              >
+                                <Bold size={13} />
+                              </button>
                             </div>
-
-                            <textarea
-                              id={inputId}
-                              rows={2}
-                              value={bullet}
-                              onChange={(e) =>
-                                handleUpdateHighlight(exp.id, bIndex, e.target.value)
-                              }
-                              placeholder="e.g. Designed backend services using **NestJS**, **PostgreSQL**..."
-                              className="w-full px-2.5 py-1.5 text-xs text-slate-800 bg-slate-50 border border-slate-200 rounded focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent leading-relaxed"
-                            />
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteHighlight(exp.id, hIndex)}
+                              className="p-1.5 text-slate-400 hover:text-red-600 transition flex-shrink-0"
+                              title="Delete bullet"
+                            >
+                              <Trash2 size={13} />
+                            </button>
                           </div>
                         );
                       })}

@@ -94,6 +94,7 @@ export interface ResumeSettings {
   sectionOrder: string[]; // ['profile', 'skills', 'experience', 'projects', 'education', 'references', ...]
   hiddenSections: string[];
   pageBreakBefore?: string[]; // Optional manual section IDs that should start on a new page
+  sectionTitles?: Record<string, string>; // Custom titles for sections (e.g., { profile: "Summary", skills: "Technical Expertise" })
 }
 
 export interface ResumeData {
@@ -110,6 +111,7 @@ export interface ResumeData {
 
 export interface ResumeDocument {
   id: string;
+  userId?: string;
   title: string;
   createdAt: number;
   updatedAt: number;
