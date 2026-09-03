@@ -10,7 +10,7 @@ High-performance, ATS-optimized software engineering resume builder.
 [![RustFS](https://img.shields.io/badge/RustFS-Object_Storage-dea584?style=flat-square&logo=rust)](https://github.com/rustfs/rustfs)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker)](https://www.docker.com/)
 
-[Features](#features) • [Quick Start (Docker)](#quick-start-with-docker-compose) • [Local Development](#local-development) • [Architecture](#architecture) • [Environment Variables](#environment-variables)
+[Features](#features) • [Quick Start (Docker)](#quick-start-with-docker-compose) • [Local Development](#local-development) • [Environment Variables](#environment-variables)
 
 </div>
 
@@ -19,10 +19,6 @@ High-performance, ATS-optimized software engineering resume builder.
 ## Overview
 
 **GGResume** is a fast, minimalist, and document-first resume builder built specifically for software engineers. Instead of generic "AI-styled" templates, GGResume follows strict typography, spacing, and ATS (Applicant Tracking System) layout principles so your resume parses accurately and reads cleanly.
-
-All resume data is persisted directly as JSON documents in a self-hosted **RustFS** object storage cluster via an S3-compatible API.
-
----
 
 ## Features
 
@@ -113,40 +109,6 @@ npm run build
 # Start production server
 npm run start
 ```
-
----
-
-## Architecture
-
-```
-ggresume/
-├── Dockerfile                   # Multi-stage standalone Next.js + Chromium build
-├── docker-compose.yml           # Orchestrates RustFS & Next.js frontend
-├── src/
-│   ├── app/
-│   │   ├── api/
-│   │   │   ├── export-pdf/      # Puppeteer headless Chromium PDF renderer
-│   │   │   └── resumes/         # Direct RustFS CRUD API routes (GET, POST, PUT, DELETE)
-│   │   ├── dashboard/           # Resumes management workspace
-│   │   ├── editor/              # Full-screen resume editor & live preview
-│   │   └── layout.tsx           # Global HTML shell & font imports
-│   ├── components/
-│   │   ├── common/              # Brand logo (GGLogo), headers, toast alerts
-│   │   ├── dashboard/           # DashboardHeader, ResumeCard, ResumeRow, Modals
-│   │   ├── editor/              # Modular editor sections (Experience, Skills, Projects, etc.)
-│   │   ├── preview/             # A4 preview canvas, BulletMarker, Toolbar, Icons
-│   │   └── ui/                  # Clean primitive components (Button, Input, Textarea)
-│   ├── hooks/
-│   │   ├── useResumeData.ts     # Direct RustFS synchronization & debounced auto-save
-│   │   └── useResumeZoom.ts     # Responsive preview scaling and fit-to-window calculation
-│   ├── lib/
-│   │   ├── rustfsClient.ts      # AWS S3-compatible client connected to RustFS
-│   │   ├── resumeStorage.ts     # Client-side API wrappers for RustFS operations
-│   │   └── pdfServer.ts         # Chromium Puppeteer print generation logic
-│   └── types/
-│       └── resume.ts            # Complete TypeScript types for resumes & document schemas
-```
-
 ---
 
 ## Environment Variables
