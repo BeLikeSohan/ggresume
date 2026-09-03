@@ -9,6 +9,7 @@ import { ResumeEditor } from '@/components/editor/ResumeEditor';
 import { ResumePreview } from '@/components/preview/ResumePreview';
 import { PreviewToolbar } from '@/components/preview/PreviewToolbar';
 import { DownloadToast } from '@/components/common/DownloadToast';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { exportResumeToPdf } from '@/lib/pdfExport';
 
 interface ResumeBuilderProps {
@@ -23,6 +24,7 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
     setResumeTitle,
     resumeData,
     setResumeData,
+    isInitialized,
     clearAll,
     exportJson,
     importJson,
@@ -74,6 +76,14 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
       setTimeout(() => setDownloadStatus(null), 3000);
     }
   };
+
+  if (!isInitialized) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-slate-100 font-sans">
+        <LoadingSpinner label="Loading resume..." size="lg" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-slate-100 font-sans">

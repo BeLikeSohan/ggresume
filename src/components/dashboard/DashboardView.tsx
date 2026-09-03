@@ -7,7 +7,6 @@ import {
   Search,
   LayoutGrid,
   List as ListIcon,
-  FileText,
   AlertCircle,
   RefreshCw,
 } from 'lucide-react';
@@ -27,7 +26,7 @@ import { CreateResumeModal } from './CreateResumeModal';
 import { RenameResumeModal } from './RenameResumeModal';
 import { DeleteResumeModal } from './DeleteResumeModal';
 import { DownloadToast } from '@/components/common/DownloadToast';
-import { Button } from '@/components/ui/Button';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 
 type SortOption = 'updated-desc' | 'updated-asc' | 'title-asc' | 'title-desc';
 type ViewMode = 'grid' | 'list';
@@ -198,19 +197,6 @@ export const DashboardView: React.FC = () => {
     }
   };
 
-  const handleRestoreSample = async () => {
-    try {
-      await createResumeInDB({
-        title: 'Software Engineer Resume (Sample)',
-        template: 'sample',
-      });
-      await loadResumes();
-      showToast('Sample restored in database');
-    } catch (e: any) {
-      alert(e.message || 'Failed to restore sample in database.');
-    }
-  };
-
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
       {/* Top Header */}
@@ -231,9 +217,6 @@ export const DashboardView: React.FC = () => {
               <div>
                 <p className="font-semibold text-red-900">Database Connection Error</p>
                 <p className="text-xs text-red-700 mt-0.5">{error}</p>
-                <p className="text-xs text-red-600 mt-1">
-                  Start PostgreSQL with: <code className="bg-red-100 px-1 py-0.5 rounded font-mono">docker compose up -d</code>
-                </p>
               </div>
             </div>
             <button
@@ -276,7 +259,7 @@ export const DashboardView: React.FC = () => {
           {/* Right Tools: Count, Sort, View mode */}
           <div className="flex items-center justify-between sm:justify-end gap-3.5 text-sm text-slate-600">
             <span className="font-medium text-xs sm:text-sm">
-              {resumes.length} {resumes.length === 1 ? 'document' : 'documents'}
+              {resumes.length} {resumes.length === 1 ? 'resume' : 'resumes'}
             </span>
 
             <select
@@ -324,40 +307,8 @@ export const DashboardView: React.FC = () => {
 
         {/* Resumes Content */}
         {isLoading ? (
-          <div className="bg-white rounded-xl border border-slate-200 p-16 text-center max-w-sm mx-auto my-12 flex flex-col items-center justify-center space-y-3">
-            <div className="w-6 h-6 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
-            <p className="text-xs text-slate-500 font-medium">Loading resumes directly from database...</p>
-          </div>
-        ) : resumes.length === 0 && !error ? (
-          /* Empty state */
-          <div className="bg-white rounded-xl border border-slate-200 p-12 text-center max-w-md mx-auto my-12 space-y-4 shadow-sm">
-            <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center mx-auto">
-              <FileText size={22} />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-slate-900">No resumes in database</h3>
-              <p className="text-xs text-slate-500 mt-1">
-                Create a new resume from scratch or load the standard template into PostgreSQL.
-              </p>
-            </div>
-            <div className="flex items-center justify-center gap-2 pt-1">
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => setIsCreateOpen(true)}
-              >
-                New resume
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRestoreSample}
-              >
-                Load sample
-              </Button>
-            </div>
-          </div>
-        ) : filteredAndSortedResumes.length === 0 && !error ? (
+          <LoadingSpinner label="Loading resumes..." size="md" />
+        ) : searchQuery.trim() && filteredAndSortedResumes.length === 0 && !error ? (
           /* Search returned 0 */
           <div className="bg-white rounded-xl border border-slate-200 p-10 text-center max-w-sm mx-auto my-12 space-y-3 shadow-sm">
             <p className="text-sm font-semibold text-slate-800">
@@ -372,13 +323,13 @@ export const DashboardView: React.FC = () => {
             </button>
           </div>
         ) : viewMode === 'grid' ? (
-          /* Grid View */
+          /* Grid View - Always shows New Resume Card as index 0 */
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {/* New Resume Card */}
+            {/* New Resume Card (First Index) */}
             <button
               type="button"
               onClick={() => setIsCreateOpen(true)}
-              className="group min-h-[290px] rounded-xl border-2 border-dashed border-slate-300 hover:border-slate-800 bg-white/70 hover:bg-white transition-all flex flex-col items-center justify-center p-6 text-center space-y-3 shadow-2xs"
+              className="group min-h-[290px] rounded-xl border-2 border-dashed border-slate-300 hover:border-slate-800 bg-white/70 hover:bg-white transition-all flex flex-col items-center justify-center p-6 text-center space-y-3 shadow-2xs cursor-pointer"
             >
               <div className="w-11 h-11 rounded-xl bg-slate-100 group-hover:bg-slate-900 group-hover:text-white text-slate-700 flex items-center justify-center transition shadow-2xs">
                 <Plus size={20} />
@@ -414,6 +365,18 @@ export const DashboardView: React.FC = () => {
               <span className="w-32 text-right sm:text-left">Edited</span>
               <span className="w-24 text-right">Actions</span>
             </div>
+            {/* Row to create a new resume in list view */}
+            <button
+              type="button"
+              onClick={() => setIsCreateOpen(true)}
+              className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-slate-50 text-left transition text-slate-600 hover:text-slate-950 cursor-pointer font-medium text-xs sm:text-sm group"
+            >
+              <span className="flex items-center gap-2 font-semibold text-slate-800 group-hover:text-slate-950">
+                <Plus size={16} className="text-slate-400 group-hover:text-slate-900" />
+                <span>Create new resume</span>
+              </span>
+              <span className="text-xs text-slate-400">Blank or template</span>
+            </button>
             {filteredAndSortedResumes.map((resume) => (
               <ResumeRow
                 key={resume.id}

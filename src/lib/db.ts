@@ -124,19 +124,6 @@ export async function listResumesFromDB(): Promise<ResumeDocument[]> {
     data: row.data,
   }));
 
-  // Automatically seed sample resume if the database is empty
-  if (resumes.length === 0) {
-    const initialSample: ResumeDocument = {
-      id: 'sample-resume',
-      title: 'Software Engineer Resume (Sample)',
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      data: defaultResumeData,
-    };
-    await saveResumeToDB('sample-resume', initialSample);
-    resumes.push(initialSample);
-  }
-
   return resumes;
 }
 
