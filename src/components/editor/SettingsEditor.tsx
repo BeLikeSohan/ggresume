@@ -3,6 +3,7 @@
 import React from 'react';
 import { ResumeSettings } from '@/types/resume';
 import { Settings, ArrowUp, ArrowDown, Eye, EyeOff, SplitSquareVertical } from 'lucide-react';
+import { HeaderStyleSelector } from '@/components/common/HeaderStyleSelector';
 
 export interface SettingsEditorProps {
   settings: ResumeSettings;
@@ -245,6 +246,14 @@ export const SettingsEditor: React.FC<SettingsEditorProps> = ({
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Header & Personal Layout Style */}
+      <div className="pt-2 border-t border-slate-200">
+        <HeaderStyleSelector
+          value={settings.headerStyle || 'grid'}
+          onChange={(headerStyle) => handleUpdate('headerStyle', headerStyle)}
+        />
       </div>
 
       {/* Section Reorder & Visibility */}

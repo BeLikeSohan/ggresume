@@ -124,6 +124,25 @@ function estimateHeaderHeight(
   const nameHeight = fontSize === 'compact' ? 24 : fontSize === 'spacious' ? 32 : 28;
   const mt = 11;
   const items = getPersonalContactItems(data.personal);
+  if (items.length === 0) return nameHeight + mt;
+
+  const headerStyle = data.settings?.headerStyle || 'grid';
+
+  if (headerStyle === 'centered' || headerStyle === 'left-inline') {
+    const lines = Math.max(Math.ceil(items.length / 3), 1);
+    return nameHeight + mt + lines * 22;
+  }
+
+  if (headerStyle === 'split') {
+    const rows = items.length;
+    return Math.max(nameHeight + 8, rows * 20) + mt;
+  }
+
+  if (headerStyle === 'banner') {
+    const rows = Math.max(Math.ceil(items.length / 2), 1);
+    return nameHeight + mt + rows * 26 + 4;
+  }
+
   const rows = Math.max(Math.ceil(items.length / 2), 1);
   const contactHeight = rows * 26;
   return nameHeight + mt + contactHeight;
@@ -840,42 +859,127 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
               }}
             >
               {/* Header only on page 0 */}
-              {page.isFirstPage && (
-                <header data-resume-header="true" className="resume-header mb-[14.2pt]">
-                  {/* Candidate Name */}
-                  <h1
-                    className={`${fontSizeClasses.name} font-bold text-black`}
-                    style={{
-                      color: accentColor,
-                      lineHeight: 1.15,
-                      margin: 0,
-                      letterSpacing: 'normal',
-                      fontFamily: fontFamilies,
-                    }}
+              {page.isFirstPage && (() => {
+                const headerStyle = settings.headerStyle || 'grid';
+                const contactItems = getPersonalContactItems(personal);
+                const mid = Math.ceil(contactItems.length / 2);
+                const leftColumnItems = contactItems.slice(0, mid);
+                const rightColumnItems = contactItems.slice(mid);
+
+                const renderItem = (item: ContactDisplayItem) => (
+                  <div
+                    key={item.id}
+                    className={`flex items-center h-[19.5pt] ${fontSizeClasses.subtext} ${lineSpacingClasses} text-black`}
                   >
-                    {personal.fullName || 'Your Full Name'}
-                  </h1>
+                    <div className="w-[17pt] flex items-center justify-start flex-shrink-0">
+                      <ProfileIcon icon={item.icon} size={12} />
+                    </div>
+                    {item.href ? (
+                      <a
+                        href={item.href}
+                        target={
+                          item.type === 'email' || item.type === 'phone'
+                            ? undefined
+                            : '_blank'
+                        }
+                        rel={
+                          item.type === 'email' || item.type === 'phone'
+                            ? undefined
+                            : 'noopener noreferrer'
+                        }
+                        className="hover:underline text-black truncate"
+                      >
+                        {item.text}
+                      </a>
+                    ) : (
+                      <span className="truncate">{item.text}</span>
+                    )}
+                  </div>
+                );
 
-                  {/* Contact Info: Two Column Grid matching original FlowCV */}
-                  {(() => {
-                    const contactItems = getPersonalContactItems(personal);
-                    if (contactItems.length === 0) return null;
-                    const mid = Math.ceil(contactItems.length / 2);
-                    const leftColumnItems = contactItems.slice(0, mid);
-                    const rightColumnItems = contactItems.slice(mid);
-
-                    return (
-                      <div className="grid grid-cols-2 gap-x-8 mt-[8pt]">
-                        {/* Left Column */}
-                        <div className="flex flex-col justify-start">
-                          {leftColumnItems.map((item) => (
+                if (headerStyle === 'centered') {
+                  return (
+                    <header
+                      data-resume-header="true"
+                      className="resume-header mb-[14.2pt] text-center"
+                    >
+                      <h1
+                        className={`${fontSizeClasses.name} font-bold text-black text-center`}
+                        style={{
+                          color: accentColor,
+                          lineHeight: 1.15,
+                          margin: 0,
+                          letterSpacing: 'normal',
+                          fontFamily: fontFamilies,
+                        }}
+                      >
+                        {personal.fullName || 'Your Full Name'}
+                      </h1>
+                      {contactItems.length > 0 && (
+                        <div className="flex flex-wrap items-center justify-center gap-x-3.5 gap-y-1 mt-[6pt]">
+                          {contactItems.map((item, idx) => (
                             <div
                               key={item.id}
-                              className={`flex items-center h-[19.5pt] ${fontSizeClasses.subtext} ${lineSpacingClasses} text-black`}
+                              className={`inline-flex items-center gap-1.5 ${fontSizeClasses.subtext} ${lineSpacingClasses} text-black`}
                             >
-                              <div className="w-[17pt] flex items-center justify-start flex-shrink-0">
-                                <ProfileIcon icon={item.icon} size={12} />
-                              </div>
+                              <ProfileIcon icon={item.icon} size={11} />
+                              {item.href ? (
+                                <a
+                                  href={item.href}
+                                  target={
+                                    item.type === 'email' || item.type === 'phone'
+                                      ? undefined
+                                      : '_blank'
+                                  }
+                                  rel={
+                                    item.type === 'email' || item.type === 'phone'
+                                      ? undefined
+                                      : 'noopener noreferrer'
+                                  }
+                                  className="hover:underline text-black truncate"
+                                >
+                                  {item.text}
+                                </a>
+                              ) : (
+                                <span className="truncate">{item.text}</span>
+                              )}
+                              {idx < contactItems.length - 1 && (
+                                <span className="text-slate-400 font-bold ml-1.5 select-none">•</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </header>
+                  );
+                }
+
+                if (headerStyle === 'left-inline') {
+                  return (
+                    <header
+                      data-resume-header="true"
+                      className="resume-header mb-[14.2pt]"
+                    >
+                      <h1
+                        className={`${fontSizeClasses.name} font-bold text-black`}
+                        style={{
+                          color: accentColor,
+                          lineHeight: 1.15,
+                          margin: 0,
+                          letterSpacing: 'normal',
+                          fontFamily: fontFamilies,
+                        }}
+                      >
+                        {personal.fullName || 'Your Full Name'}
+                      </h1>
+                      {contactItems.length > 0 && (
+                        <div className="flex flex-wrap items-center justify-start gap-x-4 gap-y-1.5 mt-[6pt]">
+                          {contactItems.map((item) => (
+                            <div
+                              key={item.id}
+                              className={`inline-flex items-center gap-1.5 ${fontSizeClasses.subtext} ${lineSpacingClasses} text-black`}
+                            >
+                              <ProfileIcon icon={item.icon} size={11} />
                               {item.href ? (
                                 <a
                                   href={item.href}
@@ -899,17 +1003,38 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
                             </div>
                           ))}
                         </div>
+                      )}
+                    </header>
+                  );
+                }
 
-                        {/* Right Column */}
-                        <div className="flex flex-col justify-start pl-[2pt]">
-                          {rightColumnItems.map((item) => (
+                if (headerStyle === 'split') {
+                  return (
+                    <header
+                      data-resume-header="true"
+                      className="resume-header mb-[14.2pt] flex justify-between items-start gap-6 pb-0.5"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <h1
+                          className={`${fontSizeClasses.name} font-bold text-black`}
+                          style={{
+                            color: accentColor,
+                            lineHeight: 1.15,
+                            margin: 0,
+                            letterSpacing: 'normal',
+                            fontFamily: fontFamilies,
+                          }}
+                        >
+                          {personal.fullName || 'Your Full Name'}
+                        </h1>
+                      </div>
+                      {contactItems.length > 0 && (
+                        <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                          {contactItems.map((item) => (
                             <div
                               key={item.id}
-                              className={`flex items-center h-[19.5pt] ${fontSizeClasses.subtext} ${lineSpacingClasses} text-black`}
+                              className={`flex items-center justify-end gap-1.5 ${fontSizeClasses.subtext} ${lineSpacingClasses} text-black`}
                             >
-                              <div className="w-[17pt] flex items-center justify-start flex-shrink-0">
-                                <ProfileIcon icon={item.icon} size={12} />
-                              </div>
                               {item.href ? (
                                 <a
                                   href={item.href}
@@ -930,14 +1055,81 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
                               ) : (
                                 <span className="truncate">{item.text}</span>
                               )}
+                              <div className="w-[14pt] flex items-center justify-end flex-shrink-0">
+                                <ProfileIcon icon={item.icon} size={11} />
+                              </div>
                             </div>
                           ))}
+                        </div>
+                      )}
+                    </header>
+                  );
+                }
+
+                if (headerStyle === 'banner') {
+                  return (
+                    <header
+                      data-resume-header="true"
+                      className="resume-header mb-[14.2pt] pl-3.5 border-l-[3.5pt]"
+                      style={{ borderColor: accentColor }}
+                    >
+                      <h1
+                        className={`${fontSizeClasses.name} font-bold text-black`}
+                        style={{
+                          color: accentColor,
+                          lineHeight: 1.15,
+                          margin: 0,
+                          letterSpacing: 'normal',
+                          fontFamily: fontFamilies,
+                        }}
+                      >
+                        {personal.fullName || 'Your Full Name'}
+                      </h1>
+                      {contactItems.length > 0 && (
+                        <div className="grid grid-cols-2 gap-x-8 mt-[7pt]">
+                          <div className="flex flex-col justify-start">
+                            {leftColumnItems.map(renderItem)}
+                          </div>
+                          <div className="flex flex-col justify-start pl-[2pt]">
+                            {rightColumnItems.map(renderItem)}
+                          </div>
+                        </div>
+                      )}
+                    </header>
+                  );
+                }
+
+                // Default 'grid' (Classic FlowCV 2-Column)
+                return (
+                  <header
+                    data-resume-header="true"
+                    className="resume-header mb-[14.2pt]"
+                  >
+                    <h1
+                      className={`${fontSizeClasses.name} font-bold text-black`}
+                      style={{
+                        color: accentColor,
+                        lineHeight: 1.15,
+                        margin: 0,
+                        letterSpacing: 'normal',
+                        fontFamily: fontFamilies,
+                      }}
+                    >
+                      {personal.fullName || 'Your Full Name'}
+                    </h1>
+                    {contactItems.length > 0 && (
+                      <div className="grid grid-cols-2 gap-x-8 mt-[8pt]">
+                        <div className="flex flex-col justify-start">
+                          {leftColumnItems.map(renderItem)}
+                        </div>
+                        <div className="flex flex-col justify-start pl-[2pt]">
+                          {rightColumnItems.map(renderItem)}
                         </div>
                       </div>
-                    );
-                  })()}
-                </header>
-              )}
+                    )}
+                  </header>
+                );
+              })()}
 
               {/* Sections for this Page */}
               <div className="resume-body">

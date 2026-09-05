@@ -210,6 +210,16 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({ data, onChange }) =>
           <PersonalInfoEditor
             data={data.personal}
             onChange={(personal) => onChange({ ...data, personal })}
+            headerStyle={data.settings?.headerStyle || 'grid'}
+            onHeaderStyleChange={(headerStyle) =>
+              onChange({
+                ...data,
+                settings: {
+                  ...data.settings,
+                  headerStyle,
+                },
+              })
+            }
           />
         )}
 

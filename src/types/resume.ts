@@ -90,6 +90,13 @@ export type FontFamily =
   | 'lora'
   | 'eb-garamond';
 
+export type HeaderStyle =
+  | 'grid'
+  | 'centered'
+  | 'left-inline'
+  | 'split'
+  | 'banner';
+
 export interface ResumeSettings {
   fontSize: 'compact' | 'standard' | 'spacious';
   lineSpacing: 'compact' | 'standard' | 'relaxed';
@@ -102,6 +109,7 @@ export interface ResumeSettings {
   hiddenSections: string[];
   pageBreakBefore?: string[]; // Optional manual section IDs that should start on a new page
   sectionTitles?: Record<string, string>; // Custom titles for sections (e.g., { profile: "Summary", skills: "Technical Expertise" })
+  headerStyle?: HeaderStyle;
 }
 
 export interface ResumeData {

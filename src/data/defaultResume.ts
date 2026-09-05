@@ -150,6 +150,7 @@ export const defaultResumeData: ResumeData = {
     sectionOrder: ['profile', 'skills', 'experiences', 'projects', 'educations', 'references'],
     hiddenSections: [],
     pageBreakBefore: [],
+    headerStyle: 'grid',
   },
 };
 
@@ -182,5 +183,6 @@ export const emptyResumeData: ResumeData = {
     sectionOrder: ['profile', 'skills', 'experiences', 'projects', 'educations', 'references'],
     hiddenSections: [],
     pageBreakBefore: [],
+    headerStyle: 'grid',
   },
 };
