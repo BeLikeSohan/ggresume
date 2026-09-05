@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { PersonalInfo, ProfileLink, HeaderStyle } from '@/types/resume';
 import { Input } from '@/components/ui/Input';
-import { User, Layout } from 'lucide-react';
+import { User } from 'lucide-react';
 import { ProfileLinksEditor } from './ProfileLinksEditor';
 import { HeaderStyleSelector } from '@/components/common/HeaderStyleSelector';
 
@@ -20,8 +20,6 @@ export const PersonalInfoEditor: React.FC<PersonalInfoEditorProps> = ({
   headerStyle = 'grid',
   onHeaderStyleChange,
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'content' | 'styling'>('content');
-
   const handleChange = (field: keyof PersonalInfo, value: string) => {
     onChange({
       ...data,
@@ -96,89 +94,57 @@ export const PersonalInfoEditor: React.FC<PersonalInfoEditorProps> = ({
           Personal Profile
         </h3>
         <p className="text-xs text-slate-500">
-          Candidate information and header layout displayed at the top of your resume.
+          Candidate information and header details displayed at the top of your resume.
         </p>
       </div>
 
-      {/* Sub-Tabs: Content vs Styling */}
-      <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200">
-        <button
-          type="button"
-          onClick={() => setActiveSubTab('content')}
-          className={`flex-1 py-1.5 px-3 text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer ${
-            activeSubTab === 'content'
-              ? 'bg-white text-slate-900 shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <User size={13} />
-          <span>Profile Info</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveSubTab('styling')}
-          className={`flex-1 py-1.5 px-3 text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer ${
-            activeSubTab === 'styling'
-              ? 'bg-white text-slate-900 shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <Layout size={13} />
-          <span>Profile Styling</span>
-        </button>
-      </div>
+      {/* Profile Info Fields */}
+      <div className="space-y-3">
+        <Input
+          label="Full Name"
+          placeholder="e.g. Washiul Alam Shohan"
+          value={data.fullName || ''}
+          onChange={(e) => handleChange('fullName', e.target.value)}
+        />
 
-      {/* Tab 1: Profile Content & Details */}
-      {activeSubTab === 'content' && (
-        <div className="space-y-4 animate-in fade-in duration-150">
-          <div className="space-y-3">
-            <Input
-              label="Full Name"
-              placeholder="e.g. Washiul Alam Shohan"
-              value={data.fullName || ''}
-              onChange={(e) => handleChange('fullName', e.target.value)}
-            />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Input
+            label="Email Address (Optional)"
+            type="email"
+            placeholder="e.g. hello@washiul.com"
+            value={data.email || ''}
+            onChange={(e) => handleChange('email', e.target.value)}
+          />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Input
-                label="Email Address (Optional)"
-                type="email"
-                placeholder="e.g. hello@washiul.com"
-                value={data.email || ''}
-                onChange={(e) => handleChange('email', e.target.value)}
-              />
-
-              <Input
-                label="Phone Number (Optional)"
-                placeholder="e.g. +1 (555) 019-2834"
-                value={data.phone || ''}
-                onChange={(e) => handleChange('phone', e.target.value)}
-              />
-            </div>
-
-            <Input
-              label="Location (Optional)"
-              placeholder="e.g. San Francisco, CA"
-              value={data.location || ''}
-              onChange={(e) => handleChange('location', e.target.value)}
-            />
-          </div>
-
-          {/* Profile Links Subsection */}
-          <ProfileLinksEditor
-            links={currentLinks}
-            onChange={handleLinksChange}
+          <Input
+            label="Phone Number (Optional)"
+            placeholder="e.g. +1 (555) 019-2834"
+            value={data.phone || ''}
+            onChange={(e) => handleChange('phone', e.target.value)}
           />
         </div>
-      )}
 
-      {/* Tab 2: Header Styling Options */}
-      {activeSubTab === 'styling' && onHeaderStyleChange && (
-        <div className="space-y-3 animate-in fade-in duration-150 pt-1">
+        <Input
+          label="Location (Optional)"
+          placeholder="e.g. San Francisco, CA"
+          value={data.location || ''}
+          onChange={(e) => handleChange('location', e.target.value)}
+        />
+      </div>
+
+      {/* Profile Links Subsection */}
+      <ProfileLinksEditor
+        links={currentLinks}
+        onChange={handleLinksChange}
+      />
+
+      {/* Compact Header Styling Options at the Bottom */}
+      {onHeaderStyleChange && (
+        <div className="pt-2 border-t border-slate-200">
           <HeaderStyleSelector
             value={headerStyle}
             onChange={onHeaderStyleChange}
-            compact={false}
+            compact={true}
           />
         </div>
       )}

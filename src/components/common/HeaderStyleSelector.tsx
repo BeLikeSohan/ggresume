@@ -14,12 +14,12 @@ export interface HeaderStyleOption {
 export const HEADER_STYLE_OPTIONS: HeaderStyleOption[] = [
   {
     id: 'grid',
-    label: '2-Column Grid',
+    label: '2-Col Grid',
     sub: 'Classic & Balanced',
     iconVisual: (
-      <div className="w-full flex flex-col gap-1 p-1">
-        <div className="w-12 h-2 bg-current rounded-xs opacity-90" />
-        <div className="grid grid-cols-2 gap-1 mt-0.5">
+      <div className="w-full flex flex-col gap-0.5 p-0.5">
+        <div className="w-8 h-1.5 bg-current rounded-xs opacity-90" />
+        <div className="grid grid-cols-2 gap-0.5 mt-0.5">
           <div className="h-1 bg-current rounded-xs opacity-60" />
           <div className="h-1 bg-current rounded-xs opacity-60" />
           <div className="h-1 bg-current rounded-xs opacity-60" />
@@ -30,37 +30,37 @@ export const HEADER_STYLE_OPTIONS: HeaderStyleOption[] = [
   },
   {
     id: 'centered',
-    label: 'Centered Inline',
-    sub: 'Academic / Minimalist',
+    label: 'Centered',
+    sub: 'Minimalist / Academic',
     iconVisual: (
-      <div className="w-full flex flex-col items-center gap-1 p-1">
-        <div className="w-14 h-2 bg-current rounded-xs opacity-90" />
-        <div className="w-20 h-1 bg-current rounded-xs opacity-60 mt-0.5" />
+      <div className="w-full flex flex-col items-center gap-0.5 p-0.5">
+        <div className="w-10 h-1.5 bg-current rounded-xs opacity-90" />
+        <div className="w-14 h-1 bg-current rounded-xs opacity-60 mt-0.5" />
       </div>
     ),
   },
   {
     id: 'left-inline',
-    label: 'Left-Aligned Inline',
-    sub: 'Modern & Compact',
+    label: 'Left Inline',
+    sub: 'Compact Flow',
     iconVisual: (
-      <div className="w-full flex flex-col items-start gap-1 p-1">
-        <div className="w-14 h-2 bg-current rounded-xs opacity-90" />
-        <div className="w-20 h-1 bg-current rounded-xs opacity-60 mt-0.5" />
+      <div className="w-full flex flex-col items-start gap-0.5 p-0.5">
+        <div className="w-10 h-1.5 bg-current rounded-xs opacity-90" />
+        <div className="w-14 h-1 bg-current rounded-xs opacity-60 mt-0.5" />
       </div>
     ),
   },
   {
     id: 'split',
-    label: 'Split Header',
-    sub: 'Executive & Corporate',
+    label: 'Split',
+    sub: 'Executive & Clean',
     iconVisual: (
-      <div className="w-full flex items-center justify-between p-1">
-        <div className="w-10 h-3 bg-current rounded-xs opacity-90" />
+      <div className="w-full flex items-center justify-between p-0.5">
+        <div className="w-6 h-2.5 bg-current rounded-xs opacity-90" />
         <div className="flex flex-col items-end gap-0.5">
-          <div className="w-8 h-1 bg-current rounded-xs opacity-60" />
-          <div className="w-8 h-1 bg-current rounded-xs opacity-60" />
-          <div className="w-8 h-1 bg-current rounded-xs opacity-60" />
+          <div className="w-6 h-0.5 bg-current rounded-xs opacity-60" />
+          <div className="w-6 h-0.5 bg-current rounded-xs opacity-60" />
+          <div className="w-6 h-0.5 bg-current rounded-xs opacity-60" />
         </div>
       </div>
     ),
@@ -70,11 +70,11 @@ export const HEADER_STYLE_OPTIONS: HeaderStyleOption[] = [
     label: 'Accent Border',
     sub: 'Creative & Bold',
     iconVisual: (
-      <div className="w-full flex items-stretch gap-1.5 p-1">
-        <div className="w-1 bg-current rounded-xs" />
-        <div className="flex-1 flex flex-col gap-1">
-          <div className="w-10 h-2 bg-current rounded-xs opacity-90" />
-          <div className="grid grid-cols-2 gap-1">
+      <div className="w-full flex items-stretch gap-1 p-0.5">
+        <div className="w-0.5 bg-current rounded-xs" />
+        <div className="flex-1 flex flex-col gap-0.5">
+          <div className="w-8 h-1.5 bg-current rounded-xs opacity-90" />
+          <div className="grid grid-cols-2 gap-0.5">
             <div className="h-1 bg-current rounded-xs opacity-60" />
             <div className="h-1 bg-current rounded-xs opacity-60" />
           </div>
@@ -95,6 +95,54 @@ export const HeaderStyleSelector: React.FC<HeaderStyleSelectorProps> = ({
   onChange,
   compact = false,
 }) => {
+  if (compact) {
+    return (
+      <div className="bg-slate-50/80 border border-slate-200/90 rounded-xl p-2.5 space-y-1.5">
+        <div className="flex items-center justify-between">
+          <label className="text-[11px] font-semibold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+            <Layout size={12} className="text-slate-500" />
+            Header Style
+          </label>
+          <span className="text-[10px] text-slate-400">
+            {HEADER_STYLE_OPTIONS.find((o) => o.id === value)?.sub || 'Classic'}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
+          {HEADER_STYLE_OPTIONS.map((opt) => {
+            const isSelected = (value || 'grid') === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => onChange(opt.id)}
+                title={`${opt.label} (${opt.sub})`}
+                className={`p-1.5 rounded-lg border text-center transition flex flex-col items-center justify-center gap-1 cursor-pointer ${
+                  isSelected
+                    ? 'border-slate-900 bg-slate-900 text-white shadow-2xs'
+                    : 'border-slate-200/90 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                <div
+                  className={`w-full h-6 rounded flex items-center justify-center transition ${
+                    isSelected
+                      ? 'bg-slate-800 text-white'
+                      : 'bg-slate-50 text-slate-500'
+                  }`}
+                >
+                  {opt.iconVisual}
+                </div>
+                <span className="text-[10.5px] font-semibold leading-tight truncate w-full">
+                  {opt.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
@@ -104,13 +152,7 @@ export const HeaderStyleSelector: React.FC<HeaderStyleSelectorProps> = ({
         </label>
       </div>
 
-      <div
-        className={`grid gap-2 ${
-          compact
-            ? 'grid-cols-2 sm:grid-cols-3'
-            : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5'
-        }`}
-      >
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
         {HEADER_STYLE_OPTIONS.map((opt) => {
           const isSelected = (value || 'grid') === opt.id;
           return (
