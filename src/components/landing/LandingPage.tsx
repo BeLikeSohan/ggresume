@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { ArrowRight, LayoutDashboard, LogOut, CheckCircle2 } from 'lucide-react';
 import { GGLogo } from '@/components/common/GGLogo';
+import { HalfGlobe } from './HalfGlobe';
 import { AuthModal } from './AuthModal';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -51,6 +52,9 @@ function LandingPageContent() {
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] bg-gradient-to-tr from-slate-200/50 via-slate-100/40 to-transparent rounded-full blur-3xl pointer-events-none -z-10"
         aria-hidden="true"
       />
+
+      {/* Animated Half Globe in Background */}
+      <HalfGlobe />
 
       {/* Minimal Top Nav */}
       <header className="w-full h-16 px-6 sm:px-10 flex items-center justify-between max-w-6xl mx-auto z-10 flex-shrink-0">
@@ -143,28 +147,56 @@ function LandingPageContent() {
         {/* CTA Action Button */}
         <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3 w-full max-w-xs">
           {user ? (
-            <Link
-              href="/dashboard"
-              className="w-full py-3.5 px-6 rounded-xl bg-slate-950 hover:bg-slate-800 text-white font-semibold text-sm sm:text-base transition-all duration-150 shadow-md hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2 group cursor-pointer"
-            >
-              <span>Go to Dashboard</span>
-              <ArrowRight
-                size={16}
-                className="group-hover:translate-x-1 transition-transform"
+            <div className="relative group w-full">
+              {/* Subtle Blue Animated Ambient Glow */}
+              <div
+                className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-blue-500/30 via-indigo-500/25 to-sky-400/30 bg-[length:200%_200%] animate-gradient-flow opacity-50 blur-md group-hover:opacity-100 group-hover:scale-105 transition-all duration-150 ease-out"
+                aria-hidden="true"
               />
-            </Link>
+              <Link
+                href="/dashboard"
+                className="relative w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 bg-[length:200%_200%] animate-gradient-flow text-white font-semibold text-sm sm:text-base transition-all duration-150 ease-out transform hover:scale-105 shadow-md hover:shadow-xl hover:shadow-blue-500/25 active:scale-95 flex items-center justify-center gap-2 group/btn cursor-pointer overflow-hidden border border-blue-400/20"
+              >
+                {/* Subtle sweeping light shimmer overlay */}
+                <span
+                  className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full animate-shimmer-slide pointer-events-none"
+                  aria-hidden="true"
+                />
+                <span className="relative z-10 flex items-center gap-2">
+                  <span>Go to Dashboard</span>
+                  <ArrowRight
+                    size={16}
+                    className="group-hover/btn:translate-x-1.5 transition-transform duration-150"
+                  />
+                </span>
+              </Link>
+            </div>
           ) : (
-            <button
-              type="button"
-              onClick={() => openAuth('signup')}
-              className="w-full py-3.5 px-6 rounded-xl bg-slate-950 hover:bg-slate-800 text-white font-semibold text-sm sm:text-base transition-all duration-150 shadow-md hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2 group cursor-pointer"
-            >
-              <span>Get Started</span>
-              <ArrowRight
-                size={16}
-                className="group-hover:translate-x-1 transition-transform"
+            <div className="relative group w-full">
+              {/* Subtle Blue Animated Ambient Glow */}
+              <div
+                className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-blue-500/30 via-indigo-500/25 to-sky-400/30 bg-[length:200%_200%] animate-gradient-flow opacity-50 blur-md group-hover:opacity-100 group-hover:scale-105 transition-all duration-150 ease-out"
+                aria-hidden="true"
               />
-            </button>
+              <button
+                type="button"
+                onClick={() => openAuth('signup')}
+                className="relative w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 bg-[length:200%_200%] animate-gradient-flow text-white font-semibold text-sm sm:text-base transition-all duration-150 ease-out transform hover:scale-105 shadow-md hover:shadow-xl hover:shadow-blue-500/25 active:scale-95 flex items-center justify-center gap-2 group/btn cursor-pointer overflow-hidden border border-blue-400/20"
+              >
+                {/* Subtle sweeping light shimmer overlay */}
+                <span
+                  className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full animate-shimmer-slide pointer-events-none"
+                  aria-hidden="true"
+                />
+                <span className="relative z-10 flex items-center gap-2">
+                  <span>Get Started</span>
+                  <ArrowRight
+                    size={16}
+                    className="group-hover/btn:translate-x-1.5 transition-transform duration-150"
+                  />
+                </span>
+              </button>
+            </div>
           )}
         </div>
       </main>
