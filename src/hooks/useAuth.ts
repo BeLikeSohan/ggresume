@@ -16,27 +16,31 @@ export interface AuthConfig {
   requireEmailVerification: boolean;
 }
 
+// Build-time evaluated auth configuration via NEXT_PUBLIC_* environment variables
+export const AUTH_CONFIG: AuthConfig = {
+  localAuthMode:
+    process.env.NEXT_PUBLIC_AUTH_LOCAL_MODE === 'true' ||
+    process.env.NEXT_PUBLIC_AUTH_LOCAL_MODE === '1',
+  showGoogleAuth:
+    process.env.NEXT_PUBLIC_ENABLE_GOOGLE_AUTH === 'true' ||
+    process.env.NEXT_PUBLIC_ENABLE_GOOGLE_AUTH === '1' ||
+    (Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) &&
+      process.env.NEXT_PUBLIC_ENABLE_GOOGLE_AUTH !== 'false' &&
+      process.env.NEXT_PUBLIC_ENABLE_GOOGLE_AUTH !== '0'),
+  requireEmailVerification:
+    process.env.NEXT_PUBLIC_AUTH_LOCAL_MODE !== 'true' &&
+    process.env.NEXT_PUBLIC_AUTH_LOCAL_MODE !== '1' &&
+    process.env.NEXT_PUBLIC_SKIP_EMAIL_VERIFICATION !== 'true' &&
+    process.env.NEXT_PUBLIC_SKIP_EMAIL_VERIFICATION !== '1' &&
+    process.env.NEXT_PUBLIC_REQUIRE_EMAIL_VERIFICATION !== 'false' &&
+    process.env.NEXT_PUBLIC_REQUIRE_EMAIL_VERIFICATION !== '0',
+};
+
 export function useAuth() {
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [config, setConfig] = useState<AuthConfig>({
-    localAuthMode: true,
-    showGoogleAuth: false,
-    requireEmailVerification: false,
-  });
-
-  const loadConfig = useCallback(async () => {
-    try {
-      const res = await fetch('/api/auth/config', { cache: 'no-store' });
-      if (res.ok) {
-        const data = await res.json();
-        setConfig(data);
-      }
-    } catch {
-      // Fallback
-    }
-  }, []);
+  const config = AUTH_CONFIG;
 
   const loadSession = useCallback(async () => {
     setIsLoading(true);
@@ -70,9 +74,8 @@ export function useAuth() {
   }, []);
 
   useEffect(() => {
-    loadConfig();
     loadSession();
-  }, [loadConfig, loadSession]);
+  }, [loadSession]);
 
   const signOut = useCallback(async () => {
     try {
