@@ -26,11 +26,13 @@ export interface Experience {
   id: string;
   role: string;
   company: string;
+  companyUrl?: string;
   location: string;
   startDate: string;
   endDate: string;
   isCurrent?: boolean;
   highlights: string[];
+  hidden?: boolean;
 }
 
 export interface Project {
@@ -42,6 +44,7 @@ export interface Project {
   startDate?: string;
   endDate?: string;
   highlights: string[];
+  hidden?: boolean;
 }
 
 export interface Education {

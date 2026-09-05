@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Experience } from '@/types/resume';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { Briefcase, Plus, Trash2, ArrowUp, ArrowDown, ChevronDown, ChevronUp } from 'lucide-react';
+import { Briefcase, Plus, Trash2, ArrowUp, ArrowDown, ChevronDown, ChevronUp, Eye, EyeOff } from 'lucide-react';
 import { SectionHeaderWithTitle } from './SectionTitleInput';
 import { RichTextarea } from '@/components/common/RichTextarea';
 
@@ -99,7 +99,11 @@ export const ExperienceEditor: React.FC<ExperienceEditorProps> = ({
                 onClick={() => setExpandedId(isExpanded ? null : exp.id)}
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="font-semibold text-sm text-slate-800 truncate">
+                  <span
+                    className={`font-semibold text-sm truncate ${
+                      exp.hidden ? 'text-slate-400 line-through' : 'text-slate-800'
+                    }`}
+                  >
                     {exp.role || 'Untitled Role'}
                   </span>
                   {exp.company && (
@@ -107,9 +111,26 @@ export const ExperienceEditor: React.FC<ExperienceEditorProps> = ({
                       at {exp.company}
                     </span>
                   )}
+                  {exp.hidden && (
+                    <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-medium flex-shrink-0">
+                      Hidden
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    onClick={() => handleUpdate(exp.id, 'hidden', !exp.hidden)}
+                    className={`p-1 transition cursor-pointer ${
+                      exp.hidden
+                        ? 'text-amber-500 hover:text-amber-600'
+                        : 'text-slate-400 hover:text-slate-700'
+                    }`}
+                    title={exp.hidden ? 'Show on resume' : 'Hide from resume'}
+                  >
+                    {exp.hidden ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
                   <button
                     type="button"
                     onClick={() => handleMove(index, 'up')}
@@ -164,7 +185,22 @@ export const ExperienceEditor: React.FC<ExperienceEditorProps> = ({
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Input
+                      label="Company Website / URL (Optional)"
+                      placeholder="e.g. https://company.com"
+                      value={exp.companyUrl || ''}
+                      onChange={(e) => handleUpdate(exp.id, 'companyUrl', e.target.value)}
+                    />
+                    <Input
+                      label="Location / Type"
+                      placeholder="e.g. San Francisco, CA (or Remote)"
+                      value={exp.location}
+                      onChange={(e) => handleUpdate(exp.id, 'location', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Input
                       label="Start Date"
                       placeholder="e.g. 2023"
@@ -176,12 +212,6 @@ export const ExperienceEditor: React.FC<ExperienceEditorProps> = ({
                       placeholder="e.g. Present"
                       value={exp.endDate}
                       onChange={(e) => handleUpdate(exp.id, 'endDate', e.target.value)}
-                    />
-                    <Input
-                      label="Location / Type"
-                      placeholder="e.g. San Francisco, CA (or Remote)"
-                      value={exp.location}
-                      onChange={(e) => handleUpdate(exp.id, 'location', e.target.value)}
                     />
                   </div>
 

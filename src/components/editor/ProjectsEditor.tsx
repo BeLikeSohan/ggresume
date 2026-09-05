@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Project } from '@/types/resume';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { FolderGit2, Plus, Trash2, ArrowUp, ArrowDown, ChevronDown, ChevronUp } from 'lucide-react';
+import { FolderGit2, Plus, Trash2, ArrowUp, ArrowDown, ChevronDown, ChevronUp, Eye, EyeOff } from 'lucide-react';
 import { SectionHeaderWithTitle } from './SectionTitleInput';
 import { RichTextarea } from '@/components/common/RichTextarea';
 
@@ -97,7 +97,11 @@ export const ProjectsEditor: React.FC<ProjectsEditorProps> = ({
                 onClick={() => setExpandedId(isExpanded ? null : proj.id)}
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="font-semibold text-sm text-slate-800 truncate">
+                  <span
+                    className={`font-semibold text-sm truncate ${
+                      proj.hidden ? 'text-slate-400 line-through' : 'text-slate-800'
+                    }`}
+                  >
                     {proj.title || 'Untitled Project'}
                   </span>
                   {proj.subtitle && (
@@ -105,9 +109,26 @@ export const ProjectsEditor: React.FC<ProjectsEditorProps> = ({
                       — {proj.subtitle}
                     </span>
                   )}
+                  {proj.hidden && (
+                    <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-medium flex-shrink-0">
+                      Hidden
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    onClick={() => handleUpdate(proj.id, 'hidden', !proj.hidden)}
+                    className={`p-1 transition cursor-pointer ${
+                      proj.hidden
+                        ? 'text-amber-500 hover:text-amber-600'
+                        : 'text-slate-400 hover:text-slate-700'
+                    }`}
+                    title={proj.hidden ? 'Show on resume' : 'Hide from resume'}
+                  >
+                    {proj.hidden ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
                   <button
                     type="button"
                     onClick={() => handleMove(index, 'up')}

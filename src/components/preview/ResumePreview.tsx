@@ -183,11 +183,12 @@ function estimateSectionHeight(
     case 'skills':
       if (!data.skills || data.skills.length === 0) return 0;
       return TITLE_HEIGHT + data.skills.length * Math.round(22 * scale) + 8;
-    case 'experiences':
-      if (!data.experiences || data.experiences.length === 0) return 0;
+    case 'experiences': {
+      const visibleExp = (data.experiences || []).filter((e) => !e.hidden);
+      if (visibleExp.length === 0) return 0;
       return (
         TITLE_HEIGHT +
-        data.experiences.reduce((acc, exp) => {
+        visibleExp.reduce((acc, exp) => {
           const highlightLines = (exp.highlights || [])
             .filter((h) => h.trim().length > 0)
             .reduce((hAcc, h) => {
@@ -196,11 +197,13 @@ function estimateSectionHeight(
           return acc + ITEM_HEADER_HEIGHT + highlightLines + 10;
         }, 0)
       );
-    case 'projects':
-      if (!data.projects || data.projects.length === 0) return 0;
+    }
+    case 'projects': {
+      const visibleProj = (data.projects || []).filter((p) => !p.hidden);
+      if (visibleProj.length === 0) return 0;
       return (
         TITLE_HEIGHT +
-        data.projects.reduce((acc, proj) => {
+        visibleProj.reduce((acc, proj) => {
           const highlightLines = (proj.highlights || [])
             .filter((h) => h.trim().length > 0)
             .reduce((hAcc, h) => {
@@ -209,6 +212,7 @@ function estimateSectionHeight(
           return acc + ITEM_HEADER_HEIGHT + highlightLines + 10;
         }, 0)
       );
+    }
     case 'educations':
       if (!data.educations || data.educations.length === 0) return 0;
       return TITLE_HEIGHT + data.educations.length * Math.round(44 * scale) + 8;
@@ -363,9 +367,9 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
         case 'skills':
           return Boolean(skills && skills.length > 0);
         case 'experiences':
-          return Boolean(experiences && experiences.length > 0);
+          return Boolean(experiences && experiences.some((e) => !e.hidden));
         case 'projects':
-          return Boolean(projects && projects.length > 0);
+          return Boolean(projects && projects.some((p) => !p.hidden));
         case 'educations':
           return Boolean(educations && educations.length > 0);
         case 'references':
@@ -541,13 +545,14 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
             </div>
           );
 
-        case 'experiences':
-          if (!experiences || experiences.length === 0) return null;
+        case 'experiences': {
+          const visibleExperiences = (experiences || []).filter((e) => !e.hidden);
+          if (visibleExperiences.length === 0) return null;
           return (
             <div key="experiences" data-resume-section="experiences" className="resume-section w-full">
               {renderSectionTitle(getSectionTitle('experiences', 'Professional Experience'), isFirstOnPage)}
               <div className="flex flex-col gap-[8.4pt]">
-                {experiences.map((exp) => (
+                {visibleExperiences.map((exp) => (
                   <div key={exp.id} className="experience-item w-full">
                     {/* Top right date & location floated so accomplishments text-wrap around it */}
                     {(exp.startDate || exp.endDate || exp.isCurrent || exp.location) && (
@@ -572,7 +577,23 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
                       {exp.company && (
                         <>
                           <span className="text-black">, </span>
-                          <span className="italic text-black font-normal">{exp.company}</span>
+                          {exp.companyUrl ? (
+                            <a
+                              href={
+                                exp.companyUrl.startsWith('http')
+                                  ? exp.companyUrl
+                                  : `https://${exp.companyUrl}`
+                              }
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="italic text-black font-normal hover:underline inline-flex items-center gap-1"
+                            >
+                              <span>{exp.company}</span>
+                              <ExternalLinkIcon size={9} />
+                            </a>
+                          ) : (
+                            <span className="italic text-black font-normal">{exp.company}</span>
+                          )}
                         </>
                       )}
                     </div>
@@ -620,14 +641,16 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
               </div>
             </div>
           );
+        }
 
-        case 'projects':
-          if (!projects || projects.length === 0) return null;
+        case 'projects': {
+          const visibleProjects = (projects || []).filter((p) => !p.hidden);
+          if (visibleProjects.length === 0) return null;
           return (
             <div key="projects" data-resume-section="projects" className="resume-section w-full">
               {renderSectionTitle(getSectionTitle('projects', 'Projects'), isFirstOnPage)}
               <div className="flex flex-col gap-[8.4pt]">
-                {projects.map((proj) => (
+                {visibleProjects.map((proj) => (
                   <div key={proj.id} className="project-item w-full">
                     <div className="flex justify-between items-baseline">
                       <div className={`${fontSizeClasses.itemTitle} ${lineSpacingClasses} flex-1 mr-4`}>
@@ -702,6 +725,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
               </div>
             </div>
           );
+        }
 
         case 'educations':
           if (!educations || educations.length === 0) return null;
