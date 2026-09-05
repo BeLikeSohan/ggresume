@@ -64,6 +64,7 @@ export interface Reference {
   role: string;
   organization: string;
   contact: string;
+  hidden?: boolean;
 }
 
 export interface CustomSectionItem {
@@ -103,6 +104,8 @@ export type HeaderStyle =
 
 export type SectionSpacing = 'compact' | 'standard' | 'spacious';
 
+export type ReferenceStyle = 'grid' | 'stacked' | 'compact' | 'upon-request';
+
 export interface ResumeSettings {
   fontSize: number | 'compact' | 'standard' | 'spacious'; // e.g. 10.0 (in pt)
   lineSpacing: number | 'compact' | 'standard' | 'relaxed'; // e.g. 1.35 (multiplier)
@@ -117,6 +120,8 @@ export interface ResumeSettings {
   pageBreakBefore?: string[]; // Optional manual section IDs that should start on a new page
   sectionTitles?: Record<string, string>; // Custom titles for sections (e.g., { profile: "Summary", skills: "Technical Expertise" })
   headerStyle?: HeaderStyle;
+  referenceStyle?: ReferenceStyle;
+  referenceCustomText?: string;
 }
 
 export interface ResumeData {

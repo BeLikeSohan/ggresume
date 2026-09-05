@@ -274,6 +274,26 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({ data, onChange }) =>
             title={data.settings?.sectionTitles?.references}
             onTitleChange={(t) => handleUpdateSectionTitle('references', t)}
             onChange={(references) => onChange({ ...data, references })}
+            style={data.settings?.referenceStyle || 'grid'}
+            onStyleChange={(referenceStyle) =>
+              onChange({
+                ...data,
+                settings: {
+                  ...data.settings,
+                  referenceStyle,
+                },
+              })
+            }
+            customText={data.settings?.referenceCustomText}
+            onCustomTextChange={(referenceCustomText) =>
+              onChange({
+                ...data,
+                settings: {
+                  ...data.settings,
+                  referenceCustomText,
+                },
+              })
+            }
           />
         )}
 

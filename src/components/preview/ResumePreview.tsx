@@ -250,9 +250,26 @@ function getItemEstimates(
       }));
     }
     case 'references': {
-      return (data.references || []).map((_, i, arr) => ({
+      const refStyle = data.settings?.referenceStyle || 'grid';
+      if (refStyle === 'upon-request') {
+        return [{ index: 0, height: BASE_LINE_HEIGHT + 2 }];
+      }
+      const visibleRefs = (data.references || []).filter((r) => !r.hidden);
+      if (refStyle === 'compact') {
+        return visibleRefs.map((_, i) => ({
+          index: i,
+          height: BASE_LINE_HEIGHT,
+        }));
+      }
+      if (refStyle === 'stacked') {
+        return visibleRefs.map((_, i) => ({
+          index: i,
+          height: BASE_LINE_HEIGHT * 2 + 4,
+        }));
+      }
+      return visibleRefs.map((_, i) => ({
         index: i,
-        height: BASE_LINE_HEIGHT * 2 + 2 + (i < arr.length - 1 ? ITEM_GAP : 0),
+        height: BASE_LINE_HEIGHT * 2 + 2,
       }));
     }
     default: {
@@ -523,8 +540,11 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
           return Boolean(projects && projects.some((p) => !p.hidden));
         case 'educations':
           return Boolean(educations && educations.length > 0);
-        case 'references':
-          return Boolean(references && references.length > 0);
+        case 'references': {
+          const refStyle = settings.referenceStyle || 'grid';
+          if (refStyle === 'upon-request') return true;
+          return Boolean(references && references.some((r) => !r.hidden));
+        }
         default: {
           const custom = allCustomSections.find((c) => c.id === key);
           return Boolean(
@@ -1002,14 +1022,34 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
         }
 
         case 'references': {
-          if (!references || references.length === 0) return null;
-          const itemsToRender = slot.itemIndices
-            ? slot.itemIndices.map((i) => references[i]).filter(Boolean)
-            : references;
-          if (itemsToRender.length === 0) return null;
+          const refStyle = settings.referenceStyle || 'grid';
           const sectionTitle = slot.isContinuation
             ? `${getSectionTitle('references', 'References')} (Continued)`
             : getSectionTitle('references', 'References');
+
+          if (refStyle === 'upon-request') {
+            return (
+              <div
+                key="references"
+                data-resume-section="references"
+                className="resume-section w-full"
+              >
+                {renderSectionTitle(sectionTitle, isFirstOnPage)}
+                <p
+                  data-resume-item="true"
+                  className={`${fontSizeClasses.body} ${lineSpacingClasses} text-black italic`}
+                >
+                  {settings.referenceCustomText || 'Available upon request.'}
+                </p>
+              </div>
+            );
+          }
+
+          const visibleRefs = (references || []).filter((r) => !r.hidden);
+          const itemsToRender = slot.itemIndices
+            ? slot.itemIndices.map((i) => visibleRefs[i]).filter(Boolean)
+            : visibleRefs;
+          if (itemsToRender.length === 0) return null;
 
           return (
             <div
@@ -1018,41 +1058,129 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
               className="resume-section w-full"
             >
               {renderSectionTitle(sectionTitle, isFirstOnPage)}
-              <div className="grid grid-cols-2 gap-4">
-                {itemsToRender.map((refItem) => (
-                  <div key={refItem.id} data-resume-item="true" className="reference-item w-full">
-                    <div className={`${fontSizeClasses.itemTitle} ${lineSpacingClasses}`}>
-                      <span className="font-bold text-black">{refItem.name}</span>
-                      {refItem.role && (
-                        <>
-                          <span className="text-black">, </span>
-                          <span className="italic text-black font-normal">{refItem.role}</span>
-                        </>
-                      )}
-                      {refItem.organization && (
-                        <>
-                          <span className="text-black">, </span>
-                          <span className="text-black font-normal">{refItem.organization}</span>
-                        </>
-                      )}
-                    </div>
-                    {refItem.contact && (
-                      <div className={`${fontSizeClasses.subtext} ${lineSpacingClasses} text-black`}>
-                        {refItem.contact.includes('@') ? (
-                          <a
-                            href={`mailto:${refItem.contact}`}
-                            className="text-black hover:underline"
-                          >
-                            {refItem.contact}
-                          </a>
-                        ) : (
-                          <span>{refItem.contact}</span>
+
+              {refStyle === 'stacked' ? (
+                <div className="flex flex-col gap-2">
+                  {itemsToRender.map((refItem) => (
+                    <div
+                      key={refItem.id}
+                      data-resume-item="true"
+                      className="reference-item w-full flex justify-between items-baseline"
+                    >
+                      <div className={`${fontSizeClasses.itemTitle} ${lineSpacingClasses}`}>
+                        <span className="font-bold text-black">{refItem.name}</span>
+                        {refItem.role && (
+                          <>
+                            <span className="text-black">, </span>
+                            <span className="italic text-black font-normal">{refItem.role}</span>
+                          </>
+                        )}
+                        {refItem.organization && (
+                          <>
+                            <span className="text-black"> — </span>
+                            <span className="text-black font-normal">{refItem.organization}</span>
+                          </>
                         )}
                       </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+                      {refItem.contact && (
+                        <div
+                          className={`text-right flex-shrink-0 ml-4 ${fontSizeClasses.subtext} ${lineSpacingClasses} text-black`}
+                        >
+                          {refItem.contact.includes('@') ? (
+                            <a
+                              href={`mailto:${refItem.contact}`}
+                              className="text-black hover:underline"
+                            >
+                              {refItem.contact}
+                            </a>
+                          ) : (
+                            <span>{refItem.contact}</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : refStyle === 'compact' ? (
+                <div className="flex flex-col gap-0.5">
+                  {itemsToRender.map((refItem) => (
+                    <div
+                      key={refItem.id}
+                      data-resume-item="true"
+                      className={`${fontSizeClasses.body} ${lineSpacingClasses} text-black flex items-start`}
+                    >
+                      {renderBullet()}
+                      <div className="flex-1">
+                        <span className="font-bold text-black">{refItem.name}</span>
+                        {refItem.role && (
+                          <span className="italic font-normal">, {refItem.role}</span>
+                        )}
+                        {refItem.organization && (
+                          <span className="font-normal"> ({refItem.organization})</span>
+                        )}
+                        {refItem.contact && (
+                          <span className="text-black">
+                            {' '}—{' '}
+                            {refItem.contact.includes('@') ? (
+                              <a
+                                href={`mailto:${refItem.contact}`}
+                                className="hover:underline"
+                              >
+                                {refItem.contact}
+                              </a>
+                            ) : (
+                              <span>{refItem.contact}</span>
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                /* Default: 2-Column Grid */
+                <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+                  {itemsToRender.map((refItem) => (
+                    <div
+                      key={refItem.id}
+                      data-resume-item="true"
+                      className="reference-item w-full"
+                    >
+                      <div className={`${fontSizeClasses.itemTitle} ${lineSpacingClasses}`}>
+                        <span className="font-bold text-black">{refItem.name}</span>
+                        {refItem.role && (
+                          <>
+                            <span className="text-black">, </span>
+                            <span className="italic text-black font-normal">{refItem.role}</span>
+                          </>
+                        )}
+                        {refItem.organization && (
+                          <>
+                            <span className="text-black">, </span>
+                            <span className="text-black font-normal">{refItem.organization}</span>
+                          </>
+                        )}
+                      </div>
+                      {refItem.contact && (
+                        <div
+                          className={`${fontSizeClasses.subtext} ${lineSpacingClasses} text-black`}
+                        >
+                          {refItem.contact.includes('@') ? (
+                            <a
+                              href={`mailto:${refItem.contact}`}
+                              className="text-black hover:underline"
+                            >
+                              {refItem.contact}
+                            </a>
+                          ) : (
+                            <span>{refItem.contact}</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           );
         }
