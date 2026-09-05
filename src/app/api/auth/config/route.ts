@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server';
-import { isLocalAuthMode, isEmailVerificationRequired } from '@/lib/auth';
+import {
+  isLocalAuthMode,
+  isEmailVerificationRequired,
+  isGoogleAuthEnabled,
+} from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   return NextResponse.json({
     localAuthMode: isLocalAuthMode(),
-    showGoogleAuth: false,
+    showGoogleAuth: isGoogleAuthEnabled(),
     requireEmailVerification: isEmailVerificationRequired(),
   });
 }

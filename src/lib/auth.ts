@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { cookies } from 'next/headers';
 
 export const SESSION_COOKIE_NAME = 'ggresume_session';
+export const GOOGLE_OAUTH_STATE_COOKIE = 'ggresume_oauth_state';
 export const SESSION_SECRET =
   process.env.AUTH_SECRET ||
   process.env.SESSION_SECRET ||
@@ -12,6 +13,59 @@ export interface UserSession {
   email: string;
   provider: string;
   emailVerified: boolean;
+}
+
+/**
+ * Checks if Google OAuth is configured via environment variables.
+ */
+export function isGoogleAuthEnabled(): boolean {
+  return Boolean(
+    (process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) &&
+      process.env.GOOGLE_CLIENT_SECRET
+  );
+}
+
+/**
+ * Get Google OAuth client configuration.
+ */
+export function getGoogleAuthConfig() {
+  const clientId =
+    process.env.GOOGLE_CLIENT_ID ||
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+    '';
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET || '';
+  return {
+    clientId,
+    clientSecret,
+    enabled: Boolean(clientId && clientSecret),
+  };
+}
+
+/**
+ * Helper to resolve the canonical base URL for the app (handles reverse proxies & headers).
+ */
+export function getAppUrl(req?: {
+  headers?: { get: (name: string) => string | null };
+  nextUrl?: { origin?: string };
+}): string {
+  if (process.env.APP_URL) {
+    return process.env.APP_URL.replace(/\/+$/, '');
+  }
+  if (process.env.NEXTAUTH_URL) {
+    return process.env.NEXTAUTH_URL.replace(/\/+$/, '');
+  }
+  if (req?.headers) {
+    const proto = req.headers.get('x-forwarded-proto') || 'http';
+    const host =
+      req.headers.get('x-forwarded-host') || req.headers.get('host');
+    if (host) {
+      return `${proto}://${host}`;
+    }
+  }
+  if (req?.nextUrl?.origin) {
+    return req.nextUrl.origin;
+  }
+  return 'http://localhost:3000';
 }
 
 /**

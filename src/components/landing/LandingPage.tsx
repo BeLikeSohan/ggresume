@@ -26,8 +26,12 @@ function LandingPageContent() {
 
   useEffect(() => {
     const authParam = searchParams.get('auth');
+    const errorParam = searchParams.get('error');
     if (authParam === 'signin' || authParam === 'signup') {
       setAuthMode(authParam);
+      setIsAuthOpen(true);
+    } else if (errorParam) {
+      setAuthMode('signin');
       setIsAuthOpen(true);
     }
     if (searchParams.get('verified') === 'true') {

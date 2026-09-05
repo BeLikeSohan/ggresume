@@ -325,6 +325,33 @@ export async function createUserInDB(params: {
 }
 
 /**
+ * Upsert or update a Google OAuth user in PostgreSQL.
+ * If user exists by email, mark email_verified = true and return user.
+ * If user doesn't exist, create user with provider 'google' and email_verified = true.
+ */
+export async function upsertGoogleUserInDB(params: {
+  email: string;
+}): Promise<DBUser> {
+  await ensureDatabaseSchema();
+  const email = params.email.trim().toLowerCase();
+
+  const existing = await getUserByEmailFromDB(email);
+  if (existing) {
+    if (!existing.email_verified) {
+      await markUserEmailVerifiedInDB(existing.id);
+      existing.email_verified = true;
+    }
+    return existing;
+  }
+
+  return createUserInDB({
+    email,
+    provider: 'google',
+    emailVerified: true,
+  });
+}
+
+/**
  * Mark a user's email as verified
  */
 export async function markUserEmailVerifiedInDB(userId: string): Promise<boolean> {

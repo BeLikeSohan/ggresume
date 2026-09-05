@@ -120,6 +120,8 @@ npm run start
 | `POSTGRES_PORT` | `5432` | PostgreSQL port |
 | `AUTH_LOCAL_MODE` | `true` | When `true`, email verification is bypassed (instant sign up for local/Docker dev) |
 | `AUTH_SECRET` | `secret` | Secret key for signing session tokens |
+| `GOOGLE_CLIENT_ID` | `(optional)` | Google OAuth 2.0 Client ID for Google Sign-In |
+| `GOOGLE_CLIENT_SECRET` | `(optional)` | Google OAuth 2.0 Client Secret for Google Sign-In |
 | `RESEND_API_KEY` | `(optional)` | Resend API key for sending verification emails |
 | `EMAIL_FROM` | `GGResume <noreply@ggresume.com>` | Sender address for transactional emails |
 | `APP_URL` | `http://localhost:3000` | Application base URL used in verification email links |

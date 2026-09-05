@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { X, Mail, Lock, Eye, EyeOff, Loader2, ArrowRight, RefreshCw } from 'lucide-react';
 import { GGLogo } from '@/components/common/GGLogo';
+import { GoogleIcon } from '@/components/preview/Icons';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -11,17 +12,35 @@ interface AuthModalProps {
   initialMode?: 'signin' | 'signup';
 }
 
+const ERROR_MESSAGES: Record<string, string> = {
+  google_not_configured:
+    'Google Sign-In is not configured yet. Please configure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.',
+  google_access_denied: 'Google sign-in was cancelled.',
+  google_exchange_failed: 'Failed to verify Google login. Please try again.',
+  google_userinfo_failed: 'Unable to retrieve your Google profile. Please try again.',
+  google_state_mismatch: 'Google sign-in security verification failed. Please try again.',
+  google_no_code: 'Google sign-in timed out or was cancelled.',
+  google_no_email: 'No verified email found with this Google account.',
+  google_callback_failed: 'An unexpected error occurred during Google sign-in.',
+  missing_token: 'Verification link is missing or invalid.',
+  invalid_or_expired_token: 'Verification link has expired or is invalid.',
+  token_expired: 'Verification link has expired. Please request a new one.',
+  verification_failed: 'Failed to verify email. Please try again.',
+};
+
 export const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
   onClose,
   initialMode = 'signin',
 }) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Email verification pending state
@@ -32,10 +51,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   useEffect(() => {
     setMode(initialMode);
-    setError(null);
     setVerificationPending(false);
     setResendMessage(null);
-  }, [initialMode, isOpen]);
+    setIsGoogleLoading(false);
+
+    // Check for errors in URL params
+    const errCode = searchParams.get('error');
+    if (errCode) {
+      setError(ERROR_MESSAGES[errCode] || decodeURIComponent(errCode));
+    } else {
+      setError(null);
+    }
+  }, [initialMode, isOpen, searchParams]);
 
   // Handle escape key
   useEffect(() => {
@@ -49,6 +76,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
+
+  const handleGoogleSignIn = () => {
+    setError(null);
+    setIsGoogleLoading(true);
+    // Redirect to the backend OAuth initiation endpoint
+    window.location.href = '/api/auth/google';
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,7 +183,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <X size={18} />
         </button>
 
-        <div className="p-6 sm:p-8 space-y-6">
+        <div className="p-6 sm:p-8 space-y-5">
           {/* Verification Pending View */}
           {verificationPending ? (
             <div className="text-center space-y-5 py-2">
@@ -249,14 +283,50 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </button>
               </div>
 
-              {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-3.5">
-                {error && (
-                  <div className="p-2.5 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
-                    {error}
-                  </div>
-                )}
+              {/* Error Box */}
+              {error && (
+                <div className="p-2.5 rounded-xl bg-red-50 border border-red-200/80 text-red-700 text-xs font-medium leading-relaxed">
+                  {error}
+                </div>
+              )}
 
+              {/* Google Sign In Button */}
+              <div className="space-y-3">
+                <button
+                  type="button"
+                  onClick={handleGoogleSignIn}
+                  disabled={isGoogleLoading || isLoading}
+                  className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 hover:border-slate-400 text-slate-800 font-semibold text-xs sm:text-sm transition-all shadow-xs hover:shadow flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-60 active:scale-[0.99]"
+                >
+                  {isGoogleLoading ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin text-slate-500" />
+                      <span>Connecting to Google...</span>
+                    </>
+                  ) : (
+                    <>
+                      <GoogleIcon size={17} />
+                      <span>
+                        {mode === 'signin'
+                          ? 'Continue with Google'
+                          : 'Sign up with Google'}
+                      </span>
+                    </>
+                  )}
+                </button>
+
+                {/* Divider */}
+                <div className="relative flex items-center justify-center">
+                  <div className="border-t border-slate-200 w-full" />
+                  <span className="bg-white px-3 text-[11px] font-medium text-slate-400 uppercase tracking-wider">
+                    or
+                  </span>
+                  <div className="border-t border-slate-200 w-full" />
+                </div>
+              </div>
+
+              {/* Email/Password Form */}
+              <form onSubmit={handleSubmit} className="space-y-3.5">
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-700">
                     Email
@@ -311,7 +381,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                 <button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={isLoading || isGoogleLoading}
                   className="w-full mt-2 py-2.5 px-4 rounded-xl bg-slate-950 hover:bg-slate-800 text-white font-semibold text-xs sm:text-sm transition shadow-sm hover:shadow active:scale-[0.99] flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
                 >
                   {isLoading ? (
@@ -321,7 +391,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </>
                   ) : (
                     <>
-                      <span>{mode === 'signin' ? 'Sign In' : 'Create Account'}</span>
+                      <span>{mode === 'signin' ? 'Sign In with Email' : 'Create Account'}</span>
                       <ArrowRight size={14} />
                     </>
                   )}
