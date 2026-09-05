@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { X, Mail, Lock, Eye, EyeOff, Loader2, ArrowRight, RefreshCw } from 'lucide-react';
 import { GGLogo } from '@/components/common/GGLogo';
 import { GoogleIcon } from '@/components/preview/Icons';
+import { AUTH_CONFIG } from '@/hooks/useAuth';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -442,39 +443,41 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               )}
 
               {/* Google Sign In Button */}
-              <div className="space-y-3">
-                <button
-                  type="button"
-                  onClick={handleGoogleSignIn}
-                  disabled={isGoogleLoading || isLoading}
-                  className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 hover:border-slate-400 text-slate-800 font-semibold text-xs sm:text-sm transition-all shadow-xs hover:shadow flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-60 active:scale-[0.99]"
-                >
-                  {isGoogleLoading ? (
-                    <>
-                      <Loader2 size={16} className="animate-spin text-slate-500" />
-                      <span>Connecting to Google...</span>
-                    </>
-                  ) : (
-                    <>
-                      <GoogleIcon size={17} />
-                      <span>
-                        {mode === 'signin'
-                          ? 'Continue with Google'
-                          : 'Sign up with Google'}
-                      </span>
-                    </>
-                  )}
-                </button>
+              {AUTH_CONFIG.showGoogleAuth && (
+                <div className="space-y-3">
+                  <button
+                    type="button"
+                    onClick={handleGoogleSignIn}
+                    disabled={isGoogleLoading || isLoading}
+                    className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 hover:border-slate-400 text-slate-800 font-semibold text-xs sm:text-sm transition-all shadow-xs hover:shadow flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-60 active:scale-[0.99]"
+                  >
+                    {isGoogleLoading ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin text-slate-500" />
+                        <span>Connecting to Google...</span>
+                      </>
+                    ) : (
+                      <>
+                        <GoogleIcon size={17} />
+                        <span>
+                          {mode === 'signin'
+                            ? 'Continue with Google'
+                            : 'Sign up with Google'}
+                        </span>
+                      </>
+                    )}
+                  </button>
 
-                {/* Divider */}
-                <div className="relative flex items-center justify-center">
-                  <div className="border-t border-slate-200 w-full" />
-                  <span className="bg-white px-3 text-[11px] font-medium text-slate-400 uppercase tracking-wider">
-                    or
-                  </span>
-                  <div className="border-t border-slate-200 w-full" />
+                  {/* Divider */}
+                  <div className="relative flex items-center justify-center">
+                    <div className="border-t border-slate-200 w-full" />
+                    <span className="bg-white px-3 text-[11px] font-medium text-slate-400 uppercase tracking-wider">
+                      or
+                    </span>
+                    <div className="border-t border-slate-200 w-full" />
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Email/Password Form */}
               <form onSubmit={handleSubmit} className="space-y-3.5">
