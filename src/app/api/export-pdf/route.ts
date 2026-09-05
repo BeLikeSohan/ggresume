@@ -13,6 +13,19 @@ interface ExportPdfRequestBody {
 }
 
 export async function POST(req: NextRequest) {
+  const isServerPdfEnabled =
+    process.env.ENABLE_SERVER_PDF === 'true' ||
+    process.env.ENABLE_SERVER_PDF === '1' ||
+    process.env.NEXT_PUBLIC_ENABLE_SERVER_PDF === 'true' ||
+    process.env.NEXT_PUBLIC_ENABLE_SERVER_PDF === '1';
+
+  if (!isServerPdfEnabled) {
+    return NextResponse.json(
+      { error: 'Server-side PDF export is currently disabled.' },
+      { status: 403 }
+    );
+  }
+
   try {
     const body: ExportPdfRequestBody = await req.json();
     const { html, styles, resumeData, fileName = 'Resume.pdf' } = body;

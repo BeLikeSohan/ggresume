@@ -12,11 +12,21 @@ import {
   ArrowDown,
   ChevronDown,
   ChevronUp,
-  Bold,
   Sparkles,
   Award,
   BookOpen,
 } from 'lucide-react';
+import { RichTextarea } from '@/components/common/RichTextarea';
+
+function highlightsToText(highlights: string[] | undefined): string {
+  if (!highlights || highlights.length === 0) return '';
+  return highlights.join('\n');
+}
+
+function textToHighlights(text: string): string[] {
+  if (!text) return [];
+  return text.split('\n');
+}
 
 export interface CustomSectionsEditorProps {
   customSections: CustomSection[];
@@ -525,77 +535,22 @@ export const CustomSectionsEditor: React.FC<CustomSectionsEditorProps> = ({
                           </div>
 
                           {/* Bullet Highlights */}
-                          <div className="space-y-2 pt-2 border-t border-slate-200">
-                            <div className="flex items-center justify-between">
-                              <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                                Bullet Points (Optional)
-                              </label>
-                              <button
-                                type="button"
-                                onClick={() => handleAddHighlight(sec.id, item.id)}
-                                className="text-xs text-slate-900 hover:underline flex items-center gap-1 font-medium"
-                              >
-                                <Plus size={12} />
-                                Add Bullet
-                              </button>
-                            </div>
-
-                            <div className="space-y-2">
-                              {(item.highlights || []).map((bullet, bIndex) => {
-                                const inputId = `custom-bullet-${sec.id}-${item.id}-${bIndex}`;
-                                return (
-                                  <div
-                                    key={bIndex}
-                                    className="bg-white p-2.5 rounded-lg border border-slate-200 space-y-1.5 shadow-2xs"
-                                  >
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-[11px] text-slate-400 font-medium">
-                                        Bullet #{bIndex + 1}
-                                      </span>
-                                      <div className="flex items-center gap-1">
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            handleBoldHighlight(sec.id, item.id, bIndex, inputId)
-                                          }
-                                          className="flex items-center gap-1 text-[11px] text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-1.5 py-0.5 rounded transition"
-                                          title="Wrap selected text in **bold**"
-                                        >
-                                          <Bold size={11} className="stroke-[2.5]" />
-                                          <span>Bold</span>
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            handleDeleteHighlight(sec.id, item.id, bIndex)
-                                          }
-                                          className="p-1 text-slate-400 hover:text-red-600 transition"
-                                          title="Delete bullet"
-                                        >
-                                          <Trash2 size={13} />
-                                        </button>
-                                      </div>
-                                    </div>
-
-                                    <textarea
-                                      id={inputId}
-                                      rows={2}
-                                      value={bullet}
-                                      onChange={(e) =>
-                                        handleUpdateHighlight(
-                                          sec.id,
-                                          item.id,
-                                          bIndex,
-                                          e.target.value
-                                        )
-                                      }
-                                      placeholder="e.g. Achieved top 5% score in **Cloud Architecture**..."
-                                      className="w-full px-2.5 py-1.5 text-xs text-slate-800 bg-slate-50 border border-slate-200 rounded focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent leading-relaxed"
-                                    />
-                                  </div>
-                                );
-                              })}
-                            </div>
+                          <div className="pt-2 border-t border-slate-200">
+                            <RichTextarea
+                              label="Bullet Points (Optional)"
+                              helperText="Each line or bullet point is rendered with your chosen bullet marker."
+                              placeholder={`• Achieved top 5% score in **Cloud Architecture**.\n• Completed 40+ hours of hands-on laboratory implementation.`}
+                              rows={3}
+                              value={highlightsToText(item.highlights)}
+                              onChange={(text) =>
+                                handleUpdateItem(
+                                  sec.id,
+                                  item.id,
+                                  'highlights',
+                                  textToHighlights(text)
+                                )
+                              }
+                            />
                           </div>
                         </div>
                       )}

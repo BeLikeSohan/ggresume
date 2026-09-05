@@ -4,14 +4,25 @@ import React, { useState } from 'react';
 import { Project } from '@/types/resume';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { FolderGit2, Plus, Trash2, ArrowUp, ArrowDown, ChevronDown, ChevronUp, Bold } from 'lucide-react';
+import { FolderGit2, Plus, Trash2, ArrowUp, ArrowDown, ChevronDown, ChevronUp, Eye, EyeOff } from 'lucide-react';
 import { SectionHeaderWithTitle } from './SectionTitleInput';
+import { RichTextarea } from '@/components/common/RichTextarea';
 
 export interface ProjectsEditorProps {
   projects: Project[];
   title?: string;
   onTitleChange?: (title: string) => void;
   onChange: (projects: Project[]) => void;
+}
+
+function highlightsToText(highlights: string[] | undefined): string {
+  if (!highlights || highlights.length === 0) return '';
+  return highlights.join('\n');
+}
+
+function textToHighlights(text: string): string[] {
+  if (!text) return [];
+  return text.split('\n');
 }
 
 export const ProjectsEditor: React.FC<ProjectsEditorProps> = ({
@@ -31,7 +42,7 @@ export const ProjectsEditor: React.FC<ProjectsEditorProps> = ({
       subtitle: 'Platform / App Subtitle',
       technologies: 'React, Node.js, PostgreSQL, Docker',
       link: 'https://github.com/username/repo',
-      highlights: ['**Led full-stack development** using modern best practices and scalable architecture.'],
+      highlights: ['• **Led full-stack development** using modern best practices and scalable architecture.'],
     };
     onChange([...projects, newProject]);
     setExpandedId(newProject.id);
@@ -56,62 +67,6 @@ export const ProjectsEditor: React.FC<ProjectsEditorProps> = ({
     onChange(newProjects);
   };
 
-  // Highlights
-  const handleAddHighlight = (projId: string) => {
-    onChange(
-      projects.map((proj) =>
-        proj.id === projId
-          ? { ...proj, highlights: [...proj.highlights, ''] }
-          : proj
-      )
-    );
-  };
-
-  const handleUpdateHighlight = (projId: string, index: number, value: string) => {
-    onChange(
-      projects.map((proj) => {
-        if (proj.id === projId) {
-          const newHighlights = [...proj.highlights];
-          newHighlights[index] = value;
-          return { ...proj, highlights: newHighlights };
-        }
-        return proj;
-      })
-    );
-  };
-
-  const handleDeleteHighlight = (projId: string, index: number) => {
-    onChange(
-      projects.map((proj) => {
-        if (proj.id === projId) {
-          const newHighlights = proj.highlights.filter((_, i) => i !== index);
-          return { ...proj, highlights: newHighlights };
-        }
-        return proj;
-      })
-    );
-  };
-
-  const handleBoldHighlight = (projId: string, index: number, inputId: string) => {
-    if (typeof document === 'undefined') return;
-    const textarea = document.getElementById(inputId) as HTMLTextAreaElement | null;
-    if (!textarea) return;
-    const start = textarea.selectionStart ?? 0;
-    const end = textarea.selectionEnd ?? 0;
-    const proj = projects.find((p) => p.id === projId);
-    if (!proj) return;
-
-    const currentText = proj.highlights[index] || '';
-    if (start === end) {
-      const updated = currentText.substring(0, start) + '**key accomplishment**' + currentText.substring(end);
-      handleUpdateHighlight(projId, index, updated);
-    } else {
-      const selected = currentText.substring(start, end);
-      const updated = currentText.substring(0, start) + `**${selected}**` + currentText.substring(end);
-      handleUpdateHighlight(projId, index, updated);
-    }
-  };
-
   return (
     <div className="space-y-4">
       <SectionHeaderWithTitle
@@ -119,7 +74,7 @@ export const ProjectsEditor: React.FC<ProjectsEditorProps> = ({
         defaultTitle="Projects"
         value={title}
         onChange={onTitleChange}
-        description="Open-source projects, system architectures, and products you built."
+        description="Showcase standout projects, open-source work, and key features built."
         rightAction={
           <Button size="sm" variant="outline" icon={<Plus size={14} />} onClick={handleAddProject}>
             Add Project
@@ -142,7 +97,11 @@ export const ProjectsEditor: React.FC<ProjectsEditorProps> = ({
                 onClick={() => setExpandedId(isExpanded ? null : proj.id)}
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="font-semibold text-sm text-slate-800 truncate">
+                  <span
+                    className={`font-semibold text-sm truncate ${
+                      proj.hidden ? 'text-slate-400 line-through' : 'text-slate-800'
+                    }`}
+                  >
                     {proj.title || 'Untitled Project'}
                   </span>
                   {proj.subtitle && (
@@ -150,14 +109,31 @@ export const ProjectsEditor: React.FC<ProjectsEditorProps> = ({
                       — {proj.subtitle}
                     </span>
                   )}
+                  {proj.hidden && (
+                    <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-medium flex-shrink-0">
+                      Hidden
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                   <button
                     type="button"
+                    onClick={() => handleUpdate(proj.id, 'hidden', !proj.hidden)}
+                    className={`p-1 transition cursor-pointer ${
+                      proj.hidden
+                        ? 'text-amber-500 hover:text-amber-600'
+                        : 'text-slate-400 hover:text-slate-700'
+                    }`}
+                    title={proj.hidden ? 'Show on resume' : 'Hide from resume'}
+                  >
+                    {proj.hidden ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => handleMove(index, 'up')}
                     disabled={index === 0}
-                    className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 transition"
+                    className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 transition cursor-pointer"
                     title="Move up"
                   >
                     <ArrowUp size={14} />
@@ -166,7 +142,7 @@ export const ProjectsEditor: React.FC<ProjectsEditorProps> = ({
                     type="button"
                     onClick={() => handleMove(index, 'down')}
                     disabled={index === projects.length - 1}
-                    className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 transition"
+                    className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 transition cursor-pointer"
                     title="Move down"
                   >
                     <ArrowDown size={14} />
@@ -174,7 +150,7 @@ export const ProjectsEditor: React.FC<ProjectsEditorProps> = ({
                   <button
                     type="button"
                     onClick={() => handleDelete(proj.id)}
-                    className="p-1 text-slate-400 hover:text-red-600 transition ml-1"
+                    className="p-1 text-slate-400 hover:text-red-600 transition ml-1 cursor-pointer"
                     title="Delete project"
                   >
                     <Trash2 size={14} />
@@ -182,7 +158,7 @@ export const ProjectsEditor: React.FC<ProjectsEditorProps> = ({
                   <button
                     type="button"
                     onClick={() => setExpandedId(isExpanded ? null : proj.id)}
-                    className="p-1 text-slate-500 hover:text-slate-900 transition ml-1"
+                    className="p-1 text-slate-500 hover:text-slate-900 transition ml-1 cursor-pointer"
                   >
                     {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                   </button>
@@ -194,31 +170,29 @@ export const ProjectsEditor: React.FC<ProjectsEditorProps> = ({
                 <div className="p-4 space-y-3.5 bg-slate-50/50">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Input
-                      label="Project Title"
-                      placeholder="e.g. Distributed Task Queue"
+                      label="Project Name"
+                      placeholder="e.g. Distributed Task Scheduler"
                       value={proj.title}
                       onChange={(e) => handleUpdate(proj.id, 'title', e.target.value)}
                     />
                     <Input
-                      label="Subtitle / Role"
-                      placeholder="e.g. Core Maintainer"
+                      label="Subtitle / Role / Context"
+                      placeholder="e.g. Open Source Contributor / Creator"
                       value={proj.subtitle}
                       onChange={(e) => handleUpdate(proj.id, 'subtitle', e.target.value)}
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="sm:col-span-2">
-                      <Input
-                        label="Technologies Used"
-                        placeholder="e.g. Rust, Tokio, gRPC, Redis"
-                        value={proj.technologies}
-                        onChange={(e) => handleUpdate(proj.id, 'technologies', e.target.value)}
-                      />
-                    </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Input
-                      label="Live Link / GitHub"
-                      placeholder="e.g. github.com/user/project"
+                      label="Key Technologies / Stack"
+                      placeholder="e.g. Go, gRPC, etcd, Prometheus, Docker"
+                      value={proj.technologies}
+                      onChange={(e) => handleUpdate(proj.id, 'technologies', e.target.value)}
+                    />
+                    <Input
+                      label="Project URL / Repository Link"
+                      placeholder="e.g. https://github.com/yourname/project"
                       value={proj.link || ''}
                       onChange={(e) => handleUpdate(proj.id, 'link', e.target.value)}
                     />
@@ -226,75 +200,29 @@ export const ProjectsEditor: React.FC<ProjectsEditorProps> = ({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Input
-                      label="Start Date"
+                      label="Start Date (Optional)"
                       placeholder="e.g. Jan 2024"
                       value={proj.startDate || ''}
                       onChange={(e) => handleUpdate(proj.id, 'startDate', e.target.value)}
                     />
                     <Input
-                      label="End Date"
+                      label="End Date (Optional)"
                       placeholder="e.g. Present"
                       value={proj.endDate || ''}
                       onChange={(e) => handleUpdate(proj.id, 'endDate', e.target.value)}
                     />
                   </div>
 
-                  {/* Bullet Highlights */}
-                  <div className="space-y-2 pt-2 border-t border-slate-200">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                        Bullet Points (Accomplishments & Tech Details)
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => handleAddHighlight(proj.id)}
-                        className="text-xs text-slate-900 hover:underline flex items-center gap-1 font-medium"
-                      >
-                        <Plus size={12} />
-                        Add Bullet
-                      </button>
-                    </div>
-
-                    <div className="space-y-2">
-                      {proj.highlights.map((highlight, hIndex) => {
-                        const inputId = `proj-${proj.id}-h-${hIndex}`;
-                        return (
-                          <div key={hIndex} className="relative flex items-center gap-1.5">
-                            <span className="text-xs text-slate-400 font-mono w-4 text-right flex-shrink-0">
-                              •
-                            </span>
-                            <div className="relative flex-1">
-                              <textarea
-                                id={inputId}
-                                rows={2}
-                                value={highlight}
-                                onChange={(e) =>
-                                  handleUpdateHighlight(proj.id, hIndex, e.target.value)
-                                }
-                                placeholder="Architected raft consensus engine handling 10k ops/sec..."
-                                className="w-full text-xs text-slate-800 bg-white border border-slate-200 rounded-lg p-2 pr-8 focus:border-slate-900 focus:outline-none transition resize-none"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => handleBoldHighlight(proj.id, hIndex, inputId)}
-                                className="absolute right-2 top-2 p-1 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded transition"
-                                title="Make selected text bold (**bold**)"
-                              >
-                                <Bold size={13} />
-                              </button>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteHighlight(proj.id, hIndex)}
-                              className="p-1.5 text-slate-400 hover:text-red-600 transition flex-shrink-0"
-                              title="Delete bullet"
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
+                  {/* Accomplishments Rich Text Field */}
+                  <div className="pt-2 border-t border-slate-200">
+                    <RichTextarea
+                      label="Accomplishments & Bullet Points"
+                      helperText="Each line or bullet point is rendered with your chosen bullet marker. Use the formatting toolbar or shortcuts (Ctrl+B) to highlight key skills."
+                      placeholder={`• Architected high-throughput message processing pipeline handling **10k ops/sec**.\n• Integrated automated CI test suites achieving **95%** test coverage.\n• Deployed containerized microservices to AWS with zero downtime.`}
+                      rows={5}
+                      value={highlightsToText(proj.highlights)}
+                      onChange={(text) => handleUpdate(proj.id, 'highlights', textToHighlights(text))}
+                    />
                   </div>
                 </div>
               )}

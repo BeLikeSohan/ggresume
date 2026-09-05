@@ -210,13 +210,23 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({ data, onChange }) =>
           <PersonalInfoEditor
             data={data.personal}
             onChange={(personal) => onChange({ ...data, personal })}
+            headerStyle={data.settings?.headerStyle || 'grid'}
+            onHeaderStyleChange={(headerStyle) =>
+              onChange({
+                ...data,
+                settings: {
+                  ...data.settings,
+                  headerStyle,
+                },
+              })
+            }
           />
         )}
 
         {activeTab === 'profile' && (
           <ProfileEditor
             value={data.profile}
-            title={data.settings?.sectionTitles?.profile}
+            title={data.settings?.sectionTitles?.profile || 'Profile'}
             onTitleChange={(t) => handleUpdateSectionTitle('profile', t)}
             onChange={(profile) => onChange({ ...data, profile })}
           />
@@ -264,6 +274,26 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({ data, onChange }) =>
             title={data.settings?.sectionTitles?.references}
             onTitleChange={(t) => handleUpdateSectionTitle('references', t)}
             onChange={(references) => onChange({ ...data, references })}
+            style={data.settings?.referenceStyle || 'grid'}
+            onStyleChange={(referenceStyle) =>
+              onChange({
+                ...data,
+                settings: {
+                  ...data.settings,
+                  referenceStyle,
+                },
+              })
+            }
+            customText={data.settings?.referenceCustomText}
+            onCustomTextChange={(referenceCustomText) =>
+              onChange({
+                ...data,
+                settings: {
+                  ...data.settings,
+                  referenceCustomText,
+                },
+              })
+            }
           />
         )}
 

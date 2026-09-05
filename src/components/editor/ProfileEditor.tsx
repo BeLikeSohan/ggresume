@@ -1,9 +1,15 @@
 'use client';
 
-import React from 'react';
-import { Textarea } from '@/components/ui/Textarea';
-import { FileText, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import {
+  FileText,
+  Sparkles,
+  Eye,
+  EyeOff,
+} from 'lucide-react';
 import { SectionHeaderWithTitle } from './SectionTitleInput';
+import { FormattedText } from '../preview/FormattedText';
+import { RichTextarea } from '@/components/common/RichTextarea';
 
 export interface ProfileEditorProps {
   value: string;
@@ -14,37 +20,54 @@ export interface ProfileEditorProps {
 
 export const ProfileEditor: React.FC<ProfileEditorProps> = ({
   value,
-  title,
+  title = 'Profile',
   onTitleChange,
   onChange,
 }) => {
+  const [showPreview, setShowPreview] = useState(true);
+
   return (
     <div className="space-y-4">
+      {/* Section Header with default "Profile" populated */}
       <SectionHeaderWithTitle
         icon={FileText}
         defaultTitle="Profile"
-        value={title}
+        value={title || 'Profile'}
         onChange={onTitleChange}
-        description="Concise summary of your background, core technical focus, and industry achievements."
+        description="Concise summary of your background, core technical focus, and career achievements."
+        rightAction={
+          <button
+            type="button"
+            onClick={() => setShowPreview(!showPreview)}
+            className="text-xs text-slate-600 hover:text-slate-950 flex items-center gap-1.5 px-2 py-1 rounded-lg border border-slate-200 hover:bg-slate-50 transition cursor-pointer"
+            title="Toggle formatted live preview"
+          >
+            {showPreview ? <EyeOff size={13} /> : <Eye size={13} />}
+            <span>{showPreview ? 'Hide Preview' : 'Show Preview'}</span>
+          </button>
+        }
       />
 
-      <Textarea
-        label="Summary Text"
-        rows={6}
+      {/* Rich Editor Component */}
+      <RichTextarea
         value={value}
-        onTextChange={onChange}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Backend Software Engineer with 2 years of experience..."
-        helperText="Pro-tip: Highlight key technologies in bold using **keyword** (e.g. **Java/Spring Boot** or **Docker**)."
+        onChange={onChange}
+        rows={6}
+        placeholder="Backend Software Engineer with 3+ years of experience in **Go**, **Java**, and **PostgreSQL**..."
       />
 
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 flex items-start gap-2">
-        <Sparkles size={14} className="mt-0.5 text-amber-600 flex-shrink-0" />
-        <div>
-          <span className="font-semibold">Bold ATS Keywords:</span> Select any text and click the{' '}
-          <strong>Bold</strong> button above to emphasize core frameworks and skills.
+      {/* Live Formatted Text Preview */}
+      {showPreview && value && value.trim() && (
+        <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 space-y-1.5 animate-in fade-in duration-150">
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+            <Sparkles size={12} className="text-amber-500" />
+            <span>Formatted Output Preview</span>
+          </div>
+          <div className="text-xs text-slate-800 leading-relaxed font-sans select-text">
+            <FormattedText text={value} />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

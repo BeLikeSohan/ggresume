@@ -9,7 +9,26 @@ export const defaultResumeData: ResumeData = {
     website: 'washiul.com',
     github: 'github.com/belikesohan',
     linkedin: 'linkedin.com/in/washiul-alam',
-    customLinks: [],
+    customLinks: [
+      {
+        id: 'link-gh',
+        label: 'GitHub',
+        url: 'github.com/belikesohan',
+        icon: 'github',
+      },
+      {
+        id: 'link-li',
+        label: 'LinkedIn',
+        url: 'linkedin.com/in/washiul-alam',
+        icon: 'linkedin',
+      },
+      {
+        id: 'link-web',
+        label: 'Portfolio',
+        url: 'washiul.com',
+        icon: 'globe',
+      },
+    ],
   },
   profile:
     'Backend Software Engineer with 3+ years of experience designing and scaling distributed systems and web APIs. Proficient in **Go**, **Java/Spring Boot**, **TypeScript/Node.js**, **REST & gRPC APIs**, **PostgreSQL**, **Redis**, **Docker**, and **AWS**, with a focus on database performance, high availability, and clean modular architecture.',
@@ -45,9 +64,9 @@ export const defaultResumeData: ResumeData = {
       endDate: 'Present',
       isCurrent: true,
       highlights: [
-        'Architected and deployed backend microservices in **Go** and **PostgreSQL**, processing over **15M requests daily** with 99.99% uptime.',
-        'Engineered a distributed caching layer with **Redis Cluster**, reducing database read load by **45%** and decreasing p95 latency from 180ms to **35ms**.',
-        'Led migration of monolithic legacy modules into containerized services deployed with **Docker** and automated CI/CD pipelines.',
+        '• Architected and deployed backend microservices in **Go** and **PostgreSQL**, processing over **15M requests daily** with 99.99% uptime.',
+        '• Engineered a distributed caching layer with **Redis Cluster**, reducing database read load by **45%** and decreasing p95 latency from 180ms to **35ms**.',
+        '• Led migration of monolithic legacy modules into containerized services deployed with **Docker** and automated CI/CD pipelines.',
       ],
     },
     {
@@ -58,9 +77,9 @@ export const defaultResumeData: ResumeData = {
       startDate: '2021',
       endDate: '2023',
       highlights: [
-        'Developed resilient **RESTful APIs and event-driven workers** using **Node.js/TypeScript** supporting 100,000+ daily active users.',
-        'Automated CI/CD deployment pipelines using **GitHub Actions**, reducing release delivery cycle times by **40%**.',
-        'Collaborated across cross-functional engineering teams to implement real-time analytics and telemetry workflows.',
+        '• Developed resilient **RESTful APIs and event-driven workers** using **Node.js/TypeScript** supporting 100,000+ daily active users.',
+        '• Automated CI/CD deployment pipelines using **GitHub Actions**, reducing release delivery cycle times by **40%**.',
+        '• Collaborated across cross-functional engineering teams to implement real-time analytics and telemetry workflows.',
       ],
     },
   ],
@@ -72,8 +91,8 @@ export const defaultResumeData: ResumeData = {
       technologies: 'Go, Redis, PostgreSQL, Prometheus, Docker',
       link: 'https://github.com/example/cloudpulse',
       highlights: [
-        'Built a high-throughput monitoring daemon in **Go** collecting system telemetry and distributed traces with sub-millisecond collection overhead.',
-        'Integrated real-time alerting rules and automated webhook notifications for incident management workflows.',
+        '• Built a high-throughput monitoring daemon in **Go** collecting system telemetry and distributed traces with sub-millisecond collection overhead.',
+        '• Integrated real-time alerting rules and automated webhook notifications for incident management workflows.',
       ],
     },
     {
@@ -83,8 +102,8 @@ export const defaultResumeData: ResumeData = {
       technologies: 'Python, Apache Kafka, PostgreSQL, Docker',
       link: 'https://github.com/example/datasync',
       highlights: [
-        'Engineered an asynchronous ETL data pipeline ingesting **500k+ records per hour** from heterogeneous sources into PostgreSQL.',
-        'Implemented comprehensive schema validation, rate-limiting, and error-recovery mechanisms to ensure data integrity.',
+        '• Engineered an asynchronous ETL data pipeline ingesting **500k+ records per hour** from heterogeneous sources into PostgreSQL.',
+        '• Implemented comprehensive schema validation, rate-limiting, and error-recovery mechanisms to ensure data integrity.',
       ],
     },
     {
@@ -121,9 +140,10 @@ export const defaultResumeData: ResumeData = {
   ],
   customSections: [],
   settings: {
-    fontSize: 'standard',
-    lineSpacing: 'standard',
-    pageMargin: 'standard',
+    fontSize: 10,
+    lineSpacing: 1.35,
+    pageMargin: 45,
+    sectionSpacing: 13.5,
     fontFamily: 'source-sans',
     bulletStyle: 'square',
     dividerThickness: 1.5,
@@ -131,6 +151,7 @@ export const defaultResumeData: ResumeData = {
     sectionOrder: ['profile', 'skills', 'experiences', 'projects', 'educations', 'references'],
     hiddenSections: [],
     pageBreakBefore: [],
+    headerStyle: 'grid',
   },
 };
 
@@ -153,9 +174,10 @@ export const emptyResumeData: ResumeData = {
   references: [],
   customSections: [],
   settings: {
-    fontSize: 'standard',
-    lineSpacing: 'standard',
-    pageMargin: 'standard',
+    fontSize: 10,
+    lineSpacing: 1.35,
+    pageMargin: 45,
+    sectionSpacing: 13.5,
     fontFamily: 'source-sans',
     bulletStyle: 'square',
     dividerThickness: 1.5,
@@ -163,5 +185,6 @@ export const emptyResumeData: ResumeData = {
     sectionOrder: ['profile', 'skills', 'experiences', 'projects', 'educations', 'references'],
     hiddenSections: [],
     pageBreakBefore: [],
+    headerStyle: 'grid',
   },
 };
