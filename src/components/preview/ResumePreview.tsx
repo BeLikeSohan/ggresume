@@ -156,88 +156,101 @@ function estimateHeaderHeight(
   return nameHeight + mt + contactHeight;
 }
 
-function estimateSectionHeight(
+export interface PageSectionSlot {
+  sectionKey: string;
+  itemIndices?: number[];
+  isContinuation?: boolean;
+}
+
+export interface ResumePage {
+  slots: PageSectionSlot[];
+  isFirstPage: boolean;
+}
+
+function getItemEstimates(
   key: string,
   data: ResumeData,
   fontSize: number | string = 10,
   lineSpacing: number | string = 1.35,
   sectionSpacing: number | string = 13.5
-): number {
+): { index: number; height: number }[] {
   const numFontSize = resolveFontSize(fontSize);
   const numLineSpacing = resolveLineSpacing(lineSpacing);
-  const numSectionSpacing = resolveSectionSpacing(sectionSpacing);
-
   const fontMultiplier = numFontSize / 10.0;
   const lineMultiplier = numLineSpacing / 1.35;
   const scale = fontMultiplier * lineMultiplier;
 
-  const TITLE_HEIGHT = Math.max(16, Math.round(numSectionSpacing + 18 * fontMultiplier));
   const BASE_LINE_HEIGHT = Math.round(18 * scale);
   const ITEM_HEADER_HEIGHT = Math.round(22 * fontMultiplier);
 
   switch (key) {
-    case 'profile':
-      if (!data.profile) return 0;
-      const lines = Math.max(1, Math.ceil(data.profile.length / 80));
-      return TITLE_HEIGHT + lines * BASE_LINE_HEIGHT + 8;
     case 'skills': {
       const visibleSkills = (data.skills || []).filter((s) => !s.hidden);
-      if (visibleSkills.length === 0) return 0;
-      return TITLE_HEIGHT + visibleSkills.length * Math.round(22 * scale) + 8;
+      return visibleSkills.map((s, i) => {
+        const itemLines = Math.max(1, Math.ceil((s.category.length + s.items.length + 5) / 80));
+        return {
+          index: i,
+          height: itemLines * BASE_LINE_HEIGHT + 4,
+        };
+      });
     }
     case 'experiences': {
       const visibleExp = (data.experiences || []).filter((e) => !e.hidden);
-      if (visibleExp.length === 0) return 0;
-      return (
-        TITLE_HEIGHT +
-        visibleExp.reduce((acc, exp) => {
-          const highlightLines = (exp.highlights || [])
-            .filter((h) => h.trim().length > 0)
-            .reduce((hAcc, h) => {
-              return hAcc + Math.max(1, Math.ceil(h.length / 75)) * BASE_LINE_HEIGHT;
-            }, 0);
-          return acc + ITEM_HEADER_HEIGHT + highlightLines + 10;
-        }, 0)
-      );
+      return visibleExp.map((exp, i) => {
+        const highlightLines = (exp.highlights || [])
+          .filter((h) => h.trim().length > 0)
+          .reduce((hAcc, h) => {
+            return hAcc + Math.max(1, Math.ceil(h.length / 75)) * BASE_LINE_HEIGHT;
+          }, 0);
+        return {
+          index: i,
+          height: ITEM_HEADER_HEIGHT + highlightLines + 10,
+        };
+      });
     }
     case 'projects': {
       const visibleProj = (data.projects || []).filter((p) => !p.hidden);
-      if (visibleProj.length === 0) return 0;
-      return (
-        TITLE_HEIGHT +
-        visibleProj.reduce((acc, proj) => {
-          const highlightLines = (proj.highlights || [])
-            .filter((h) => h.trim().length > 0)
-            .reduce((hAcc, h) => {
-              return hAcc + Math.max(1, Math.ceil(h.length / 75)) * BASE_LINE_HEIGHT;
-            }, 0);
-          return acc + ITEM_HEADER_HEIGHT + highlightLines + 10;
-        }, 0)
-      );
+      return visibleProj.map((proj, i) => {
+        const highlightLines = (proj.highlights || [])
+          .filter((h) => h.trim().length > 0)
+          .reduce((hAcc, h) => {
+            return hAcc + Math.max(1, Math.ceil(h.length / 75)) * BASE_LINE_HEIGHT;
+          }, 0);
+        return {
+          index: i,
+          height: ITEM_HEADER_HEIGHT + highlightLines + 10,
+        };
+      });
     }
-    case 'educations':
-      if (!data.educations || data.educations.length === 0) return 0;
-      return TITLE_HEIGHT + data.educations.length * Math.round(44 * scale) + 8;
-    case 'references':
-      if (!data.references || data.references.length === 0) return 0;
-      return TITLE_HEIGHT + data.references.length * Math.round(36 * scale) + 8;
+    case 'educations': {
+      return (data.educations || []).map((_, i) => ({
+        index: i,
+        height: Math.round(44 * scale) + 8,
+      }));
+    }
+    case 'references': {
+      return (data.references || []).map((_, i) => ({
+        index: i,
+        height: Math.round(36 * scale) + 8,
+      }));
+    }
     default: {
       const customSec = (data.customSections || []).find((c) => c.id === key);
-      if (!customSec || !customSec.items || customSec.items.length === 0) return 0;
-      return (
-        TITLE_HEIGHT +
-        customSec.items.reduce((acc, item) => {
-          const descLines = item.description
-            ? Math.max(1, Math.ceil(item.description.length / 75)) * BASE_LINE_HEIGHT
-            : 0;
-          const highlightLines = (item.highlights || [])
-            .filter((h) => h.trim().length > 0)
-            .reduce((hAcc, h) => {
-              return hAcc + Math.max(1, Math.ceil(h.length / 75)) * BASE_LINE_HEIGHT;
-            }, 0);
-          return acc + ITEM_HEADER_HEIGHT + descLines + highlightLines + 10;
-        }, 0)
-      );
+      if (!customSec || !customSec.items) return [];
+      return customSec.items.map((item, i) => {
+        const descLines = item.description
+          ? Math.max(1, Math.ceil(item.description.length / 75)) * BASE_LINE_HEIGHT
+          : 0;
+        const highlightLines = (item.highlights || [])
+          .filter((h) => h.trim().length > 0)
+          .reduce((hAcc, h) => {
+            return hAcc + Math.max(1, Math.ceil(h.length / 75)) * BASE_LINE_HEIGHT;
+          }, 0);
+        return {
+          index: i,
+          height: ITEM_HEADER_HEIGHT + descLines + highlightLines + 10,
+        };
+      });
     }
   }
 }
@@ -246,53 +259,115 @@ function calculatePages(
   visibleSections: string[],
   manualBreaks: string[],
   usableHeight: number,
-  measuredHeights: Record<string, number>,
   headerHeight: number,
   data: ResumeData,
   fontSize: number | string = 10,
   lineSpacing: number | string = 1.35,
   sectionSpacing: number | string = 13.5
-): { sections: string[]; isFirstPage: boolean }[] {
+): ResumePage[] {
   if (visibleSections.length === 0) {
-    return [{ sections: [], isFirstPage: true }];
+    return [{ slots: [], isFirstPage: true }];
   }
 
-  // 14.2pt header margin-bottom in px: 14.2 * (96 / 72) = 18.93px
-  const HEADER_MB_PX = 18.93;
+  const numSectionSpacing = resolveSectionSpacing(sectionSpacing);
+  const numFontSize = resolveFontSize(fontSize);
+  const fontMultiplier = numFontSize / 10.0;
+  const lineMultiplier = resolveLineSpacing(lineSpacing) / 1.35;
+  const scale = fontMultiplier * lineMultiplier;
+  const BASE_LINE_HEIGHT = Math.round(18 * scale);
+
+  const TITLE_HEIGHT = Math.max(16, Math.round(numSectionSpacing + 18 * fontMultiplier));
+  const HEADER_MB_PX = 9.33; // 7pt in px
 
   const manualBreakSet = new Set(manualBreaks);
-  const pages: { sections: string[]; isFirstPage: boolean }[] = [];
-  let currentSections: string[] = [];
+  const pages: ResumePage[] = [];
+  let currentSlots: PageSectionSlot[] = [];
   let isFirstPage = true;
   let currentHeight = headerHeight + HEADER_MB_PX;
 
   for (const secKey of visibleSections) {
     const isManualBreak = manualBreakSet.has(secKey);
-    const secHeight =
-      measuredHeights[secKey] ||
-      estimateSectionHeight(secKey, data, fontSize, lineSpacing, sectionSpacing);
 
-    if (isManualBreak && (currentSections.length > 0 || !isFirstPage)) {
-      pages.push({ sections: currentSections, isFirstPage });
-      currentSections = [secKey];
+    if (isManualBreak && (currentSlots.length > 0 || !isFirstPage)) {
+      pages.push({ slots: currentSlots, isFirstPage });
+      currentSlots = [];
       isFirstPage = false;
-      currentHeight = secHeight;
+      currentHeight = 0;
+    }
+
+    if (secKey === 'profile') {
+      const lines = Math.max(1, Math.ceil((data.profile || '').length / 80));
+      const profileHeight = TITLE_HEIGHT + lines * BASE_LINE_HEIGHT + 8;
+
+      if (currentSlots.length > 0 && currentHeight + profileHeight > usableHeight) {
+        pages.push({ slots: currentSlots, isFirstPage });
+        currentSlots = [{ sectionKey: secKey }];
+        isFirstPage = false;
+        currentHeight = profileHeight;
+      } else {
+        currentSlots.push({ sectionKey: secKey });
+        currentHeight += profileHeight;
+      }
       continue;
     }
 
-    if (currentSections.length > 0 && currentHeight + secHeight > usableHeight) {
-      pages.push({ sections: currentSections, isFirstPage });
-      currentSections = [secKey];
-      isFirstPage = false;
-      currentHeight = secHeight;
-    } else {
-      currentSections.push(secKey);
-      currentHeight += secHeight;
+    const items = getItemEstimates(secKey, data, fontSize, lineSpacing, sectionSpacing);
+    if (items.length === 0) continue;
+
+    let itemIdx = 0;
+    let isContinuation = false;
+
+    while (itemIdx < items.length) {
+      const activeHeaderReq = isContinuation ? 0 : TITLE_HEIGHT;
+
+      // If current page cannot even fit the header + 1 item, break to new page
+      if (
+        currentSlots.length > 0 &&
+        currentHeight + activeHeaderReq + items[itemIdx].height > usableHeight
+      ) {
+        pages.push({ slots: currentSlots, isFirstPage });
+        currentSlots = [];
+        isFirstPage = false;
+        currentHeight = 0;
+      }
+
+      const headerHeightForThisChunk = isContinuation ? 0 : TITLE_HEIGHT;
+      const fittingIndices: number[] = [];
+      let chunkHeight = headerHeightForThisChunk;
+
+      while (itemIdx < items.length) {
+        const nextItemHeight = items[itemIdx].height;
+        if (
+          fittingIndices.length > 0 &&
+          currentHeight + chunkHeight + nextItemHeight > usableHeight
+        ) {
+          break;
+        }
+        fittingIndices.push(itemIdx);
+        chunkHeight += nextItemHeight;
+        itemIdx++;
+      }
+
+      currentSlots.push({
+        sectionKey: secKey,
+        itemIndices: fittingIndices,
+        isContinuation,
+      });
+      currentHeight += chunkHeight;
+      isContinuation = true;
+
+      // If there are still items left, start next page
+      if (itemIdx < items.length) {
+        pages.push({ slots: currentSlots, isFirstPage });
+        currentSlots = [];
+        isFirstPage = false;
+        currentHeight = 0;
+      }
     }
   }
 
-  if (currentSections.length > 0 || pages.length === 0) {
-    pages.push({ sections: currentSections, isFirstPage });
+  if (currentSlots.length > 0 || pages.length === 0) {
+    pages.push({ slots: currentSlots, isFirstPage });
   }
 
   return pages;
@@ -394,12 +469,11 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
       }
     });
 
-    const [pages, setPages] = useState<{ sections: string[]; isFirstPage: boolean }[]>(() =>
+    const [pages, setPages] = useState<ResumePage[]>(() =>
       calculatePages(
         visibleSections,
         effectivePageBreaks,
         usablePageHeight,
-        {},
         estimateHeaderHeight(data, numFontSize),
         data,
         numFontSize,
@@ -412,25 +486,13 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
       if (typeof window === 'undefined') return;
 
       const container = document.getElementById('resume-print-node');
-      if (!container) return;
-
-      const headerEl = container.querySelector('[data-resume-header]') as HTMLElement | null;
+      const headerEl = container?.querySelector('[data-resume-header]') as HTMLElement | null;
       const headerHeight = headerEl ? headerEl.offsetHeight : estimateHeaderHeight(data, numFontSize);
-
-      const sectionEls = container.querySelectorAll<HTMLElement>('[data-resume-section]');
-      const measured: Record<string, number> = {};
-      sectionEls.forEach((el) => {
-        const key = el.getAttribute('data-resume-section');
-        if (key) {
-          measured[key] = Math.max(el.offsetHeight, el.scrollHeight);
-        }
-      });
 
       const nextPages = calculatePages(
         visibleSections,
         effectivePageBreaks,
         usablePageHeight,
-        measured,
         headerHeight,
         data,
         numFontSize,
@@ -444,8 +506,14 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
           prev.every(
             (p, i) =>
               p.isFirstPage === nextPages[i].isFirstPage &&
-              p.sections.length === nextPages[i].sections.length &&
-              p.sections.every((s, si) => s === nextPages[i].sections[si])
+              p.slots.length === nextPages[i].slots.length &&
+              p.slots.every(
+                (s, si) =>
+                  s.sectionKey === nextPages[i].slots[si].sectionKey &&
+                  s.isContinuation === nextPages[i].slots[si].isContinuation &&
+                  JSON.stringify(s.itemIndices) ===
+                    JSON.stringify(nextPages[i].slots[si].itemIndices)
+              )
           );
         return isSame ? prev : nextPages;
       });
@@ -515,7 +583,8 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
     );
 
     // Render Section Content
-    const renderSection = (sectionKey: string, isFirstOnPage = false) => {
+    const renderSection = (slot: PageSectionSlot, isFirstOnPage = false) => {
+      const sectionKey = slot.sectionKey;
       if (hiddenSections.includes(sectionKey)) return null;
 
       switch (sectionKey) {
@@ -532,12 +601,23 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
 
         case 'skills': {
           const visibleSkills = (skills || []).filter((s) => !s.hidden);
-          if (visibleSkills.length === 0) return null;
+          const itemsToRender = slot.itemIndices
+            ? slot.itemIndices.map((i) => visibleSkills[i]).filter(Boolean)
+            : visibleSkills;
+          if (itemsToRender.length === 0) return null;
+          const sectionTitle = slot.isContinuation
+            ? `${getSectionTitle('skills', 'Skills')} (Continued)`
+            : getSectionTitle('skills', 'Skills');
+
           return (
-            <div key="skills" data-resume-section="skills" className="resume-section w-full">
-              {renderSectionTitle(getSectionTitle('skills', 'Skills'), isFirstOnPage)}
+            <div
+              key={`skills-${slot.isContinuation ? 'cont' : 'main'}`}
+              data-resume-section="skills"
+              className="resume-section w-full"
+            >
+              {renderSectionTitle(sectionTitle, isFirstOnPage)}
               <div className="flex flex-col gap-0">
-                {visibleSkills.map((s) => (
+                {itemsToRender.map((s) => (
                   <div key={s.id} className={`${fontSizeClasses.body} ${lineSpacingClasses} text-black`}>
                     <span className="font-bold text-black">{s.category}</span>
                     <span className="mx-1 text-black font-normal">—</span>
@@ -551,12 +631,23 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
 
         case 'experiences': {
           const visibleExperiences = (experiences || []).filter((e) => !e.hidden);
-          if (visibleExperiences.length === 0) return null;
+          const itemsToRender = slot.itemIndices
+            ? slot.itemIndices.map((i) => visibleExperiences[i]).filter(Boolean)
+            : visibleExperiences;
+          if (itemsToRender.length === 0) return null;
+          const sectionTitle = slot.isContinuation
+            ? `${getSectionTitle('experiences', 'Professional Experience')} (Continued)`
+            : getSectionTitle('experiences', 'Professional Experience');
+
           return (
-            <div key="experiences" data-resume-section="experiences" className="resume-section w-full">
-              {renderSectionTitle(getSectionTitle('experiences', 'Professional Experience'), isFirstOnPage)}
+            <div
+              key={`experiences-${slot.isContinuation ? 'cont' : 'main'}`}
+              data-resume-section="experiences"
+              className="resume-section w-full"
+            >
+              {renderSectionTitle(sectionTitle, isFirstOnPage)}
               <div className="flex flex-col gap-[8.4pt]">
-                {visibleExperiences.map((exp) => (
+                {itemsToRender.map((exp) => (
                   <div key={exp.id} className="experience-item w-full">
                     {/* Top right date & location floated so accomplishments text-wrap around it */}
                     {(exp.startDate || exp.endDate || exp.isCurrent || exp.location) && (
@@ -649,12 +740,23 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
 
         case 'projects': {
           const visibleProjects = (projects || []).filter((p) => !p.hidden);
-          if (visibleProjects.length === 0) return null;
+          const itemsToRender = slot.itemIndices
+            ? slot.itemIndices.map((i) => visibleProjects[i]).filter(Boolean)
+            : visibleProjects;
+          if (itemsToRender.length === 0) return null;
+          const sectionTitle = slot.isContinuation
+            ? `${getSectionTitle('projects', 'Projects')} (Continued)`
+            : getSectionTitle('projects', 'Projects');
+
           return (
-            <div key="projects" data-resume-section="projects" className="resume-section w-full">
-              {renderSectionTitle(getSectionTitle('projects', 'Projects'), isFirstOnPage)}
+            <div
+              key={`projects-${slot.isContinuation ? 'cont' : 'main'}`}
+              data-resume-section="projects"
+              className="resume-section w-full"
+            >
+              {renderSectionTitle(sectionTitle, isFirstOnPage)}
               <div className="flex flex-col gap-[8.4pt]">
-                {visibleProjects.map((proj) => (
+                {itemsToRender.map((proj) => (
                   <div key={proj.id} className="project-item w-full">
                     <div className="flex justify-between items-baseline">
                       <div className={`${fontSizeClasses.itemTitle} ${lineSpacingClasses} flex-1 mr-4`}>
@@ -731,13 +833,25 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
           );
         }
 
-        case 'educations':
+        case 'educations': {
           if (!educations || educations.length === 0) return null;
+          const itemsToRender = slot.itemIndices
+            ? slot.itemIndices.map((i) => educations[i]).filter(Boolean)
+            : educations;
+          if (itemsToRender.length === 0) return null;
+          const sectionTitle = slot.isContinuation
+            ? `${getSectionTitle('educations', 'Education')} (Continued)`
+            : getSectionTitle('educations', 'Education');
+
           return (
-            <div key="educations" data-resume-section="educations" className="resume-section w-full">
-              {renderSectionTitle(getSectionTitle('educations', 'Education'), isFirstOnPage)}
+            <div
+              key={`educations-${slot.isContinuation ? 'cont' : 'main'}`}
+              data-resume-section="educations"
+              className="resume-section w-full"
+            >
+              {renderSectionTitle(sectionTitle, isFirstOnPage)}
               <div className="flex flex-col gap-[8.4pt]">
-                {educations.map((edu) => (
+                {itemsToRender.map((edu) => (
                   <div key={edu.id} className="education-item w-full">
                     <div className="flex justify-between items-baseline">
                       <div className={`${fontSizeClasses.itemTitle} ${lineSpacingClasses}`}>
@@ -772,14 +886,27 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
               </div>
             </div>
           );
+        }
 
-        case 'references':
+        case 'references': {
           if (!references || references.length === 0) return null;
+          const itemsToRender = slot.itemIndices
+            ? slot.itemIndices.map((i) => references[i]).filter(Boolean)
+            : references;
+          if (itemsToRender.length === 0) return null;
+          const sectionTitle = slot.isContinuation
+            ? `${getSectionTitle('references', 'References')} (Continued)`
+            : getSectionTitle('references', 'References');
+
           return (
-            <div key="references" data-resume-section="references" className="resume-section w-full">
-              {renderSectionTitle(getSectionTitle('references', 'References'), isFirstOnPage)}
-              <div className="flex flex-col gap-[5.4pt]">
-                {references.map((refItem) => (
+            <div
+              key={`references-${slot.isContinuation ? 'cont' : 'main'}`}
+              data-resume-section="references"
+              className="resume-section w-full"
+            >
+              {renderSectionTitle(sectionTitle, isFirstOnPage)}
+              <div className="grid grid-cols-2 gap-4">
+                {itemsToRender.map((refItem) => (
                   <div key={refItem.id} className="reference-item w-full">
                     <div className={`${fontSizeClasses.itemTitle} ${lineSpacingClasses}`}>
                       <span className="font-bold text-black">{refItem.name}</span>
@@ -815,17 +942,29 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
               </div>
             </div>
           );
+        }
 
         default: {
           // Custom sections
-          const customSec = (customSections || []).find((c) => c.id === sectionKey);
+          const customSec = (allCustomSections || []).find((c) => c.id === sectionKey);
           if (!customSec || !customSec.items || customSec.items.length === 0) return null;
+          const itemsToRender = slot.itemIndices
+            ? slot.itemIndices.map((i) => customSec.items[i]).filter(Boolean)
+            : customSec.items;
+          if (itemsToRender.length === 0) return null;
+          const sectionTitle = slot.isContinuation
+            ? `${customSec.title || 'Custom Section'} (Continued)`
+            : customSec.title || 'Custom Section';
 
           return (
-            <div key={customSec.id} data-resume-section={customSec.id} className="resume-section w-full">
-              {renderSectionTitle(customSec.title || 'Custom Section', isFirstOnPage)}
+            <div
+              key={`${customSec.id}-${slot.isContinuation ? 'cont' : 'main'}`}
+              data-resume-section={customSec.id}
+              className="resume-section w-full"
+            >
+              {renderSectionTitle(sectionTitle, isFirstOnPage)}
               <div className="flex flex-col gap-[8.4pt]">
-                {customSec.items.map((item) => {
+                {itemsToRender.map((item) => {
                   if (
                     !item.title &&
                     !item.subtitle &&
@@ -1224,8 +1363,8 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
 
               {/* Sections for this Page */}
               <div className="resume-body">
-                {page.sections.map((sectionKey, secIdx) =>
-                  renderSection(sectionKey, page.isFirstPage ? false : secIdx === 0)
+                {page.slots.map((slot, slotIdx) =>
+                  renderSection(slot, page.isFirstPage ? false : slotIdx === 0)
                 )}
               </div>
 
