@@ -226,7 +226,7 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({ data, onChange }) =>
         {activeTab === 'profile' && (
           <ProfileEditor
             value={data.profile}
-            title={data.settings?.sectionTitles?.profile}
+            title={data.settings?.sectionTitles?.profile || 'Profile'}
             onTitleChange={(t) => handleUpdateSectionTitle('profile', t)}
             onChange={(profile) => onChange({ ...data, profile })}
           />
