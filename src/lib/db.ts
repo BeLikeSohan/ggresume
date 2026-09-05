@@ -86,6 +86,16 @@ export async function ensureDatabaseSchema(): Promise<void> {
 
         CREATE INDEX IF NOT EXISTS idx_verification_tokens_user_id ON verification_tokens(user_id);
 
+        CREATE TABLE IF NOT EXISTS password_reset_tokens (
+          token VARCHAR(255) PRIMARY KEY,
+          user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          email VARCHAR(255) NOT NULL,
+          expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user_id ON password_reset_tokens(user_id);
+
         CREATE TABLE IF NOT EXISTS resumes (
           id VARCHAR(255) PRIMARY KEY,
           user_id VARCHAR(255) REFERENCES users(id) ON DELETE CASCADE,
@@ -426,5 +436,91 @@ export async function getVerificationTokenFromDB(token: string): Promise<{
 export async function deleteVerificationTokenFromDB(token: string): Promise<boolean> {
   await ensureDatabaseSchema();
   const res = await pool.query('DELETE FROM verification_tokens WHERE token = $1', [token]);
+  return (res.rowCount ?? 0) > 0;
+}
+
+/**
+ * Create a password reset token in PostgreSQL
+ */
+export async function createPasswordResetTokenInDB(params: {
+  userId: string;
+  email: string;
+  token: string;
+  expiresInHours?: number;
+  expiresAt?: Date;
+}): Promise<{ token: string; expiresAt: Date }> {
+  await ensureDatabaseSchema();
+  const { userId, email, token, expiresInHours = 1, expiresAt: customExpiresAt } = params;
+  const expiresAt =
+    customExpiresAt || new Date(Date.now() + expiresInHours * 60 * 60 * 1000);
+
+  // Delete any existing password reset tokens for this user
+  await pool.query('DELETE FROM password_reset_tokens WHERE user_id = $1', [userId]);
+
+  await pool.query(
+    `INSERT INTO password_reset_tokens (token, user_id, email, expires_at)
+     VALUES ($1, $2, $3, $4)`,
+    [token, userId, email, expiresAt]
+  );
+
+  return { token, expiresAt };
+}
+
+/**
+ * Find and validate a password reset token
+ */
+export async function getPasswordResetTokenFromDB(token: string): Promise<{
+  token: string;
+  userId: string;
+  email: string;
+  expiresAt: Date;
+  isExpired: boolean;
+} | null> {
+  await ensureDatabaseSchema();
+  const res = await pool.query(
+    'SELECT token, user_id, email, expires_at FROM password_reset_tokens WHERE token = $1 LIMIT 1',
+    [token]
+  );
+
+  if (res.rows.length === 0) return null;
+
+  const row = res.rows[0];
+  const expiresAt = new Date(row.expires_at);
+  const isExpired = expiresAt.getTime() < Date.now();
+
+  return {
+    token: row.token,
+    userId: row.user_id,
+    email: row.email,
+    expiresAt,
+    isExpired,
+  };
+}
+
+/**
+ * Delete a password reset token after use
+ */
+export async function deletePasswordResetTokenFromDB(token: string): Promise<boolean> {
+  await ensureDatabaseSchema();
+  const res = await pool.query('DELETE FROM password_reset_tokens WHERE token = $1', [
+    token,
+  ]);
+  return (res.rowCount ?? 0) > 0;
+}
+
+/**
+ * Update a user's password hash and ensure email is marked verified
+ */
+export async function updateUserPasswordInDB(
+  userId: string,
+  newPasswordHash: string
+): Promise<boolean> {
+  await ensureDatabaseSchema();
+  const res = await pool.query(
+    `UPDATE users
+     SET password_hash = $1, email_verified = TRUE, updated_at = CURRENT_TIMESTAMP
+     WHERE id = $2`,
+    [newPasswordHash, userId]
+  );
   return (res.rowCount ?? 0) > 0;
 }

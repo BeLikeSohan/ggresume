@@ -9,7 +9,7 @@ import { GoogleIcon } from '@/components/preview/Icons';
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialMode?: 'signin' | 'signup';
+  initialMode?: 'signin' | 'signup' | 'forgot-password';
 }
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -35,7 +35,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
+  const [mode, setMode] = useState<'signin' | 'signup' | 'forgot-password'>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -49,10 +49,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [isResending, setIsResending] = useState(false);
   const [resendMessage, setResendMessage] = useState<string | null>(null);
 
+  // Forgot password state
+  const [forgotSent, setForgotSent] = useState(false);
+  const [forgotMessage, setForgotMessage] = useState<string | null>(null);
+
   useEffect(() => {
     setMode(initialMode);
     setVerificationPending(false);
     setResendMessage(null);
+    setForgotSent(false);
+    setForgotMessage(null);
     setIsGoogleLoading(false);
 
     // Check for errors in URL params
@@ -86,6 +92,42 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (mode === 'forgot-password') {
+      if (!email || !email.includes('@')) {
+        setError('Please enter a valid email address.');
+        return;
+      }
+
+      setError(null);
+      setIsLoading(true);
+
+      try {
+        const res = await fetch('/api/auth/forgot-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email.trim() }),
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to send reset email.');
+        }
+
+        setIsLoading(false);
+        setForgotSent(true);
+        setForgotMessage(
+          data.message ||
+            'If an account exists with this email, a reset link has been sent.'
+        );
+      } catch (err: any) {
+        setIsLoading(false);
+        setError(err.message || 'An error occurred. Please try again.');
+      }
+      return;
+    }
+
     if (!email || !password) {
       setError('Please fill in both email and password.');
       return;
@@ -234,6 +276,115 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </button>
               </div>
             </div>
+          ) : mode === 'forgot-password' ? (
+            <div className="space-y-5">
+              {/* Header */}
+              <div className="text-center space-y-2 pt-1">
+                <div className="flex justify-center">
+                  <GGLogo size="md" showWordmark={false} />
+                </div>
+                <h2 className="text-xl font-bold text-slate-950 tracking-tight">
+                  Reset your password
+                </h2>
+                <p className="text-xs text-slate-500 max-w-xs mx-auto">
+                  Enter the email address associated with your account, and we&apos;ll send you a password reset link.
+                </p>
+              </div>
+
+              {/* Error Box */}
+              {error && (
+                <div className="p-2.5 rounded-xl bg-red-50 border border-red-200/80 text-red-700 text-xs font-medium leading-relaxed">
+                  {error}
+                </div>
+              )}
+
+              {forgotSent ? (
+                <div className="space-y-4 py-2">
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 text-xs font-medium leading-relaxed flex items-start gap-2.5">
+                    <Mail size={16} className="text-slate-900 flex-shrink-0 mt-0.5" />
+                    <span>{forgotMessage}</span>
+                  </div>
+
+                  <div className="space-y-2.5 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setForgotSent(false);
+                        setError(null);
+                      }}
+                      className="w-full py-2.5 px-4 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-800 font-semibold text-xs transition flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                    >
+                      <span>Resend or use another email</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMode('signin');
+                        setError(null);
+                        setForgotSent(false);
+                      }}
+                      className="text-xs text-slate-500 hover:text-slate-900 transition underline underline-offset-4 cursor-pointer block mx-auto"
+                    >
+                      Back to Sign In
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-3.5">
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-700">
+                      Email address
+                    </label>
+                    <div className="relative">
+                      <Mail
+                        size={14}
+                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                      />
+                      <input
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="you@example.com"
+                        className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-slate-300 text-slate-900 text-xs sm:text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:border-transparent transition"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full mt-2 py-2.5 px-4 rounded-xl bg-slate-950 hover:bg-slate-800 text-white font-semibold text-xs sm:text-sm transition shadow-sm hover:shadow active:scale-[0.99] flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 size={14} className="animate-spin" />
+                        <span>Sending reset link...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Send Reset Link</span>
+                        <ArrowRight size={14} />
+                      </>
+                    )}
+                  </button>
+
+                  <div className="pt-2 text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMode('signin');
+                        setError(null);
+                      }}
+                      className="text-xs text-slate-500 hover:text-slate-900 transition underline underline-offset-4 cursor-pointer"
+                    >
+                      Back to Sign In
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
           ) : (
             <>
               {/* Header */}
@@ -348,9 +499,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-700">
-                    Password
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-semibold text-slate-700">
+                      Password
+                    </label>
+                    {mode === 'signin' && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMode('forgot-password');
+                          setError(null);
+                          setForgotSent(false);
+                        }}
+                        className="text-[11px] font-medium text-slate-500 hover:text-slate-900 transition underline underline-offset-2 cursor-pointer"
+                      >
+                        Forgot password?
+                      </button>
+                    )}
+                  </div>
                   <div className="relative">
                     <Lock
                       size={14}
