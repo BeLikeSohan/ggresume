@@ -5,6 +5,9 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['puppeteer'],
   },
+  images: {
+    minimumCacheTTL: 31536000,
+  },
   async redirects() {
     return [
       {
