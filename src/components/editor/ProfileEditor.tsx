@@ -55,19 +55,6 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({
         rows={6}
         placeholder="Backend Software Engineer with 3+ years of experience in **Go**, **Java**, and **PostgreSQL**..."
       />
-
-      {/* Live Formatted Text Preview */}
-      {showPreview && value && value.trim() && (
-        <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 space-y-1.5 animate-in fade-in duration-150">
-          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-            <Sparkles size={12} className="text-amber-500" />
-            <span>Formatted Output Preview</span>
-          </div>
-          <div className="text-xs text-slate-800 leading-relaxed font-sans select-text">
-            <FormattedText text={value} />
-          </div>
-        </div>
-      )}
     </div>
   );
 };
