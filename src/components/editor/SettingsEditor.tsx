@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { ResumeSettings } from '@/types/resume';
-import { Settings, ArrowUp, ArrowDown, Eye, EyeOff, SplitSquareVertical } from 'lucide-react';
+import { Settings, ArrowUp, ArrowDown, Eye, EyeOff, SplitSquareVertical, GripVertical } from 'lucide-react';
 import { HeaderStyleSelector } from '@/components/common/HeaderStyleSelector';
 import { NumericSliderControl } from '@/components/common/NumericSliderControl';
 import {
@@ -38,6 +38,9 @@ export const SettingsEditor: React.FC<SettingsEditorProps> = ({
   );
   const effectiveSectionOrder = [...currentOrder, ...missingKeys];
 
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
   const handleUpdate = <K extends keyof ResumeSettings>(key: K, value: ResumeSettings[K]) => {
     onChange({
       ...settings,
@@ -72,6 +75,42 @@ export const SettingsEditor: React.FC<SettingsEditorProps> = ({
       ? currentBreaks.filter((k) => k !== sectionKey)
       : [...currentBreaks, sectionKey];
     handleUpdate('pageBreakBefore', newBreaks);
+  };
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(index));
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === targetIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    const newOrder = [...effectiveSectionOrder];
+    const [moved] = newOrder.splice(draggedIndex, 1);
+    newOrder.splice(targetIndex, 0, moved);
+
+    handleUpdate('sectionOrder', newOrder);
+    setDraggedIndex(null);
+    setDragOverIndex(null);
   };
 
   return (
@@ -244,25 +283,47 @@ export const SettingsEditor: React.FC<SettingsEditorProps> = ({
           Section Order & Visibility
         </label>
         <p className="text-xs text-slate-500">
-          Use the arrows to rearrange sections on your resume or toggle the eye icon to hide/show them.
+          Drag and drop sections or use the arrows to rearrange them. Toggle the eye icon to show/hide sections.
         </p>
 
         <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 overflow-hidden shadow-xs">
           {effectiveSectionOrder.map((secKey, index) => {
             const isHidden = (settings.hiddenSections || []).includes(secKey);
             const title = sectionNames[secKey] || secKey;
+            const isBeingDragged = draggedIndex === index;
+            const isDropTarget = dragOverIndex === index && draggedIndex !== index;
 
             return (
               <div
                 key={secKey}
-                className={`px-3 py-2 flex items-center justify-between text-xs transition ${
-                  isHidden ? 'bg-slate-50 text-slate-400' : 'text-slate-800'
+                draggable
+                onDragStart={(e) => handleDragStart(e, index)}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDragEnd={handleDragEnd}
+                onDrop={(e) => handleDrop(e, index)}
+                className={`px-3 py-2 flex items-center justify-between text-xs transition select-none ${
+                  isBeingDragged
+                    ? 'opacity-40 bg-slate-100 border-dashed border-slate-300'
+                    : isDropTarget
+                    ? 'bg-blue-50/80 ring-2 ring-blue-500/30 z-10'
+                    : isHidden
+                    ? 'bg-slate-50 text-slate-400'
+                    : 'bg-white text-slate-800 hover:bg-slate-50/80'
                 }`}
               >
                 <div className="flex items-center gap-2">
+                  <div
+                    className="text-slate-400 hover:text-slate-600 cursor-grab active:cursor-grabbing p-0.5 transition"
+                    title="Drag to reorder"
+                  >
+                    <GripVertical size={15} />
+                  </div>
                   <button
                     type="button"
-                    onClick={() => toggleSectionVisibility(secKey)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleSectionVisibility(secKey);
+                    }}
                     className={`p-1 rounded hover:bg-slate-200 transition ${
                       isHidden ? 'text-slate-400' : 'text-slate-700'
                     }`}
@@ -275,7 +336,7 @@ export const SettingsEditor: React.FC<SettingsEditorProps> = ({
                   </span>
                 </div>
 
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1" onMouseDown={(e) => e.stopPropagation()}>
                   {index > 0 && (() => {
                     const rawBreaks = settings.pageBreakBefore || [];
                     const currentBreaks =
