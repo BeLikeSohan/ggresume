@@ -85,7 +85,6 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
   const handleDownloadPdf = async () => {
     if (!previewRef.current) return;
     setIsDownloading(true);
-    setDownloadStatus('Preparing PDF...');
 
     try {
       const fileName = `${
@@ -95,15 +94,10 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
       await exportResumeToPdf(previewRef.current, {
         fileName,
         resumeData,
-        onProgress: (status) => setDownloadStatus(status),
       });
-
-      setDownloadStatus('Downloaded successfully!');
-      setTimeout(() => setDownloadStatus(null), 3500);
     } catch (error) {
       console.error(error);
-      alert('Could not export PDF. Please try again!');
-      setDownloadStatus(null);
+      alert('Could not open print dialog. Please try again!');
     } finally {
       setIsDownloading(false);
     }
@@ -172,7 +166,7 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
 
         {/* Right Side: Live Resume Preview */}
         <div
-          className={`w-full lg:w-[52%] xl:w-[56%] h-full flex flex-col bg-slate-200/90 overflow-hidden relative ${
+          className={`preview-column w-full lg:w-[52%] xl:w-[56%] h-full flex flex-col bg-slate-200/90 overflow-hidden relative ${
             mobileView === 'preview' ? 'flex' : 'hidden lg:flex'
           }`}
         >
@@ -185,8 +179,8 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
           />
 
           {/* Scrollable Viewport */}
-          <div className="flex-1 overflow-auto p-4 md:p-8 flex justify-center items-start scrollbar-thin">
-            <div className="my-2">
+          <div className="preview-viewport flex-1 overflow-auto p-4 md:p-8 flex justify-center items-start scrollbar-thin">
+            <div className="preview-inner my-2">
               <ResumePreview
                 ref={previewRef}
                 data={resumeData}

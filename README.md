@@ -44,8 +44,8 @@ High-performance, ATS-optimized software engineering resume builder.
 - **Density Controls**: Configurable font sizing (Compact, Standard, Spacious), line heights, page margins, and divider styles.
 
 ### High-Fidelity PDF Export
-- **Puppeteer Headless Chromium**: Generates pixel-perfect, vector-sharp PDFs via the `/api/export-pdf` server endpoint.
-- **Browser Print Fallback**: Clean print stylesheet (`@media print`) for instant native browser printing (`Ctrl+P` / `Cmd+P`).
+- **Native Browser Print (`window.print()`)**: Generates pixel-perfect, vector-sharp PDFs directly using the browser's native print engine.
+- **Dedicated Print Stylesheet**: Precision `@media print` rules with zero-margin A4 pagination, exact color reproduction, and full font fidelity.
 
 ### Direct PostgreSQL Persistence
 - Resumes are stored directly in PostgreSQL with `JSONB` for schema flexibility and fast queries.
@@ -124,7 +124,6 @@ npm run start
 | `EMAIL_FROM` | `GGResume <noreply@ggresume.com>` | Sender address for transactional emails |
 | `APP_URL` | `http://localhost:3000` | Application base URL used in verification email links |
 | `PORT` | `3000` | Port for the Next.js frontend service |
-| `PUPPETEER_EXECUTABLE_PATH` | `/usr/bin/chromium` (Docker container) | Custom path to Chromium executable |
 
 ---
 
