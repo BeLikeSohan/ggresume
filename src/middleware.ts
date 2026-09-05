@@ -89,7 +89,9 @@ export async function middleware(req: NextRequest) {
   // 2. Protected paths check
   const isProtectedPage =
     pathname.startsWith('/dashboard') || pathname.startsWith('/editor');
-  const isProtectedApi = pathname.startsWith('/api/resumes');
+  const isProtectedApi =
+    pathname.startsWith('/api/resumes') ||
+    pathname.startsWith('/api/export-pdf');
 
   if (!isProtectedPage && !isProtectedApi) {
     return NextResponse.next();
@@ -129,5 +131,6 @@ export const config = {
     '/dashboard/:path*',
     '/editor/:path*',
     '/api/resumes/:path*',
+    '/api/export-pdf/:path*',
   ],
 };
