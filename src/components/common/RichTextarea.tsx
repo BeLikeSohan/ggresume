@@ -16,6 +16,7 @@ export interface RichTextareaProps {
   placeholder?: string;
   value: string;
   rows?: number;
+  showBullets?: boolean;
   className?: string;
   onChange: (value: string) => void;
 }
@@ -26,6 +27,7 @@ export const RichTextarea: React.FC<RichTextareaProps> = ({
   placeholder,
   value,
   rows = 5,
+  showBullets = true,
   className = '',
   onChange,
 }) => {
@@ -190,7 +192,8 @@ export const RichTextarea: React.FC<RichTextareaProps> = ({
             {label}
           </label>
           <span className="text-[11px] text-slate-400">
-            {lineCount} {lineCount === 1 ? 'bullet' : 'bullets'} · {wordCount} words
+            {showBullets ? `${lineCount} ${lineCount === 1 ? 'bullet' : 'bullets'} · ` : ''}
+            {wordCount} {wordCount === 1 ? 'word' : 'words'}
           </span>
         </div>
       )}
@@ -241,14 +244,16 @@ export const RichTextarea: React.FC<RichTextareaProps> = ({
               <Code size={13} className="stroke-[2.5]" />
             </button>
 
-            <button
-              type="button"
-              onClick={toggleBulletList}
-              title="Toggle Bullet Point List (• item)"
-              className="p-1.5 rounded-lg text-slate-700 hover:text-slate-950 hover:bg-slate-200/80 active:bg-slate-300 transition cursor-pointer"
-            >
-              <List size={13} className="stroke-[2.5]" />
-            </button>
+            {showBullets && (
+              <button
+                type="button"
+                onClick={toggleBulletList}
+                title="Toggle Bullet Point List (• item)"
+                className="p-1.5 rounded-lg text-slate-700 hover:text-slate-950 hover:bg-slate-200/80 active:bg-slate-300 transition cursor-pointer"
+              >
+                <List size={13} className="stroke-[2.5]" />
+              </button>
+            )}
 
             <div className="h-3.5 w-px bg-slate-300 mx-0.5" />
 

@@ -20,6 +20,7 @@ export interface SkillCategory {
   id: string;
   category: string;
   items: string; // e.g., "**Spring Boot**, **NestJS**, Gin, FastAPI, React"
+  hidden?: boolean;
 }
 
 export interface Experience {

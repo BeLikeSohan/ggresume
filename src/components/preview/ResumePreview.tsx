@@ -180,9 +180,11 @@ function estimateSectionHeight(
       if (!data.profile) return 0;
       const lines = Math.max(1, Math.ceil(data.profile.length / 80));
       return TITLE_HEIGHT + lines * BASE_LINE_HEIGHT + 8;
-    case 'skills':
-      if (!data.skills || data.skills.length === 0) return 0;
-      return TITLE_HEIGHT + data.skills.length * Math.round(22 * scale) + 8;
+    case 'skills': {
+      const visibleSkills = (data.skills || []).filter((s) => !s.hidden);
+      if (visibleSkills.length === 0) return 0;
+      return TITLE_HEIGHT + visibleSkills.length * Math.round(22 * scale) + 8;
+    }
     case 'experiences': {
       const visibleExp = (data.experiences || []).filter((e) => !e.hidden);
       if (visibleExp.length === 0) return 0;
@@ -365,7 +367,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
         case 'profile':
           return Boolean(profile && profile.trim());
         case 'skills':
-          return Boolean(skills && skills.length > 0);
+          return Boolean(skills && skills.some((s) => !s.hidden));
         case 'experiences':
           return Boolean(experiences && experiences.some((e) => !e.hidden));
         case 'projects':
@@ -528,13 +530,14 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
             </div>
           );
 
-        case 'skills':
-          if (!skills || skills.length === 0) return null;
+        case 'skills': {
+          const visibleSkills = (skills || []).filter((s) => !s.hidden);
+          if (visibleSkills.length === 0) return null;
           return (
             <div key="skills" data-resume-section="skills" className="resume-section w-full">
               {renderSectionTitle(getSectionTitle('skills', 'Skills'), isFirstOnPage)}
               <div className="flex flex-col gap-0">
-                {skills.map((s) => (
+                {visibleSkills.map((s) => (
                   <div key={s.id} className={`${fontSizeClasses.body} ${lineSpacingClasses} text-black`}>
                     <span className="font-bold text-black">{s.category}</span>
                     <span className="mx-1 text-black font-normal">—</span>
@@ -544,6 +547,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
               </div>
             </div>
           );
+        }
 
         case 'experiences': {
           const visibleExperiences = (experiences || []).filter((e) => !e.hidden);

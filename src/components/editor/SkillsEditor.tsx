@@ -3,8 +3,9 @@
 import React from 'react';
 import { SkillCategory } from '@/types/resume';
 import { Button } from '@/components/ui/Button';
-import { Cpu, Plus, Trash2, ArrowUp, ArrowDown, Bold } from 'lucide-react';
+import { Cpu, Plus, Trash2, ArrowUp, ArrowDown, Eye, EyeOff } from 'lucide-react';
 import { SectionHeaderWithTitle } from './SectionTitleInput';
+import { RichTextarea } from '@/components/common/RichTextarea';
 
 export interface SkillsEditorProps {
   skills: SkillCategory[];
@@ -28,7 +29,7 @@ export const SkillsEditor: React.FC<SkillsEditorProps> = ({
     onChange([...skills, newCategory]);
   };
 
-  const handleUpdate = (id: string, field: keyof SkillCategory, value: string) => {
+  const handleUpdate = (id: string, field: keyof SkillCategory, value: string | boolean) => {
     onChange(
       skills.map((s) => (s.id === id ? { ...s, [field]: value } : s))
     );
@@ -45,26 +46,6 @@ export const SkillsEditor: React.FC<SkillsEditorProps> = ({
     const [moved] = newSkills.splice(index, 1);
     newSkills.splice(targetIndex, 0, moved);
     onChange(newSkills);
-  };
-
-  const handleBoldSelection = (id: string, inputId: string) => {
-    if (typeof document === 'undefined') return;
-    const input = document.getElementById(inputId) as HTMLInputElement | null;
-    if (!input) return;
-    const start = input.selectionStart ?? 0;
-    const end = input.selectionEnd ?? 0;
-    const item = skills.find((s) => s.id === id);
-    if (!item) return;
-
-    const currentText = item.items || '';
-    if (start === end) {
-      const updated = currentText.substring(0, start) + '**Skill**' + currentText.substring(end);
-      handleUpdate(id, 'items', updated);
-    } else {
-      const selected = currentText.substring(start, end);
-      const updated = currentText.substring(0, start) + `**${selected}**` + currentText.substring(end);
-      handleUpdate(id, 'items', updated);
-    }
   };
 
   return (
@@ -84,27 +65,47 @@ export const SkillsEditor: React.FC<SkillsEditorProps> = ({
 
       <div className="space-y-3">
         {skills.map((skill, index) => {
-          const inputId = `skill-items-${skill.id}`;
           return (
             <div
               key={skill.id}
-              className="p-3.5 bg-white border border-slate-200 rounded-xl shadow-xs space-y-2.5 transition-all hover:border-slate-300"
+              className="p-3.5 bg-white border border-slate-200 rounded-xl shadow-xs space-y-3 transition-all hover:border-slate-300"
             >
-              <div className="flex items-center justify-between gap-2">
-                <input
-                  type="text"
-                  value={skill.category}
-                  onChange={(e) => handleUpdate(skill.id, 'category', e.target.value)}
-                  placeholder="Category Name (e.g. Frameworks)"
-                  className="font-semibold text-sm text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-slate-900 focus:outline-none px-1 py-0.5 w-48"
-                />
+              <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <input
+                    type="text"
+                    value={skill.category}
+                    onChange={(e) => handleUpdate(skill.id, 'category', e.target.value)}
+                    placeholder="Category Name (e.g. Frameworks & Databases)"
+                    className={`font-semibold text-sm bg-transparent border-b border-transparent hover:border-slate-300 focus:border-slate-900 focus:outline-none px-1 py-0.5 w-full max-w-xs truncate ${
+                      skill.hidden ? 'text-slate-400 line-through' : 'text-slate-800'
+                    }`}
+                  />
+                  {skill.hidden && (
+                    <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-medium flex-shrink-0">
+                      Hidden
+                    </span>
+                  )}
+                </div>
 
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleUpdate(skill.id, 'hidden', !skill.hidden)}
+                    className={`p-1 transition cursor-pointer ${
+                      skill.hidden
+                        ? 'text-amber-500 hover:text-amber-600'
+                        : 'text-slate-400 hover:text-slate-700'
+                    }`}
+                    title={skill.hidden ? 'Show on resume' : 'Hide from resume'}
+                  >
+                    {skill.hidden ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
                   <button
                     type="button"
                     onClick={() => handleMove(index, 'up')}
                     disabled={index === 0}
-                    className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 disabled:hover:text-slate-400 transition"
+                    className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 disabled:hover:text-slate-400 transition cursor-pointer"
                     title="Move up"
                   >
                     <ArrowUp size={14} />
@@ -113,7 +114,7 @@ export const SkillsEditor: React.FC<SkillsEditorProps> = ({
                     type="button"
                     onClick={() => handleMove(index, 'down')}
                     disabled={index === skills.length - 1}
-                    className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 disabled:hover:text-slate-400 transition"
+                    className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 disabled:hover:text-slate-400 transition cursor-pointer"
                     title="Move down"
                   >
                     <ArrowDown size={14} />
@@ -121,7 +122,7 @@ export const SkillsEditor: React.FC<SkillsEditorProps> = ({
                   <button
                     type="button"
                     onClick={() => handleDelete(skill.id)}
-                    className="p-1 text-slate-400 hover:text-red-600 transition ml-1"
+                    className="p-1 text-slate-400 hover:text-red-600 transition ml-1 cursor-pointer"
                     title="Delete category"
                   >
                     <Trash2 size={14} />
@@ -129,23 +130,14 @@ export const SkillsEditor: React.FC<SkillsEditorProps> = ({
                 </div>
               </div>
 
-              <div className="relative">
-                <input
-                  id={inputId}
-                  type="text"
+              <div>
+                <RichTextarea
+                  placeholder="e.g. Go, Java, Python, **PostgreSQL**, **Redis**, Docker, Kubernetes"
+                  rows={2}
+                  showBullets={false}
                   value={skill.items}
-                  onChange={(e) => handleUpdate(skill.id, 'items', e.target.value)}
-                  placeholder="Java, Go, Python, TypeScript, Spring Boot, Docker"
-                  className="w-full text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 pr-10 focus:bg-white focus:border-slate-900 focus:outline-none transition-colors font-mono"
+                  onChange={(text) => handleUpdate(skill.id, 'items', text)}
                 />
-                <button
-                  type="button"
-                  onClick={() => handleBoldSelection(skill.id, inputId)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-900 hover:bg-slate-200/60 rounded transition"
-                  title="Make selected skill bold (**skill**)"
-                >
-                  <Bold size={13} />
-                </button>
               </div>
             </div>
           );
