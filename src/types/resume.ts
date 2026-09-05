@@ -97,13 +97,16 @@ export type HeaderStyle =
   | 'split'
   | 'banner';
 
+export type SectionSpacing = 'compact' | 'standard' | 'spacious';
+
 export interface ResumeSettings {
-  fontSize: 'compact' | 'standard' | 'spacious';
-  lineSpacing: 'compact' | 'standard' | 'relaxed';
-  pageMargin: 'compact' | 'standard' | 'relaxed';
+  fontSize: number | 'compact' | 'standard' | 'spacious'; // e.g. 10.0 (in pt)
+  lineSpacing: number | 'compact' | 'standard' | 'relaxed'; // e.g. 1.35 (multiplier)
+  pageMargin: number | 'compact' | 'standard' | 'relaxed'; // e.g. 45.0 (in pt)
+  sectionSpacing?: number | 'compact' | 'standard' | 'spacious'; // e.g. 13.5 (in pt)
   fontFamily: FontFamily | string;
   bulletStyle: 'square' | 'disc' | 'dash';
-  dividerThickness: number; // in px e.g. 1.5
+  dividerThickness: number; // in pt e.g. 1.5
   accentColor: string; // e.g. #000000
   sectionOrder: string[]; // ['profile', 'skills', 'experience', 'projects', 'education', 'references', ...]
   hiddenSections: string[];

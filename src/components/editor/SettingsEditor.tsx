@@ -4,6 +4,14 @@ import React from 'react';
 import { ResumeSettings } from '@/types/resume';
 import { Settings, ArrowUp, ArrowDown, Eye, EyeOff, SplitSquareVertical } from 'lucide-react';
 import { HeaderStyleSelector } from '@/components/common/HeaderStyleSelector';
+import { NumericSliderControl } from '@/components/common/NumericSliderControl';
+import {
+  resolveFontSize,
+  resolveLineSpacing,
+  resolveSectionSpacing,
+  resolvePageMargin,
+  resolveDividerThickness,
+} from '@/lib/layoutMetrics';
 
 export interface SettingsEditorProps {
   settings: ResumeSettings;
@@ -119,79 +127,67 @@ export const SettingsEditor: React.FC<SettingsEditorProps> = ({
         </div>
       </div>
 
-      {/* Font Size & Spacing Controls */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* Font Size */}
-        <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
-            Font Size
-          </label>
-          <div className="flex rounded-lg border border-slate-200 bg-slate-100 p-1">
-            {(['compact', 'standard', 'spacious'] as const).map((size) => (
-              <button
-                key={size}
-                type="button"
-                onClick={() => handleUpdate('fontSize', size)}
-                className={`flex-1 py-1 text-xs font-medium capitalize rounded-md transition ${
-                  settings.fontSize === size
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                {size}
-              </button>
-            ))}
-          </div>
-        </div>
+      {/* Font Size, Spacing & Margin Numeric Controls */}
+      <div className="space-y-2">
+        <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+          Size, Spacing & Margins
+        </label>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* Font Size */}
+          <NumericSliderControl
+            label="Font Size"
+            value={resolveFontSize(settings.fontSize)}
+            min={8.0}
+            max={13.0}
+            step={0.5}
+            unit="pt"
+            decimals={1}
+            description="Base body font size across resume"
+            onChange={(val) => handleUpdate('fontSize', val)}
+          />
 
-        {/* Line Spacing */}
-        <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
-            Line Spacing
-          </label>
-          <div className="flex rounded-lg border border-slate-200 bg-slate-100 p-1">
-            {(['compact', 'standard', 'relaxed'] as const).map((space) => (
-              <button
-                key={space}
-                type="button"
-                onClick={() => handleUpdate('lineSpacing', space)}
-                className={`flex-1 py-1 text-xs font-medium capitalize rounded-md transition ${
-                  settings.lineSpacing === space
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                {space}
-              </button>
-            ))}
-          </div>
-        </div>
+          {/* Line Spacing */}
+          <NumericSliderControl
+            label="Line Spacing"
+            value={resolveLineSpacing(settings.lineSpacing)}
+            min={1.05}
+            max={1.85}
+            step={0.05}
+            unit="x"
+            decimals={2}
+            description="Line height multiplier"
+            onChange={(val) => handleUpdate('lineSpacing', val)}
+          />
 
-        {/* Margins */}
-        <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
-            Page Margins
-          </label>
-          <div className="flex rounded-lg border border-slate-200 bg-slate-100 p-1">
-            {(['compact', 'standard', 'relaxed'] as const).map((margin) => (
-              <button
-                key={margin}
-                type="button"
-                onClick={() => handleUpdate('pageMargin', margin)}
-                className={`flex-1 py-1 text-xs font-medium capitalize rounded-md transition ${
-                  settings.pageMargin === margin
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                {margin}
-              </button>
-            ))}
-          </div>
+          {/* Section Spacing */}
+          <NumericSliderControl
+            label="Section Spacing"
+            value={resolveSectionSpacing(settings.sectionSpacing)}
+            min={4.0}
+            max={28.0}
+            step={0.5}
+            unit="pt"
+            decimals={1}
+            description="Vertical gap between sections"
+            onChange={(val) => handleUpdate('sectionSpacing', val)}
+          />
+
+          {/* Page Margins */}
+          <NumericSliderControl
+            label="Page Margins"
+            value={resolvePageMargin(settings.pageMargin).horizontal}
+            min={20}
+            max={65}
+            step={1}
+            unit="pt"
+            decimals={0}
+            description="Outer page margin padding"
+            onChange={(val) => handleUpdate('pageMargin', val)}
+          />
         </div>
       </div>
 
-      {/* Bullet Style & Accent Color */}
+      {/* Bullet Style & Divider Thickness */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Bullet Style */}
         <div className="space-y-1.5">
@@ -200,7 +196,7 @@ export const SettingsEditor: React.FC<SettingsEditorProps> = ({
           </label>
           <div className="flex rounded-lg border border-slate-200 bg-slate-100 p-1">
             {[
-              { id: 'square', label: '■ Square (Original)' },
+              { id: 'square', label: '■ Square' },
               { id: 'disc', label: '● Circle' },
               { id: 'dash', label: '— Dash' },
             ].map((b) => (
@@ -220,32 +216,18 @@ export const SettingsEditor: React.FC<SettingsEditorProps> = ({
           </div>
         </div>
 
-        {/* Divider Thickness */}
-        <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
-            Divider Line Thickness
-          </label>
-          <div className="flex rounded-lg border border-slate-200 bg-slate-100 p-1">
-            {[
-              { val: 1, label: '1.0 pt' },
-              { val: 1.5, label: '1.5 pt (Original)' },
-              { val: 2, label: '2.0 pt' },
-            ].map((thick) => (
-              <button
-                key={thick.val}
-                type="button"
-                onClick={() => handleUpdate('dividerThickness', thick.val)}
-                className={`flex-1 py-1 text-xs font-medium rounded-md transition ${
-                  settings.dividerThickness === thick.val
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                {thick.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Divider Thickness Numeric Slider */}
+        <NumericSliderControl
+          label="Divider Line Thickness"
+          value={resolveDividerThickness(settings.dividerThickness)}
+          min={0.5}
+          max={3.0}
+          step={0.25}
+          unit="pt"
+          decimals={2}
+          description="Section title border line width"
+          onChange={(val) => handleUpdate('dividerThickness', val)}
+        />
       </div>
 
       {/* Header & Personal Layout Style */}

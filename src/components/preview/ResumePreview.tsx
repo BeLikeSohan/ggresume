@@ -15,6 +15,13 @@ import {
   ExternalLinkIcon,
   ProfileIcon,
 } from './Icons';
+import {
+  resolveFontSize,
+  resolveLineSpacing,
+  resolveSectionSpacing,
+  resolvePageMargin,
+  resolveDividerThickness,
+} from '@/lib/layoutMetrics';
 
 const useIsomorphicLayoutEffect =
   typeof window !== 'undefined' ? useLayoutEffect : useEffect;
@@ -119,9 +126,10 @@ export function getPersonalContactItems(personal: ResumeData['personal']): Conta
 
 function estimateHeaderHeight(
   data: ResumeData,
-  fontSize: 'compact' | 'standard' | 'spacious' = 'standard'
+  fontSize: number | string = 10
 ): number {
-  const nameHeight = fontSize === 'compact' ? 24 : fontSize === 'spacious' ? 32 : 28;
+  const numFontSize = resolveFontSize(fontSize);
+  const nameHeight = Math.round(numFontSize * 2.8);
   const mt = 11;
   const items = getPersonalContactItems(data.personal);
   if (items.length === 0) return nameHeight + mt;
@@ -130,35 +138,40 @@ function estimateHeaderHeight(
 
   if (headerStyle === 'centered' || headerStyle === 'left-inline') {
     const lines = Math.max(Math.ceil(items.length / 3), 1);
-    return nameHeight + mt + lines * 22;
+    return nameHeight + mt + lines * Math.round(numFontSize * 2.2);
   }
 
   if (headerStyle === 'split') {
     const rows = items.length;
-    return Math.max(nameHeight + 8, rows * 20) + mt;
+    return Math.max(nameHeight + 8, rows * Math.round(numFontSize * 2.0)) + mt;
   }
 
   if (headerStyle === 'banner') {
     const rows = Math.max(Math.ceil(items.length / 2), 1);
-    return nameHeight + mt + rows * 26 + 4;
+    return nameHeight + mt + rows * Math.round(numFontSize * 2.6) + 4;
   }
 
   const rows = Math.max(Math.ceil(items.length / 2), 1);
-  const contactHeight = rows * 26;
+  const contactHeight = rows * Math.round(numFontSize * 2.6);
   return nameHeight + mt + contactHeight;
 }
 
 function estimateSectionHeight(
   key: string,
   data: ResumeData,
-  fontSize: 'compact' | 'standard' | 'spacious' = 'standard',
-  lineSpacing: 'compact' | 'standard' | 'relaxed' = 'standard'
+  fontSize: number | string = 10,
+  lineSpacing: number | string = 1.35,
+  sectionSpacing: number | string = 13.5
 ): number {
-  const fontMultiplier = fontSize === 'compact' ? 0.95 : fontSize === 'spacious' ? 1.15 : 1.0;
-  const lineMultiplier = lineSpacing === 'compact' ? 0.95 : lineSpacing === 'relaxed' ? 1.15 : 1.0;
+  const numFontSize = resolveFontSize(fontSize);
+  const numLineSpacing = resolveLineSpacing(lineSpacing);
+  const numSectionSpacing = resolveSectionSpacing(sectionSpacing);
+
+  const fontMultiplier = numFontSize / 10.0;
+  const lineMultiplier = numLineSpacing / 1.35;
   const scale = fontMultiplier * lineMultiplier;
 
-  const TITLE_HEIGHT = Math.round(34 * fontMultiplier);
+  const TITLE_HEIGHT = Math.max(16, Math.round(numSectionSpacing + 18 * fontMultiplier));
   const BASE_LINE_HEIGHT = Math.round(18 * scale);
   const ITEM_HEADER_HEIGHT = Math.round(22 * fontMultiplier);
 
@@ -224,8 +237,9 @@ function calculatePages(
   measuredHeights: Record<string, number>,
   headerHeight: number,
   data: ResumeData,
-  fontSize: 'compact' | 'standard' | 'spacious' = 'standard',
-  lineSpacing: 'compact' | 'standard' | 'relaxed' = 'standard'
+  fontSize: number | string = 10,
+  lineSpacing: number | string = 1.35,
+  sectionSpacing: number | string = 13.5
 ): { sections: string[]; isFirstPage: boolean }[] {
   if (visibleSections.length === 0) {
     return [{ sections: [], isFirstPage: true }];
@@ -244,7 +258,7 @@ function calculatePages(
     const isManualBreak = manualBreakSet.has(secKey);
     const secHeight =
       measuredHeights[secKey] ||
-      estimateSectionHeight(secKey, data, fontSize, lineSpacing);
+      estimateSectionHeight(secKey, data, fontSize, lineSpacing, sectionSpacing);
 
     if (isManualBreak && (currentSections.length > 0 || !isFirstPage)) {
       pages.push({ sections: currentSections, isFirstPage });
@@ -297,6 +311,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
       fontSize = 'standard',
       lineSpacing = 'standard',
       pageMargin = 'standard',
+      sectionSpacing = 'standard',
       fontFamily = 'source-sans',
       bulletStyle = 'square',
       dividerThickness = 1.5,
@@ -310,13 +325,14 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
     const effectivePageBreaks =
       rawBreaks.length === 1 && rawBreaks[0] === 'educations' ? [] : rawBreaks;
 
+    const numFontSize = resolveFontSize(fontSize);
+    const numLineSpacing = resolveLineSpacing(lineSpacing);
+    const numSectionSpacing = resolveSectionSpacing(sectionSpacing);
+    const { horizontal: marginH, vertical: marginV } = resolvePageMargin(pageMargin);
+    const numDividerThickness = resolveDividerThickness(dividerThickness);
+
     const A4_HEIGHT_PX = 1122.52;
-    const verticalPaddingPx =
-      {
-        compact: (32 + 32) * (96 / 72),
-        standard: (41.5 + 42) * (96 / 72),
-        relaxed: (48 + 48) * (96 / 72),
-      }[pageMargin] || 111.33;
+    const verticalPaddingPx = (marginV * 2) * (96 / 72);
     const usablePageHeight = A4_HEIGHT_PX - verticalPaddingPx;
 
     const allCustomSections = customSections || [];
@@ -372,10 +388,11 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
         effectivePageBreaks,
         usablePageHeight,
         {},
-        estimateHeaderHeight(data, fontSize),
+        estimateHeaderHeight(data, numFontSize),
         data,
-        fontSize,
-        lineSpacing
+        numFontSize,
+        numLineSpacing,
+        numSectionSpacing
       )
     );
 
@@ -386,7 +403,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
       if (!container) return;
 
       const headerEl = container.querySelector('[data-resume-header]') as HTMLElement | null;
-      const headerHeight = headerEl ? headerEl.offsetHeight : estimateHeaderHeight(data, fontSize);
+      const headerHeight = headerEl ? headerEl.offsetHeight : estimateHeaderHeight(data, numFontSize);
 
       const sectionEls = container.querySelectorAll<HTMLElement>('[data-resume-section]');
       const measured: Record<string, number> = {};
@@ -404,8 +421,9 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
         measured,
         headerHeight,
         data,
-        fontSize,
-        lineSpacing
+        numFontSize,
+        numLineSpacing,
+        numSectionSpacing
       );
 
       setPages((prev) => {
@@ -427,43 +445,22 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
       fontSize,
       lineSpacing,
       pageMargin,
+      sectionSpacing,
       fontFamily,
     ]);
 
-    // Font size scaling (exact point sizes)
+    // Font size scaling (relative em sizes based on page root font-size)
     const fontSizeClasses = {
-      compact: {
-        root: 'text-[9.5pt]',
-        name: 'text-[17pt]',
-        sectionTitle: 'text-[10.5pt]',
-        itemTitle: 'text-[9.5pt]',
-        body: 'text-[9.5pt]',
-        subtext: 'text-[9.5pt]',
-      },
-      standard: {
-        root: 'text-[10pt]',
-        name: 'text-[18pt]',
-        sectionTitle: 'text-[11pt]',
-        itemTitle: 'text-[10pt]',
-        body: 'text-[10pt]',
-        subtext: 'text-[10pt]',
-      },
-      spacious: {
-        root: 'text-[10.5pt]',
-        name: 'text-[19pt]',
-        sectionTitle: 'text-[11.5pt]',
-        itemTitle: 'text-[10.5pt]',
-        body: 'text-[10.5pt]',
-        subtext: 'text-[10.5pt]',
-      },
-    }[fontSize];
+      root: 'text-[1em]',
+      name: 'text-[1.8em]',
+      sectionTitle: 'text-[1.1em]',
+      itemTitle: 'text-[1em]',
+      body: 'text-[1em]',
+      subtext: 'text-[0.95em]',
+    };
 
-    // Spacing configs (matching exact FlowCV 12pt line spacing on 10pt font)
-    const lineSpacingClasses = {
-      compact: 'leading-[1.15]',
-      standard: 'leading-[1.2]',
-      relaxed: 'leading-[1.32]',
-    }[lineSpacing];
+    // Spacing configs (inherits dynamic line-height from page container)
+    const lineSpacingClasses = 'leading-[inherit]';
 
     const marginStyles = {
       compact: { paddingLeft: '36pt', paddingRight: '36pt', paddingTop: '32pt', paddingBottom: '32pt' },
@@ -489,9 +486,10 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
       <SectionHeader
         title={title}
         accentColor={accentColor}
-        dividerThickness={dividerThickness}
+        dividerThickness={numDividerThickness}
         isFirstOnPage={isFirstOnPage}
-        fontSizeClass={fontSizeClasses.sectionTitle}
+        fontSizePt={numFontSize * 1.1}
+        sectionSpacing={numSectionSpacing}
       />
     );
 
@@ -855,7 +853,12 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
                 overflow: 'hidden',
                 boxSizing: 'border-box',
                 fontFamily: fontFamilies,
-                ...marginStyles,
+                paddingLeft: `${marginH}pt`,
+                paddingRight: `${marginH}pt`,
+                paddingTop: `${marginV}pt`,
+                paddingBottom: `${marginV}pt`,
+                fontSize: `${numFontSize}pt`,
+                lineHeight: numLineSpacing,
               }}
             >
               {/* Header only on page 0 */}

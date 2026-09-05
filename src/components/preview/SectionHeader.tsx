@@ -1,11 +1,14 @@
 import React from 'react';
+import { resolveSectionSpacing } from '@/lib/layoutMetrics';
 
 interface SectionHeaderProps {
   title: string;
   accentColor?: string;
   dividerThickness?: number;
   isFirstOnPage?: boolean;
+  fontSizePt?: number;
   fontSizeClass?: string;
+  sectionSpacing?: number | 'compact' | 'standard' | 'spacious';
   className?: string;
 }
 
@@ -14,15 +17,21 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
   accentColor = '#000000',
   dividerThickness = 1.5,
   isFirstOnPage = false,
+  fontSizePt,
   fontSizeClass = 'text-[11pt]',
+  sectionSpacing = 13.5,
   className = '',
 }) => {
+  const spacingNum = resolveSectionSpacing(sectionSpacing);
+  const paddingTop = isFirstOnPage ? '0pt' : `${spacingNum}pt`;
+  const marginBottom = `${Math.max(2, spacingNum * 0.38).toFixed(1)}pt`;
+
   return (
     <div
       className={`section-header w-full ${className}`}
       style={{
-        paddingTop: isFirstOnPage ? '0pt' : '13.5pt',
-        marginBottom: '5.5pt',
+        paddingTop,
+        marginBottom,
       }}
     >
       <h2
@@ -30,6 +39,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
         style={{
           color: accentColor,
           lineHeight: 1.25,
+          fontSize: fontSizePt ? `${fontSizePt}pt` : undefined,
           margin: 0,
           padding: 0,
           letterSpacing: 'normal',
