@@ -54,12 +54,19 @@ export const NumericSliderControl: React.FC<NumericSliderControlProps> = ({
   };
 
   return (
-    <div className="bg-slate-50/70 border border-slate-200/90 rounded-xl p-3 space-y-2">
-      <div className="flex items-center justify-between gap-2">
-        <label className="text-xs font-semibold text-slate-800 tracking-tight">
-          {label}
-        </label>
-        <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-2 py-0.5 shadow-2xs">
+    <div className="bg-slate-50/70 border border-slate-200/90 rounded-xl p-3.5 space-y-2.5">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <label className="text-xs font-semibold text-slate-800 tracking-tight">
+            {label}
+          </label>
+          {description && (
+            <p className="text-[11px] text-slate-500 leading-normal mt-0.5">
+              {description}
+            </p>
+          )}
+        </div>
+        <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-2.5 py-1 shadow-2xs flex-shrink-0">
           <input
             type="number"
             min={min}
@@ -67,7 +74,7 @@ export const NumericSliderControl: React.FC<NumericSliderControlProps> = ({
             step={step}
             value={displayValue}
             onChange={handleInputChange}
-            className="w-10 text-xs font-bold text-slate-900 text-right bg-transparent outline-none focus:text-blue-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            className="w-11 text-xs font-bold text-slate-900 text-right bg-transparent outline-none focus:text-blue-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
           <span className="text-[11px] font-medium text-slate-500 select-none">
             {unit}
@@ -75,15 +82,15 @@ export const NumericSliderControl: React.FC<NumericSliderControlProps> = ({
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2.5 pt-0.5">
         <button
           type="button"
           onClick={handleDecrement}
           disabled={value <= min}
           aria-label={`Decrease ${label}`}
-          className="w-6 h-6 rounded-md bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer flex-shrink-0"
+          className="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer flex-shrink-0 shadow-2xs"
         >
-          <Minus size={12} />
+          <Minus size={13} />
         </button>
 
         <input
@@ -93,7 +100,7 @@ export const NumericSliderControl: React.FC<NumericSliderControlProps> = ({
           step={step}
           value={value}
           onChange={handleSliderChange}
-          className="flex-1 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-slate-900"
+          className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-slate-900"
         />
 
         <button
@@ -101,17 +108,11 @@ export const NumericSliderControl: React.FC<NumericSliderControlProps> = ({
           onClick={handleIncrement}
           disabled={value >= max}
           aria-label={`Increase ${label}`}
-          className="w-6 h-6 rounded-md bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer flex-shrink-0"
+          className="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer flex-shrink-0 shadow-2xs"
         >
-          <Plus size={12} />
+          <Plus size={13} />
         </button>
       </div>
-
-      {description && (
-        <p className="text-[10px] text-slate-400 leading-tight">
-          {description}
-        </p>
-      )}
     </div>
   );
 };

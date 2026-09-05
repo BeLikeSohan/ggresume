@@ -130,7 +130,7 @@ function estimateHeaderHeight(
 ): number {
   const numFontSize = resolveFontSize(fontSize);
   const nameHeight = Math.round(numFontSize * 2.8);
-  const mt = 11;
+  const mt = 6;
   const items = getPersonalContactItems(data.personal);
   if (items.length === 0) return nameHeight + mt;
 
@@ -188,9 +188,11 @@ function estimateSectionHeight(
       return (
         TITLE_HEIGHT +
         data.experiences.reduce((acc, exp) => {
-          const highlightLines = (exp.highlights || []).reduce((hAcc, h) => {
-            return hAcc + Math.max(1, Math.ceil(h.length / 75)) * BASE_LINE_HEIGHT;
-          }, 0);
+          const highlightLines = (exp.highlights || [])
+            .filter((h) => h.trim().length > 0)
+            .reduce((hAcc, h) => {
+              return hAcc + Math.max(1, Math.ceil(h.length / 75)) * BASE_LINE_HEIGHT;
+            }, 0);
           return acc + ITEM_HEADER_HEIGHT + highlightLines + 10;
         }, 0)
       );
@@ -199,9 +201,11 @@ function estimateSectionHeight(
       return (
         TITLE_HEIGHT +
         data.projects.reduce((acc, proj) => {
-          const highlightLines = (proj.highlights || []).reduce((hAcc, h) => {
-            return hAcc + Math.max(1, Math.ceil(h.length / 75)) * BASE_LINE_HEIGHT;
-          }, 0);
+          const highlightLines = (proj.highlights || [])
+            .filter((h) => h.trim().length > 0)
+            .reduce((hAcc, h) => {
+              return hAcc + Math.max(1, Math.ceil(h.length / 75)) * BASE_LINE_HEIGHT;
+            }, 0);
           return acc + ITEM_HEADER_HEIGHT + highlightLines + 10;
         }, 0)
       );
@@ -220,9 +224,11 @@ function estimateSectionHeight(
           const descLines = item.description
             ? Math.max(1, Math.ceil(item.description.length / 75)) * BASE_LINE_HEIGHT
             : 0;
-          const highlightLines = (item.highlights || []).reduce((hAcc, h) => {
-            return hAcc + Math.max(1, Math.ceil(h.length / 75)) * BASE_LINE_HEIGHT;
-          }, 0);
+          const highlightLines = (item.highlights || [])
+            .filter((h) => h.trim().length > 0)
+            .reduce((hAcc, h) => {
+              return hAcc + Math.max(1, Math.ceil(h.length / 75)) * BASE_LINE_HEIGHT;
+            }, 0);
           return acc + ITEM_HEADER_HEIGHT + descLines + highlightLines + 10;
         }, 0)
       );
@@ -573,20 +579,38 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
 
                     {/* Bullets (Accomplishments) */}
                     {exp.highlights && exp.highlights.length > 0 && (
-                      <div className="mt-[1pt]">
-                        {exp.highlights.map((h, i) => (
-                          <div
-                            key={i}
-                            className={`${fontSizeClasses.body} ${lineSpacingClasses} text-black text-justify pl-[10pt] -indent-[10pt]`}
-                          >
-                            <BulletMarker
-                              style={bulletStyle}
-                              accentColor={accentColor}
-                              isInline={true}
-                            />
-                            <FormattedText text={h} />
-                          </div>
-                        ))}
+                      <div className="mt-[1pt] space-y-[1pt]">
+                        {exp.highlights
+                          .filter((h) => h.trim().length > 0)
+                          .map((h, i) => {
+                            const isBullet = /^[\s]*[•\-\*]\s+/.test(h);
+                            const cleanText = isBullet ? h.replace(/^[\s]*[•\-\*]\s+/, '') : h;
+
+                            if (isBullet) {
+                              return (
+                                <div
+                                  key={i}
+                                  className={`${fontSizeClasses.body} ${lineSpacingClasses} text-black text-justify pl-[10pt] -indent-[10pt]`}
+                                >
+                                  <BulletMarker
+                                    style={bulletStyle}
+                                    accentColor={accentColor}
+                                    isInline={true}
+                                  />
+                                  <FormattedText text={cleanText} />
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <div
+                                key={i}
+                                className={`${fontSizeClasses.body} ${lineSpacingClasses} text-black text-justify`}
+                              >
+                                <FormattedText text={cleanText} />
+                              </div>
+                            );
+                          })}
                       </div>
                     )}
 
@@ -641,18 +665,36 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
                     </div>
 
                     {proj.highlights && proj.highlights.length > 0 && (
-                      <div className="flex flex-col mt-[1pt]">
-                        {proj.highlights.map((h, i) => (
-                          <div
-                            key={i}
-                            className={`flex items-start ${fontSizeClasses.body} ${lineSpacingClasses} text-black`}
-                          >
-                            {renderBullet()}
-                            <div className="flex-1 text-justify">
-                              <FormattedText text={h} />
-                            </div>
-                          </div>
-                        ))}
+                      <div className="flex flex-col mt-[1pt] space-y-[1pt]">
+                        {proj.highlights
+                          .filter((h) => h.trim().length > 0)
+                          .map((h, i) => {
+                            const isBullet = /^[\s]*[•\-\*]\s+/.test(h);
+                            const cleanText = isBullet ? h.replace(/^[\s]*[•\-\*]\s+/, '') : h;
+
+                            if (isBullet) {
+                              return (
+                                <div
+                                  key={i}
+                                  className={`flex items-start ${fontSizeClasses.body} ${lineSpacingClasses} text-black`}
+                                >
+                                  {renderBullet()}
+                                  <div className="flex-1 text-justify">
+                                    <FormattedText text={cleanText} />
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <div
+                                key={i}
+                                className={`${fontSizeClasses.body} ${lineSpacingClasses} text-black text-justify`}
+                              >
+                                <FormattedText text={cleanText} />
+                              </div>
+                            );
+                          })}
                       </div>
                     )}
                   </div>
@@ -797,20 +839,38 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
 
                       {/* Bullets (Highlights) */}
                       {item.highlights && item.highlights.length > 0 && (
-                        <div className="mt-[1pt]">
-                          {item.highlights.map((h, i) => (
-                            <div
-                              key={i}
-                              className={`${fontSizeClasses.body} ${lineSpacingClasses} text-black text-justify pl-[10pt] -indent-[10pt]`}
-                            >
-                              <BulletMarker
-                                style={bulletStyle}
-                                accentColor={accentColor}
-                                isInline={true}
-                              />
-                              <FormattedText text={h} />
-                            </div>
-                          ))}
+                        <div className="mt-[1pt] space-y-[1pt]">
+                          {item.highlights
+                            .filter((h) => h.trim().length > 0)
+                            .map((h, i) => {
+                              const isBullet = /^[\s]*[•\-\*]\s+/.test(h);
+                              const cleanText = isBullet ? h.replace(/^[\s]*[•\-\*]\s+/, '') : h;
+
+                              if (isBullet) {
+                                return (
+                                  <div
+                                    key={i}
+                                    className={`${fontSizeClasses.body} ${lineSpacingClasses} text-black text-justify pl-[10pt] -indent-[10pt]`}
+                                  >
+                                    <BulletMarker
+                                      style={bulletStyle}
+                                      accentColor={accentColor}
+                                      isInline={true}
+                                    />
+                                    <FormattedText text={cleanText} />
+                                  </div>
+                                );
+                              }
+
+                              return (
+                                <div
+                                  key={i}
+                                  className={`${fontSizeClasses.body} ${lineSpacingClasses} text-black text-justify`}
+                                >
+                                  <FormattedText text={cleanText} />
+                                </div>
+                              );
+                            })}
                         </div>
                       )}
 
@@ -904,7 +964,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
                   return (
                     <header
                       data-resume-header="true"
-                      className="resume-header mb-[14.2pt] text-center"
+                      className="resume-header mb-[7pt] text-center"
                     >
                       <h1
                         className={`${fontSizeClasses.name} font-bold text-black text-center`}
@@ -919,7 +979,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
                         {personal.fullName || 'Your Full Name'}
                       </h1>
                       {contactItems.length > 0 && (
-                        <div className="flex flex-wrap items-center justify-center gap-x-3.5 gap-y-1 mt-[6pt]">
+                        <div className="flex flex-wrap items-center justify-center gap-x-3.5 gap-y-1 mt-[4.5pt]">
                           {contactItems.map((item, idx) => (
                             <div
                               key={item.id}
@@ -961,7 +1021,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
                   return (
                     <header
                       data-resume-header="true"
-                      className="resume-header mb-[14.2pt]"
+                      className="resume-header mb-[7pt]"
                     >
                       <h1
                         className={`${fontSizeClasses.name} font-bold text-black`}
@@ -976,7 +1036,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
                         {personal.fullName || 'Your Full Name'}
                       </h1>
                       {contactItems.length > 0 && (
-                        <div className="flex flex-wrap items-center justify-start gap-x-4 gap-y-1.5 mt-[6pt]">
+                        <div className="flex flex-wrap items-center justify-start gap-x-4 gap-y-1.5 mt-[4.5pt]">
                           {contactItems.map((item) => (
                             <div
                               key={item.id}
@@ -1015,7 +1075,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
                   return (
                     <header
                       data-resume-header="true"
-                      className="resume-header mb-[14.2pt] flex justify-between items-start gap-6 pb-0.5"
+                      className="resume-header mb-[7pt] flex justify-between items-start gap-6 pb-0.5"
                     >
                       <div className="flex-1 min-w-0">
                         <h1
@@ -1073,7 +1133,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
                   return (
                     <header
                       data-resume-header="true"
-                      className="resume-header mb-[14.2pt] pl-3.5 border-l-[3.5pt]"
+                      className="resume-header mb-[7pt] pl-3.5 border-l-[3.5pt]"
                       style={{ borderColor: accentColor }}
                     >
                       <h1
@@ -1089,7 +1149,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
                         {personal.fullName || 'Your Full Name'}
                       </h1>
                       {contactItems.length > 0 && (
-                        <div className="grid grid-cols-2 gap-x-8 mt-[7pt]">
+                        <div className="grid grid-cols-2 gap-x-8 mt-[5pt]">
                           <div className="flex flex-col justify-start">
                             {leftColumnItems.map(renderItem)}
                           </div>
@@ -1106,7 +1166,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
                 return (
                   <header
                     data-resume-header="true"
-                    className="resume-header mb-[14.2pt]"
+                    className="resume-header mb-[7pt]"
                   >
                     <h1
                       className={`${fontSizeClasses.name} font-bold text-black`}
@@ -1121,7 +1181,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
                       {personal.fullName || 'Your Full Name'}
                     </h1>
                     {contactItems.length > 0 && (
-                      <div className="grid grid-cols-2 gap-x-8 mt-[8pt]">
+                      <div className="grid grid-cols-2 gap-x-8 mt-[5pt]">
                         <div className="flex flex-col justify-start">
                           {leftColumnItems.map(renderItem)}
                         </div>

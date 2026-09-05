@@ -127,12 +127,12 @@ export const SettingsEditor: React.FC<SettingsEditorProps> = ({
         </div>
       </div>
 
-      {/* Font Size, Spacing & Margin Numeric Controls */}
-      <div className="space-y-2">
+      {/* Font Size, Spacing & Margin Numeric Controls - 1 Per Row */}
+      <div className="space-y-3">
         <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
           Size, Spacing & Margins
         </label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="flex flex-col space-y-3">
           {/* Font Size */}
           <NumericSliderControl
             label="Font Size"
@@ -187,8 +187,8 @@ export const SettingsEditor: React.FC<SettingsEditorProps> = ({
         </div>
       </div>
 
-      {/* Bullet Style & Divider Thickness */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* Bullet Style & Divider Thickness - 1 Per Row */}
+      <div className="flex flex-col space-y-3 pt-2 border-t border-slate-200">
         {/* Bullet Style */}
         <div className="space-y-1.5">
           <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
@@ -204,7 +204,7 @@ export const SettingsEditor: React.FC<SettingsEditorProps> = ({
                 key={b.id}
                 type="button"
                 onClick={() => handleUpdate('bulletStyle', b.id as any)}
-                className={`flex-1 py-1 text-xs font-medium rounded-md transition ${
+                className={`flex-1 py-1.5 text-xs font-medium rounded-md transition cursor-pointer ${
                   settings.bulletStyle === b.id
                     ? 'bg-white text-slate-900 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'

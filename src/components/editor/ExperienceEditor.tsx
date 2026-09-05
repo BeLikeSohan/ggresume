@@ -4,14 +4,25 @@ import React, { useState } from 'react';
 import { Experience } from '@/types/resume';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { Briefcase, Plus, Trash2, ArrowUp, ArrowDown, ChevronDown, ChevronUp, Bold } from 'lucide-react';
+import { Briefcase, Plus, Trash2, ArrowUp, ArrowDown, ChevronDown, ChevronUp } from 'lucide-react';
 import { SectionHeaderWithTitle } from './SectionTitleInput';
+import { RichTextarea } from '@/components/common/RichTextarea';
 
 export interface ExperienceEditorProps {
   experiences: Experience[];
   title?: string;
   onTitleChange?: (title: string) => void;
   onChange: (experiences: Experience[]) => void;
+}
+
+function highlightsToText(highlights: string[] | undefined): string {
+  if (!highlights || highlights.length === 0) return '';
+  return highlights.join('\n');
+}
+
+function textToHighlights(text: string): string[] {
+  if (!text) return [];
+  return text.split('\n');
 }
 
 export const ExperienceEditor: React.FC<ExperienceEditorProps> = ({
@@ -33,7 +44,7 @@ export const ExperienceEditor: React.FC<ExperienceEditorProps> = ({
       startDate: '2024',
       endDate: 'Present',
       isCurrent: true,
-      highlights: ['Designed and developed high-impact features using **relevant technologies**.'],
+      highlights: ['• Designed and developed high-impact features using **relevant technologies**.'],
     };
     onChange([...experiences, newExp]);
     setExpandedId(newExp.id);
@@ -56,62 +67,6 @@ export const ExperienceEditor: React.FC<ExperienceEditorProps> = ({
     const [moved] = newExps.splice(index, 1);
     newExps.splice(targetIndex, 0, moved);
     onChange(newExps);
-  };
-
-  // Bullet highlights
-  const handleAddHighlight = (expId: string) => {
-    onChange(
-      experiences.map((exp) =>
-        exp.id === expId
-          ? { ...exp, highlights: [...exp.highlights, ''] }
-          : exp
-      )
-    );
-  };
-
-  const handleUpdateHighlight = (expId: string, index: number, value: string) => {
-    onChange(
-      experiences.map((exp) => {
-        if (exp.id === expId) {
-          const newHighlights = [...exp.highlights];
-          newHighlights[index] = value;
-          return { ...exp, highlights: newHighlights };
-        }
-        return exp;
-      })
-    );
-  };
-
-  const handleDeleteHighlight = (expId: string, index: number) => {
-    onChange(
-      experiences.map((exp) => {
-        if (exp.id === expId) {
-          const newHighlights = exp.highlights.filter((_, i) => i !== index);
-          return { ...exp, highlights: newHighlights };
-        }
-        return exp;
-      })
-    );
-  };
-
-  const handleBoldHighlight = (expId: string, index: number, inputId: string) => {
-    if (typeof document === 'undefined') return;
-    const textarea = document.getElementById(inputId) as HTMLTextAreaElement | null;
-    if (!textarea) return;
-    const start = textarea.selectionStart ?? 0;
-    const end = textarea.selectionEnd ?? 0;
-    const exp = experiences.find((e) => e.id === expId);
-    if (!exp) return;
-
-    const currentText = exp.highlights[index] || '';
-    if (start === end) {
-      const updated = currentText.substring(0, start) + '**bold phrase**' + currentText.substring(end);
-      handleUpdateHighlight(expId, index, updated);
-    } else {
-      const selected = currentText.substring(start, end);
-      const updated = currentText.substring(0, start) + `**${selected}**` + currentText.substring(end);
-      handleUpdateHighlight(expId, index, updated);
-    }
   };
 
   return (
@@ -159,7 +114,7 @@ export const ExperienceEditor: React.FC<ExperienceEditorProps> = ({
                     type="button"
                     onClick={() => handleMove(index, 'up')}
                     disabled={index === 0}
-                    className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 transition"
+                    className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 transition cursor-pointer"
                     title="Move up"
                   >
                     <ArrowUp size={14} />
@@ -168,7 +123,7 @@ export const ExperienceEditor: React.FC<ExperienceEditorProps> = ({
                     type="button"
                     onClick={() => handleMove(index, 'down')}
                     disabled={index === experiences.length - 1}
-                    className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 transition"
+                    className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 transition cursor-pointer"
                     title="Move down"
                   >
                     <ArrowDown size={14} />
@@ -176,7 +131,7 @@ export const ExperienceEditor: React.FC<ExperienceEditorProps> = ({
                   <button
                     type="button"
                     onClick={() => handleDelete(exp.id)}
-                    className="p-1 text-slate-400 hover:text-red-600 transition ml-1"
+                    className="p-1 text-slate-400 hover:text-red-600 transition ml-1 cursor-pointer"
                     title="Delete experience"
                   >
                     <Trash2 size={14} />
@@ -184,7 +139,7 @@ export const ExperienceEditor: React.FC<ExperienceEditorProps> = ({
                   <button
                     type="button"
                     onClick={() => setExpandedId(isExpanded ? null : exp.id)}
-                    className="p-1 text-slate-500 hover:text-slate-900 transition ml-1"
+                    className="p-1 text-slate-500 hover:text-slate-900 transition ml-1 cursor-pointer"
                   >
                     {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                   </button>
@@ -230,62 +185,16 @@ export const ExperienceEditor: React.FC<ExperienceEditorProps> = ({
                     />
                   </div>
 
-                  {/* Bullet Highlights */}
-                  <div className="space-y-2 pt-2 border-t border-slate-200">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                        Bullet Points (Accomplishments)
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => handleAddHighlight(exp.id)}
-                        className="text-xs text-slate-900 hover:underline flex items-center gap-1 font-medium"
-                      >
-                        <Plus size={12} />
-                        Add Bullet
-                      </button>
-                    </div>
-
-                    <div className="space-y-2">
-                      {exp.highlights.map((highlight, hIndex) => {
-                        const inputId = `exp-${exp.id}-h-${hIndex}`;
-                        return (
-                          <div key={hIndex} className="relative flex items-center gap-1.5">
-                            <span className="text-xs text-slate-400 font-mono w-4 text-right flex-shrink-0">
-                              •
-                            </span>
-                            <div className="relative flex-1">
-                              <textarea
-                                id={inputId}
-                                rows={2}
-                                value={highlight}
-                                onChange={(e) =>
-                                  handleUpdateHighlight(exp.id, hIndex, e.target.value)
-                                }
-                                placeholder="Engineered scalable service reducing p99 latency by 35% using Go and Redis..."
-                                className="w-full text-xs text-slate-800 bg-white border border-slate-200 rounded-lg p-2 pr-8 focus:border-slate-900 focus:outline-none transition resize-none"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => handleBoldHighlight(exp.id, hIndex, inputId)}
-                                className="absolute right-2 top-2 p-1 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded transition"
-                                title="Make selected text bold (**bold**)"
-                              >
-                                <Bold size={13} />
-                              </button>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteHighlight(exp.id, hIndex)}
-                              className="p-1.5 text-slate-400 hover:text-red-600 transition flex-shrink-0"
-                              title="Delete bullet"
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
+                  {/* Accomplishments Rich Text Field */}
+                  <div className="pt-2 border-t border-slate-200">
+                    <RichTextarea
+                      label="Accomplishments / Bullet Points"
+                      helperText="Each line or bullet point is rendered with your chosen bullet marker. Use the formatting toolbar or shortcuts (Ctrl+B) to highlight key skills."
+                      placeholder={`• Designed and developed high-impact microservices using **Go** and **PostgreSQL**.\n• Reduced API response times by **45%** by implementing distributed Redis caching.\n• Mentored 4 engineers and established CI/CD automated test pipelines.`}
+                      rows={5}
+                      value={highlightsToText(exp.highlights)}
+                      onChange={(text) => handleUpdate(exp.id, 'highlights', textToHighlights(text))}
+                    />
                   </div>
                 </div>
               )}
