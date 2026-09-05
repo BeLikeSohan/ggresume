@@ -67,7 +67,7 @@ export async function exportResumeToPdf(
     const html = element.outerHTML || element.innerHTML;
     const clientStyles = extractClientStyles();
 
-    onProgress?.('Connecting to server-side PDF engine...');
+    onProgress?.('Generating PDF File...');
 
     const response = await fetch('/api/export-pdf', {
       method: 'POST',
