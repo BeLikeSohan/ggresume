@@ -18,8 +18,11 @@ import {
 const useIsomorphicLayoutEffect =
   typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
-function estimateHeaderHeight(data: ResumeData): number {
-  const nameHeight = 28;
+function estimateHeaderHeight(
+  data: ResumeData,
+  fontSize: 'compact' | 'standard' | 'spacious' = 'standard'
+): number {
+  const nameHeight = fontSize === 'compact' ? 24 : fontSize === 'spacious' ? 32 : 28;
   const mt = 11;
   const { personal } = data;
   const leftCount = [personal.email, personal.location, personal.github].filter(Boolean).length;
@@ -29,26 +32,37 @@ function estimateHeaderHeight(data: ResumeData): number {
   return nameHeight + mt + contactHeight;
 }
 
-function estimateSectionHeight(key: string, data: ResumeData): number {
-  const TITLE_HEIGHT = 34;
+function estimateSectionHeight(
+  key: string,
+  data: ResumeData,
+  fontSize: 'compact' | 'standard' | 'spacious' = 'standard',
+  lineSpacing: 'compact' | 'standard' | 'relaxed' = 'standard'
+): number {
+  const fontMultiplier = fontSize === 'compact' ? 0.95 : fontSize === 'spacious' ? 1.15 : 1.0;
+  const lineMultiplier = lineSpacing === 'compact' ? 0.95 : lineSpacing === 'relaxed' ? 1.15 : 1.0;
+  const scale = fontMultiplier * lineMultiplier;
+
+  const TITLE_HEIGHT = Math.round(34 * fontMultiplier);
+  const BASE_LINE_HEIGHT = Math.round(18 * scale);
+  const ITEM_HEADER_HEIGHT = Math.round(22 * fontMultiplier);
+
   switch (key) {
     case 'profile':
       if (!data.profile) return 0;
-      const lines = Math.max(1, Math.ceil(data.profile.length / 85));
-      return TITLE_HEIGHT + lines * 18 + 12;
+      const lines = Math.max(1, Math.ceil(data.profile.length / 80));
+      return TITLE_HEIGHT + lines * BASE_LINE_HEIGHT + 8;
     case 'skills':
       if (!data.skills || data.skills.length === 0) return 0;
-      return TITLE_HEIGHT + data.skills.length * 20 + 12;
+      return TITLE_HEIGHT + data.skills.length * Math.round(22 * scale) + 8;
     case 'experiences':
       if (!data.experiences || data.experiences.length === 0) return 0;
       return (
         TITLE_HEIGHT +
         data.experiences.reduce((acc, exp) => {
-          const roleLine = 22;
           const highlightLines = (exp.highlights || []).reduce((hAcc, h) => {
-            return hAcc + Math.max(1, Math.ceil(h.length / 80)) * 18;
+            return hAcc + Math.max(1, Math.ceil(h.length / 75)) * BASE_LINE_HEIGHT;
           }, 0);
-          return acc + roleLine + highlightLines + 12;
+          return acc + ITEM_HEADER_HEIGHT + highlightLines + 10;
         }, 0)
       );
     case 'projects':
@@ -56,33 +70,31 @@ function estimateSectionHeight(key: string, data: ResumeData): number {
       return (
         TITLE_HEIGHT +
         data.projects.reduce((acc, proj) => {
-          const titleLine = 22;
           const highlightLines = (proj.highlights || []).reduce((hAcc, h) => {
-            return hAcc + Math.max(1, Math.ceil(h.length / 80)) * 18;
+            return hAcc + Math.max(1, Math.ceil(h.length / 75)) * BASE_LINE_HEIGHT;
           }, 0);
-          return acc + titleLine + highlightLines + 12;
+          return acc + ITEM_HEADER_HEIGHT + highlightLines + 10;
         }, 0)
       );
     case 'educations':
       if (!data.educations || data.educations.length === 0) return 0;
-      return TITLE_HEIGHT + data.educations.length * 44 + 12;
+      return TITLE_HEIGHT + data.educations.length * Math.round(44 * scale) + 8;
     case 'references':
       if (!data.references || data.references.length === 0) return 0;
-      return TITLE_HEIGHT + data.references.length * 36 + 12;
+      return TITLE_HEIGHT + data.references.length * Math.round(36 * scale) + 8;
     default: {
       const customSec = (data.customSections || []).find((c) => c.id === key);
       if (!customSec || !customSec.items || customSec.items.length === 0) return 0;
       return (
         TITLE_HEIGHT +
         customSec.items.reduce((acc, item) => {
-          const titleLine = 22;
           const descLines = item.description
-            ? Math.max(1, Math.ceil(item.description.length / 80)) * 18
+            ? Math.max(1, Math.ceil(item.description.length / 75)) * BASE_LINE_HEIGHT
             : 0;
           const highlightLines = (item.highlights || []).reduce((hAcc, h) => {
-            return hAcc + Math.max(1, Math.ceil(h.length / 80)) * 18;
+            return hAcc + Math.max(1, Math.ceil(h.length / 75)) * BASE_LINE_HEIGHT;
           }, 0);
-          return acc + titleLine + descLines + highlightLines + 12;
+          return acc + ITEM_HEADER_HEIGHT + descLines + highlightLines + 10;
         }, 0)
       );
     }
@@ -95,21 +107,28 @@ function calculatePages(
   usableHeight: number,
   measuredHeights: Record<string, number>,
   headerHeight: number,
-  data: ResumeData
+  data: ResumeData,
+  fontSize: 'compact' | 'standard' | 'spacious' = 'standard',
+  lineSpacing: 'compact' | 'standard' | 'relaxed' = 'standard'
 ): { sections: string[]; isFirstPage: boolean }[] {
   if (visibleSections.length === 0) {
     return [{ sections: [], isFirstPage: true }];
   }
 
+  // 14.2pt header margin-bottom in px: 14.2 * (96 / 72) = 18.93px
+  const HEADER_MB_PX = 18.93;
+
   const manualBreakSet = new Set(manualBreaks);
   const pages: { sections: string[]; isFirstPage: boolean }[] = [];
   let currentSections: string[] = [];
   let isFirstPage = true;
-  let currentHeight = headerHeight + 18.93;
+  let currentHeight = headerHeight + HEADER_MB_PX;
 
   for (const secKey of visibleSections) {
     const isManualBreak = manualBreakSet.has(secKey);
-    const secHeight = measuredHeights[secKey] || estimateSectionHeight(secKey, data);
+    const secHeight =
+      measuredHeights[secKey] ||
+      estimateSectionHeight(secKey, data, fontSize, lineSpacing);
 
     if (isManualBreak && (currentSections.length > 0 || !isFirstPage)) {
       pages.push({ sections: currentSections, isFirstPage });
@@ -237,8 +256,10 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
         effectivePageBreaks,
         usablePageHeight,
         {},
-        estimateHeaderHeight(data),
-        data
+        estimateHeaderHeight(data, fontSize),
+        data,
+        fontSize,
+        lineSpacing
       )
     );
 
@@ -249,14 +270,14 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
       if (!container) return;
 
       const headerEl = container.querySelector('[data-resume-header]') as HTMLElement | null;
-      const headerHeight = headerEl ? headerEl.offsetHeight : estimateHeaderHeight(data);
+      const headerHeight = headerEl ? headerEl.offsetHeight : estimateHeaderHeight(data, fontSize);
 
       const sectionEls = container.querySelectorAll<HTMLElement>('[data-resume-section]');
       const measured: Record<string, number> = {};
       sectionEls.forEach((el) => {
         const key = el.getAttribute('data-resume-section');
         if (key) {
-          measured[key] = el.offsetHeight;
+          measured[key] = Math.max(el.offsetHeight, el.scrollHeight);
         }
       });
 
@@ -266,7 +287,9 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
         usablePageHeight,
         measured,
         headerHeight,
-        data
+        data,
+        fontSize,
+        lineSpacing
       );
 
       setPages((prev) => {
@@ -710,7 +733,10 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
               className="resume-page bg-white text-black shadow-2xl relative"
               style={{
                 width: '210mm',
+                height: '297mm',
                 minHeight: '297mm',
+                maxHeight: '297mm',
+                overflow: 'hidden',
                 boxSizing: 'border-box',
                 fontFamily: fontFamilies,
                 ...marginStyles,

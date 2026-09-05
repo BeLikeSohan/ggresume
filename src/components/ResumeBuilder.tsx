@@ -11,7 +11,11 @@ import { PreviewToolbar } from '@/components/preview/PreviewToolbar';
 import { DownloadToast } from '@/components/common/DownloadToast';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { UnsavedChangesModal } from '@/components/common/UnsavedChangesModal';
-import { exportResumeToPdf } from '@/lib/pdfExport';
+import { ServerPdfModal } from '@/components/common/ServerPdfModal';
+import {
+  saveResumeAsPdfClient,
+  downloadResumePdfServer,
+} from '@/lib/pdfExport';
 
 interface ResumeBuilderProps {
   resumeId?: string;
@@ -42,8 +46,16 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
   const [downloadStatus, setDownloadStatus] = useState<string | null>(null);
   const [mobileView, setMobileView] = useState<'editor' | 'preview'>('editor');
   const [isUnsavedModalOpen, setIsUnsavedModalOpen] = useState(false);
+  const [isServerPdfModalOpen, setIsServerPdfModalOpen] = useState(false);
 
   const previewRef = useRef<HTMLDivElement>(null);
+
+  // Helper to generate formatted filename
+  const getPdfFileName = () => {
+    return `${
+      resumeData.personal.fullName.trim().replace(/\s+/g, '_') || 'Candidate'
+    }-Resume.pdf`;
+  };
 
   // Manual save handler from Header
   const handleSave = async () => {
@@ -81,18 +93,34 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
     }
   }, [saveResume, router]);
 
-  // PDF Export
-  const handleDownloadPdf = async () => {
+  // Client-Side PDF Save (Browser Print Dialog)
+  const handleSavePdfClient = async () => {
     if (!previewRef.current) return;
     setIsDownloading(true);
-    setDownloadStatus('Preparing PDF...');
 
     try {
-      const fileName = `${
-        resumeData.personal.fullName.trim().replace(/\s+/g, '_') || 'Candidate'
-      }-Resume.pdf`;
+      const fileName = getPdfFileName();
+      await saveResumeAsPdfClient(previewRef.current, {
+        fileName,
+        resumeData,
+      });
+    } catch (error) {
+      console.error('Client PDF export failed:', error);
+      alert('Could not open print dialog. Please try again!');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
-      await exportResumeToPdf(previewRef.current, {
+  // Direct Server-Side PDF Download
+  const handleDownloadPdfServerDirect = async () => {
+    if (!previewRef.current) return;
+    setIsDownloading(true);
+    setDownloadStatus('Capturing document snapshot...');
+
+    try {
+      const fileName = getPdfFileName();
+      await downloadResumePdfServer(previewRef.current, {
         fileName,
         resumeData,
         onProgress: (status) => setDownloadStatus(status),
@@ -100,13 +128,37 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
 
       setDownloadStatus('Downloaded successfully!');
       setTimeout(() => setDownloadStatus(null), 3500);
-    } catch (error) {
-      console.error(error);
-      alert('Could not export PDF. Please try again!');
+    } catch (error: any) {
+      console.error('Server PDF generation failed:', error);
+      alert(
+        error?.message ||
+          'Could not generate PDF on server. Please try using "Save as PDF (Browser)" instead.'
+      );
       setDownloadStatus(null);
     } finally {
       setIsDownloading(false);
     }
+  };
+
+  // Server-Side PDF Trigger (checks production mode for advice modal)
+  const handleTriggerServerDownload = () => {
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (isProduction) {
+      setIsServerPdfModalOpen(true);
+    } else {
+      handleDownloadPdfServerDirect();
+    }
+  };
+
+  // Server PDF Modal Handlers
+  const handleModalUseClientSave = () => {
+    setIsServerPdfModalOpen(false);
+    handleSavePdfClient();
+  };
+
+  const handleModalProceedServerDownload = () => {
+    setIsServerPdfModalOpen(false);
+    handleDownloadPdfServerDirect();
   };
 
   // Duplicate current resume and transition to the new copy
@@ -134,7 +186,9 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
         resumeTitle={resumeTitle}
         onUpdateTitle={setResumeTitle}
         onDuplicate={handleDuplicate}
-        onDownloadPdf={handleDownloadPdf}
+        onSavePdfClient={handleSavePdfClient}
+        onDownloadPdfServer={handleTriggerServerDownload}
+        onDownloadPdf={handleSavePdfClient}
         onClear={clearAll}
         onExportJson={exportJson}
         onImportJson={importJson}
@@ -159,6 +213,15 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
         onSaveAndExit={handleSaveAndExit}
       />
 
+      {/* Production Advice Modal for Server PDF Download */}
+      <ServerPdfModal
+        isOpen={isServerPdfModalOpen}
+        onClose={() => setIsServerPdfModalOpen(false)}
+        onUseClientSave={handleModalUseClientSave}
+        onProceedServerDownload={handleModalProceedServerDownload}
+        isDownloading={isDownloading}
+      />
+
       {/* Main Split Body: Left Editor / Right Preview */}
       <main className="flex-1 flex overflow-hidden relative">
         {/* Left Side: Form Editor */}
@@ -172,7 +235,7 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
 
         {/* Right Side: Live Resume Preview */}
         <div
-          className={`w-full lg:w-[52%] xl:w-[56%] h-full flex flex-col bg-slate-200/90 overflow-hidden relative ${
+          className={`preview-column w-full lg:w-[52%] xl:w-[56%] h-full flex flex-col bg-slate-200/90 overflow-hidden relative ${
             mobileView === 'preview' ? 'flex' : 'hidden lg:flex'
           }`}
         >
@@ -185,8 +248,8 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
           />
 
           {/* Scrollable Viewport */}
-          <div className="flex-1 overflow-auto p-4 md:p-8 flex justify-center items-start scrollbar-thin">
-            <div className="my-2">
+          <div className="preview-viewport flex-1 overflow-auto p-4 md:p-8 flex justify-center items-start scrollbar-thin">
+            <div className="preview-inner my-2">
               <ResumePreview
                 ref={previewRef}
                 data={resumeData}

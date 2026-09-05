@@ -23,23 +23,70 @@
   }
 }
 
-/* Print Styles for Pixel-Perfect Native PDF Generation */
+/* Print Styles for Pixel-Perfect Native PDF Generation via window.print() */
 @media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  *,
+  *::before,
+  *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  html,
   body {
-    background: transparent !important;
-    padding: 0 !important;
+    width: 210mm !important;
+    min-width: 210mm !important;
+    height: auto !important;
+    min-height: 0 !important;
     margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
     overflow: visible !important;
   }
 
-  /* Hide everything except the resume preview */
+  /* Hide app navigation, editor panel, toolbars, dialogs, toasts */
   .no-print,
-  nav,
   .app-header,
+  header:not(.resume-header),
+  nav,
   aside,
   .editor-panel,
-  .preview-toolbar {
+  .preview-toolbar,
+  [role="dialog"],
+  [role="status"] {
     display: none !important;
+  }
+
+  /* Reset all container wrappers so they don't introduce margin/padding/scroll/height */
+  body > div,
+  main,
+  .preview-column,
+  .preview-viewport,
+  .preview-inner,
+  .preview-container,
+  .print-area {
+    display: block !important;
+    position: static !important;
+    width: 210mm !important;
+    max-width: 210mm !important;
+    min-width: 210mm !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    overflow: visible !important;
+    transform: none !important;
+    box-shadow: none !important;
+    gap: 0 !important;
   }
 
   /* Candidate header inside the resume must always remain visible */
@@ -47,40 +94,28 @@
   .resume-header {
     display: block !important;
     visibility: visible !important;
+    opacity: 1 !important;
   }
 
-  main {
-    overflow: visible !important;
-    display: block !important;
-    height: auto !important;
-  }
-
-  .preview-container {
-    transform: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    width: 100% !important;
-    display: block !important;
-  }
-
-  .print-area {
-    margin: 0 !important;
-    padding: 0 !important;
-    box-shadow: none !important;
-    width: 100% !important;
-    max-width: none !important;
-    gap: 0 !important;
-    display: block !important;
-  }
-
+  /* Exact A4 resume page */
   .resume-page {
-    box-shadow: none !important;
-    margin: 0 !important;
+    display: block !important;
+    position: relative !important;
     width: 210mm !important;
+    min-width: 210mm !important;
+    max-width: 210mm !important;
     height: 297mm !important;
+    min-height: 297mm !important;
+    max-height: 297mm !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    background-color: #ffffff !important;
     page-break-after: always !important;
     break-after: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
     box-sizing: border-box !important;
+    overflow: hidden !important;
   }
 
   .resume-page:last-child {
@@ -88,8 +123,13 @@
     break-after: auto !important;
   }
 
-  @page {
-    size: A4 portrait;
-    margin: 0;
+  /* Link formatting for print */
+  a {
+    text-decoration: none !important;
+    color: inherit !important;
+  }
+
+  a[href]::after {
+    content: "" !important;
   }
 }

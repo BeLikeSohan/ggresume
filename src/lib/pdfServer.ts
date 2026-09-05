@@ -29,6 +29,14 @@ export function buildResumeHtml(options: {
     :root {
       --font-inter: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
       --font-source-sans: "Source Sans 3", "Source Sans Pro", -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-roboto: "Roboto", -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-open-sans: "Open Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-lato: "Lato", -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-plus-jakarta-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-literata: "Literata", Georgia, serif;
+      --font-merriweather: "Merriweather", Georgia, serif;
+      --font-lora: "Lora", Georgia, serif;
+      --font-eb-garamond: "EB Garamond", "Garamond", Georgia, serif;
     }
     ${RESUME_PDF_STYLES}
     ${extraStyles}
@@ -57,7 +65,7 @@ function escapeHtml(str: string): string {
 }
 
 export async function generateResumePdf(options: GeneratePdfOptions): Promise<Uint8Array> {
-  const { html, extraStyles = '', resumeData, title = 'Resume' } = options;
+  const { html, extraStyles = '', title = 'Resume' } = options;
 
   // 1. Resolve content: client-captured HTML snapshot
   const contentHtml = html;

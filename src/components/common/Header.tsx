@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useRef, useState, useEffect } from 'react';
-import Link from 'next/link';
 import {
   Download,
   Upload,
@@ -15,6 +14,10 @@ import {
   Check,
   Edit2,
   Save,
+  Printer,
+  ChevronDown,
+  CloudDownload,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { GGLogo } from '@/components/common/GGLogo';
@@ -23,7 +26,9 @@ export interface HeaderProps {
   resumeTitle?: string;
   onUpdateTitle?: (newTitle: string) => void;
   onDuplicate?: () => void;
-  onDownloadPdf: () => void;
+  onSavePdfClient?: () => void;
+  onDownloadPdfServer?: () => void;
+  onDownloadPdf?: () => void;
   onClear: () => void;
   onExportJson: () => void;
   onImportJson: (jsonData: string) => void;
@@ -40,6 +45,8 @@ export const Header: React.FC<HeaderProps> = ({
   resumeTitle = 'Software Engineer Resume',
   onUpdateTitle,
   onDuplicate,
+  onSavePdfClient,
+  onDownloadPdfServer,
   onDownloadPdf,
   onClear,
   onExportJson,
@@ -53,12 +60,29 @@ export const Header: React.FC<HeaderProps> = ({
   onBack,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pdfMenuRef = useRef<HTMLDivElement>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleInput, setTitleInput] = useState(resumeTitle);
+  const [isPdfMenuOpen, setIsPdfMenuOpen] = useState(false);
 
   useEffect(() => {
     setTitleInput(resumeTitle);
   }, [resumeTitle]);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (pdfMenuRef.current && !pdfMenuRef.current.contains(e.target as Node)) {
+        setIsPdfMenuOpen(false);
+      }
+    };
+    if (isPdfMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isPdfMenuOpen]);
 
   const handleTitleSubmit = () => {
     setIsEditingTitle(false);
@@ -100,6 +124,24 @@ export const Header: React.FC<HeaderProps> = ({
     if (onBack) {
       e.preventDefault();
       onBack();
+    }
+  };
+
+  const handleClientPdfClick = () => {
+    setIsPdfMenuOpen(false);
+    if (onSavePdfClient) {
+      onSavePdfClient();
+    } else if (onDownloadPdf) {
+      onDownloadPdf();
+    }
+  };
+
+  const handleServerPdfClick = () => {
+    setIsPdfMenuOpen(false);
+    if (onDownloadPdfServer) {
+      onDownloadPdfServer();
+    } else if (onDownloadPdf) {
+      onDownloadPdf();
     }
   };
 
@@ -284,23 +326,97 @@ export const Header: React.FC<HeaderProps> = ({
           </Button>
         )}
 
-        {/* Primary Download Button */}
-        <Button
-          size="sm"
-          variant="outline"
-          icon={
-            isDownloading ? (
-              <Loader2 size={14} className="animate-spin" />
-            ) : (
-              <Download size={14} />
-            )
-          }
-          onClick={onDownloadPdf}
-          disabled={isDownloading}
-          className="font-semibold bg-white hover:bg-slate-50 border-slate-200 text-slate-800"
-        >
-          {isDownloading ? 'Generating...' : 'Download PDF'}
-        </Button>
+        {/* PDF Export Split Button with Dropdown Menu */}
+        <div className="relative inline-flex items-center" ref={pdfMenuRef}>
+          <div className="inline-flex rounded-lg shadow-xs overflow-hidden border border-slate-300">
+            {/* Main Action: Save as PDF (Client) */}
+            <button
+              type="button"
+              onClick={handleClientPdfClick}
+              disabled={isDownloading}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white text-slate-800 hover:bg-slate-50 disabled:opacity-50 transition cursor-pointer"
+              title="Save as PDF via Browser Print (Instant & Vector Quality)"
+            >
+              {isDownloading ? (
+                <Loader2 size={13} className="animate-spin text-slate-600" />
+              ) : (
+                <Printer size={13} className="text-slate-700" />
+              )}
+              <span>{isDownloading ? 'Exporting...' : 'Save PDF'}</span>
+            </button>
+
+            {/* Dropdown Toggle */}
+            <button
+              type="button"
+              onClick={() => setIsPdfMenuOpen((prev) => !prev)}
+              disabled={isDownloading}
+              className="px-1.5 py-1.5 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-l border-slate-200 disabled:opacity-50 transition cursor-pointer"
+              title="PDF Export options"
+              aria-label="PDF Export options"
+              aria-expanded={isPdfMenuOpen}
+            >
+              <ChevronDown
+                size={13}
+                className={`transition-transform duration-150 ${
+                  isPdfMenuOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Dropdown Menu */}
+          {isPdfMenuOpen && (
+            <div className="absolute right-0 top-full mt-1.5 w-72 bg-white rounded-xl shadow-xl border border-slate-200 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150 text-left">
+              <button
+                type="button"
+                onClick={handleClientPdfClick}
+                className="w-full text-left p-2 rounded-lg hover:bg-slate-50 transition flex items-start gap-2.5 group cursor-pointer"
+              >
+                <div className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-blue-100 transition">
+                  <Sparkles size={14} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-semibold text-slate-900">
+                      Save as PDF (Browser)
+                    </span>
+                    <span className="text-[10px] font-medium bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded font-mono">
+                      Fast
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                    Instant vector PDF via browser print dialog. Recommended.
+                  </p>
+                </div>
+              </button>
+
+              <div className="my-1 border-t border-slate-100" />
+
+              <button
+                type="button"
+                onClick={handleServerPdfClick}
+                className="w-full text-left p-2 rounded-lg hover:bg-slate-50 transition flex items-start gap-2.5 group cursor-pointer"
+              >
+                <div className="w-7 h-7 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-slate-200 transition">
+                  <CloudDownload size={14} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-semibold text-slate-900">
+                      Download PDF (Server)
+                    </span>
+                    <span className="text-[10px] font-medium bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded font-mono">
+                      Fallback
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                    Generates PDF on cloud server via headless Chrome.
+                  </p>
+                </div>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );

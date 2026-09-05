@@ -21,7 +21,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
     <div
       className={`section-header w-full ${className}`}
       style={{
-        marginTop: isFirstOnPage ? '0pt' : '13.5pt',
+        paddingTop: isFirstOnPage ? '0pt' : '13.5pt',
         marginBottom: '5.5pt',
       }}
     >
