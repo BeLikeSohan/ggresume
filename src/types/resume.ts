@@ -1,12 +1,19 @@
+export interface ProfileLink {
+  id: string;
+  label: string;
+  url: string;
+  icon?: string;
+}
+
 export interface PersonalInfo {
   fullName: string;
-  email: string;
-  phone: string;
-  location: string;
-  website: string;
-  github: string;
+  email?: string;
+  phone?: string;
+  location?: string;
+  website?: string;
+  github?: string;
   linkedin?: string;
-  customLinks?: { id: string; label: string; url: string; icon?: string }[];
+  customLinks?: ProfileLink[];
 }
 
 export interface SkillCategory {

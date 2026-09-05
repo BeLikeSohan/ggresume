@@ -9,7 +9,26 @@ export const defaultResumeData: ResumeData = {
     website: 'washiul.com',
     github: 'github.com/belikesohan',
     linkedin: 'linkedin.com/in/washiul-alam',
-    customLinks: [],
+    customLinks: [
+      {
+        id: 'link-gh',
+        label: 'GitHub',
+        url: 'github.com/belikesohan',
+        icon: 'github',
+      },
+      {
+        id: 'link-li',
+        label: 'LinkedIn',
+        url: 'linkedin.com/in/washiul-alam',
+        icon: 'linkedin',
+      },
+      {
+        id: 'link-web',
+        label: 'Portfolio',
+        url: 'washiul.com',
+        icon: 'globe',
+      },
+    ],
   },
   profile:
     'Backend Software Engineer with 3+ years of experience designing and scaling distributed systems and web APIs. Proficient in **Go**, **Java/Spring Boot**, **TypeScript/Node.js**, **REST & gRPC APIs**, **PostgreSQL**, **Redis**, **Docker**, and **AWS**, with a focus on database performance, high availability, and clean modular architecture.',

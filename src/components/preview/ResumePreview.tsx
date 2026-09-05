@@ -13,10 +13,109 @@ import {
   GlobeIcon,
   LinkedinIcon,
   ExternalLinkIcon,
+  ProfileIcon,
 } from './Icons';
 
 const useIsomorphicLayoutEffect =
   typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+
+export interface ContactDisplayItem {
+  id: string;
+  type: 'email' | 'phone' | 'location' | 'profile';
+  icon: string;
+  text: string;
+  href?: string;
+}
+
+export function getPersonalContactItems(personal: ResumeData['personal']): ContactDisplayItem[] {
+  if (!personal) return [];
+  const items: ContactDisplayItem[] = [];
+
+  if (personal.email && personal.email.trim()) {
+    items.push({
+      id: 'contact-email',
+      type: 'email',
+      icon: 'email',
+      text: personal.email.trim(),
+      href: `mailto:${personal.email.trim()}`,
+    });
+  }
+
+  if (personal.phone && personal.phone.trim()) {
+    items.push({
+      id: 'contact-phone',
+      type: 'phone',
+      icon: 'phone',
+      text: personal.phone.trim(),
+      href: `tel:${personal.phone.trim()}`,
+    });
+  }
+
+  if (personal.location && personal.location.trim()) {
+    items.push({
+      id: 'contact-location',
+      type: 'location',
+      icon: 'location',
+      text: personal.location.trim(),
+    });
+  }
+
+  // Profile links: use customLinks if provided, or legacy fields as fallback
+  if (
+    personal.customLinks &&
+    Array.isArray(personal.customLinks) &&
+    personal.customLinks.length > 0
+  ) {
+    personal.customLinks.forEach((link, idx) => {
+      if (link.url && link.url.trim()) {
+        const rawUrl = link.url.trim();
+        const displayUrl = rawUrl.replace(/^https?:\/\//, '');
+        const href = rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`;
+        items.push({
+          id: link.id || `profile-link-${idx}`,
+          type: 'profile',
+          icon: link.icon || 'link',
+          text: displayUrl,
+          href,
+        });
+      }
+    });
+  } else {
+    // Legacy fallbacks
+    if (personal.github && personal.github.trim()) {
+      const raw = personal.github.trim();
+      items.push({
+        id: 'contact-github',
+        type: 'profile',
+        icon: 'github',
+        text: raw.replace(/^https?:\/\//, ''),
+        href: raw.startsWith('http') ? raw : `https://${raw}`,
+      });
+    }
+    if (personal.linkedin && personal.linkedin.trim()) {
+      const raw = personal.linkedin.trim();
+      items.push({
+        id: 'contact-linkedin',
+        type: 'profile',
+        icon: 'linkedin',
+        text: raw.replace(/^https?:\/\//, ''),
+        href: raw.startsWith('http') ? raw : `https://${raw}`,
+      });
+    }
+    if (personal.website && personal.website.trim()) {
+      const raw = personal.website.trim();
+      items.push({
+        id: 'contact-website',
+        type: 'profile',
+        icon: 'globe',
+        text: raw.replace(/^https?:\/\//, ''),
+        href: raw.startsWith('http') ? raw : `https://${raw}`,
+      });
+    }
+  }
+
+  return items;
+}
 
 function estimateHeaderHeight(
   data: ResumeData,
@@ -24,10 +123,8 @@ function estimateHeaderHeight(
 ): number {
   const nameHeight = fontSize === 'compact' ? 24 : fontSize === 'spacious' ? 32 : 28;
   const mt = 11;
-  const { personal } = data;
-  const leftCount = [personal.email, personal.location, personal.github].filter(Boolean).length;
-  const rightCount = [personal.phone, personal.website, personal.linkedin].filter(Boolean).length;
-  const rows = Math.max(leftCount, rightCount, 1);
+  const items = getPersonalContactItems(data.personal);
+  const rows = Math.max(Math.ceil(items.length / 2), 1);
   const contactHeight = rows * 26;
   return nameHeight + mt + contactHeight;
 }
@@ -760,103 +857,85 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
                   </h1>
 
                   {/* Contact Info: Two Column Grid matching original FlowCV */}
-                  <div className="grid grid-cols-2 gap-x-8 mt-[8pt]">
-                    {/* Left Column */}
-                    <div className="flex flex-col justify-start">
-                      {personal.email && (
-                        <div className={`flex items-center h-[19.5pt] ${fontSizeClasses.subtext} ${lineSpacingClasses} text-black`}>
-                          <div className="w-[17pt] flex items-center justify-start flex-shrink-0">
-                            <EmailIcon size={12} />
-                          </div>
-                          <a
-                            href={`mailto:${personal.email}`}
-                            className="hover:underline text-black truncate"
-                          >
-                            {personal.email}
-                          </a>
-                        </div>
-                      )}
-                      {personal.location && (
-                        <div className={`flex items-center h-[19.5pt] ${fontSizeClasses.subtext} ${lineSpacingClasses} text-black`}>
-                          <div className="w-[17pt] flex items-center justify-start flex-shrink-0">
-                            <LocationIcon size={12} />
-                          </div>
-                          <span className="truncate">{personal.location}</span>
-                        </div>
-                      )}
-                      {personal.github && (
-                        <div className={`flex items-center h-[19.5pt] ${fontSizeClasses.subtext} ${lineSpacingClasses} text-black`}>
-                          <div className="w-[17pt] flex items-center justify-start flex-shrink-0">
-                            <GithubIcon size={12} />
-                          </div>
-                          <a
-                            href={
-                              personal.github.startsWith('http')
-                                ? personal.github
-                                : `https://${personal.github}`
-                            }
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="hover:underline text-black truncate"
-                          >
-                            {personal.github.replace(/^https?:\/\//, '')}
-                          </a>
-                        </div>
-                      )}
-                    </div>
+                  {(() => {
+                    const contactItems = getPersonalContactItems(personal);
+                    if (contactItems.length === 0) return null;
+                    const mid = Math.ceil(contactItems.length / 2);
+                    const leftColumnItems = contactItems.slice(0, mid);
+                    const rightColumnItems = contactItems.slice(mid);
 
-                    {/* Right Column */}
-                    <div className="flex flex-col justify-start pl-[2pt]">
-                      {personal.phone && (
-                        <div className={`flex items-center h-[19.5pt] ${fontSizeClasses.subtext} ${lineSpacingClasses} text-black`}>
-                          <div className="w-[17pt] flex items-center justify-start flex-shrink-0">
-                            <PhoneIcon size={12} />
-                          </div>
-                          <a href={`tel:${personal.phone}`} className="hover:underline text-black truncate">
-                            {personal.phone}
-                          </a>
+                    return (
+                      <div className="grid grid-cols-2 gap-x-8 mt-[8pt]">
+                        {/* Left Column */}
+                        <div className="flex flex-col justify-start">
+                          {leftColumnItems.map((item) => (
+                            <div
+                              key={item.id}
+                              className={`flex items-center h-[19.5pt] ${fontSizeClasses.subtext} ${lineSpacingClasses} text-black`}
+                            >
+                              <div className="w-[17pt] flex items-center justify-start flex-shrink-0">
+                                <ProfileIcon icon={item.icon} size={12} />
+                              </div>
+                              {item.href ? (
+                                <a
+                                  href={item.href}
+                                  target={
+                                    item.type === 'email' || item.type === 'phone'
+                                      ? undefined
+                                      : '_blank'
+                                  }
+                                  rel={
+                                    item.type === 'email' || item.type === 'phone'
+                                      ? undefined
+                                      : 'noopener noreferrer'
+                                  }
+                                  className="hover:underline text-black truncate"
+                                >
+                                  {item.text}
+                                </a>
+                              ) : (
+                                <span className="truncate">{item.text}</span>
+                              )}
+                            </div>
+                          ))}
                         </div>
-                      )}
-                      {personal.website && (
-                        <div className={`flex items-center h-[19.5pt] ${fontSizeClasses.subtext} ${lineSpacingClasses} text-black`}>
-                          <div className="w-[17pt] flex items-center justify-start flex-shrink-0">
-                            <GlobeIcon size={12} />
-                          </div>
-                          <a
-                            href={
-                              personal.website.startsWith('http')
-                                ? personal.website
-                                : `https://${personal.website}`
-                            }
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="hover:underline text-black truncate"
-                          >
-                            {personal.website.replace(/^https?:\/\//, '')}
-                          </a>
+
+                        {/* Right Column */}
+                        <div className="flex flex-col justify-start pl-[2pt]">
+                          {rightColumnItems.map((item) => (
+                            <div
+                              key={item.id}
+                              className={`flex items-center h-[19.5pt] ${fontSizeClasses.subtext} ${lineSpacingClasses} text-black`}
+                            >
+                              <div className="w-[17pt] flex items-center justify-start flex-shrink-0">
+                                <ProfileIcon icon={item.icon} size={12} />
+                              </div>
+                              {item.href ? (
+                                <a
+                                  href={item.href}
+                                  target={
+                                    item.type === 'email' || item.type === 'phone'
+                                      ? undefined
+                                      : '_blank'
+                                  }
+                                  rel={
+                                    item.type === 'email' || item.type === 'phone'
+                                      ? undefined
+                                      : 'noopener noreferrer'
+                                  }
+                                  className="hover:underline text-black truncate"
+                                >
+                                  {item.text}
+                                </a>
+                              ) : (
+                                <span className="truncate">{item.text}</span>
+                              )}
+                            </div>
+                          ))}
                         </div>
-                      )}
-                      {personal.linkedin && (
-                        <div className={`flex items-center h-[19.5pt] ${fontSizeClasses.subtext} ${lineSpacingClasses} text-black`}>
-                          <div className="w-[17pt] flex items-center justify-start flex-shrink-0">
-                            <LinkedinIcon size={12} />
-                          </div>
-                          <a
-                            href={
-                              personal.linkedin.startsWith('http')
-                                ? personal.linkedin
-                                : `https://${personal.linkedin}`
-                            }
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="hover:underline text-black truncate"
-                          >
-                            {personal.linkedin.replace(/^https?:\/\//, '')}
-                          </a>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                      </div>
+                    );
+                  })()}
                 </header>
               )}
 
