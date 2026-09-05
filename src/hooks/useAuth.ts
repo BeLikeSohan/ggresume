@@ -82,7 +82,11 @@ export function useAuth() {
       localStorage.removeItem('ggresume_user');
     } catch (_) {}
     setUser(null);
-    router.push('/');
+    if (typeof window !== 'undefined') {
+      window.location.href = '/';
+    } else {
+      router.push('/');
+    }
   }, [router]);
 
   return {
