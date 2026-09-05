@@ -28,6 +28,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
 
   return (
     <div
+      data-resume-section-header="true"
       className={`section-header w-full ${className}`}
       style={{
         paddingTop,

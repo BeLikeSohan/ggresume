@@ -129,31 +129,33 @@ function estimateHeaderHeight(
   fontSize: number | string = 10
 ): number {
   const numFontSize = resolveFontSize(fontSize);
-  const nameHeight = Math.round(numFontSize * 2.8);
+  const PT_TO_PX = 96 / 72;
+  const nameHeight = Math.round(17.5 * PT_TO_PX * 1.25); // ~29px
   const mt = 6;
   const items = getPersonalContactItems(data.personal);
   if (items.length === 0) return nameHeight + mt;
 
   const headerStyle = data.settings?.headerStyle || 'grid';
+  const contactLineHeight = Math.round(numFontSize * 0.95 * PT_TO_PX * 1.35); // ~17px
 
   if (headerStyle === 'centered' || headerStyle === 'left-inline') {
     const lines = Math.max(Math.ceil(items.length / 3), 1);
-    return nameHeight + mt + lines * Math.round(numFontSize * 2.2);
+    return nameHeight + mt + lines * contactLineHeight;
   }
 
   if (headerStyle === 'split') {
     const rows = items.length;
-    return Math.max(nameHeight + 8, rows * Math.round(numFontSize * 2.0)) + mt;
+    return Math.max(nameHeight + 8, rows * contactLineHeight) + mt;
   }
 
   if (headerStyle === 'banner') {
     const rows = Math.max(Math.ceil(items.length / 2), 1);
-    return nameHeight + mt + rows * Math.round(numFontSize * 2.6) + 4;
+    return nameHeight + mt + rows * contactLineHeight + 4;
   }
 
+  // default 'grid'
   const rows = Math.max(Math.ceil(items.length / 2), 1);
-  const contactHeight = rows * Math.round(numFontSize * 2.6);
-  return nameHeight + mt + contactHeight;
+  return nameHeight + mt + rows * contactLineHeight;
 }
 
 export interface PageSectionSlot {
@@ -167,6 +169,17 @@ export interface ResumePage {
   isFirstPage: boolean;
 }
 
+export interface MeasuredItem {
+  index: number;
+  height: number;
+}
+
+export interface MeasuredSection {
+  totalHeight: number;
+  headerHeight: number;
+  items: MeasuredItem[];
+}
+
 function getItemEstimates(
   key: string,
   data: ResumeData,
@@ -174,81 +187,91 @@ function getItemEstimates(
   lineSpacing: number | string = 1.35,
   sectionSpacing: number | string = 13.5
 ): { index: number; height: number }[] {
+  const PT_TO_PX = 96 / 72;
   const numFontSize = resolveFontSize(fontSize);
   const numLineSpacing = resolveLineSpacing(lineSpacing);
   const fontMultiplier = numFontSize / 10.0;
   const lineMultiplier = numLineSpacing / 1.35;
   const scale = fontMultiplier * lineMultiplier;
 
-  const BASE_LINE_HEIGHT = Math.round(18 * scale);
-  const ITEM_HEADER_HEIGHT = Math.round(22 * fontMultiplier);
+  const BASE_LINE_HEIGHT = Math.round(numFontSize * PT_TO_PX * numLineSpacing);
+  const ITEM_GAP = Math.round(8.4 * PT_TO_PX); // ~11px
 
   switch (key) {
     case 'skills': {
       const visibleSkills = (data.skills || []).filter((s) => !s.hidden);
       return visibleSkills.map((s, i) => {
-        const itemLines = Math.max(1, Math.ceil((s.category.length + s.items.length + 5) / 80));
+        const textLen = s.category.length + s.items.length + 4;
+        const itemLines = Math.max(1, Math.ceil(textLen / 95));
         return {
           index: i,
-          height: itemLines * BASE_LINE_HEIGHT + 4,
+          height: itemLines * BASE_LINE_HEIGHT,
         };
       });
     }
     case 'experiences': {
       const visibleExp = (data.experiences || []).filter((e) => !e.hidden);
       return visibleExp.map((exp, i) => {
+        const headerLines = 1;
         const highlightLines = (exp.highlights || [])
           .filter((h) => h.trim().length > 0)
           .reduce((hAcc, h) => {
-            return hAcc + Math.max(1, Math.ceil(h.length / 75)) * BASE_LINE_HEIGHT;
+            const isBullet = /^[\s]*[•\-\*]\s+/.test(h);
+            const clean = isBullet ? h.replace(/^[\s]*[•\-\*]\s+/, '') : h;
+            return hAcc + Math.max(1, Math.ceil(clean.length / 92)) * BASE_LINE_HEIGHT + 1.5;
           }, 0);
         return {
           index: i,
-          height: ITEM_HEADER_HEIGHT + highlightLines + 10,
+          height: headerLines * BASE_LINE_HEIGHT + 2 + highlightLines + (i < visibleExp.length - 1 ? ITEM_GAP : 0),
         };
       });
     }
     case 'projects': {
       const visibleProj = (data.projects || []).filter((p) => !p.hidden);
       return visibleProj.map((proj, i) => {
+        const headerLines = 1;
         const highlightLines = (proj.highlights || [])
           .filter((h) => h.trim().length > 0)
           .reduce((hAcc, h) => {
-            return hAcc + Math.max(1, Math.ceil(h.length / 75)) * BASE_LINE_HEIGHT;
+            const isBullet = /^[\s]*[•\-\*]\s+/.test(h);
+            const clean = isBullet ? h.replace(/^[\s]*[•\-\*]\s+/, '') : h;
+            return hAcc + Math.max(1, Math.ceil(clean.length / 92)) * BASE_LINE_HEIGHT + 1.5;
           }, 0);
         return {
           index: i,
-          height: ITEM_HEADER_HEIGHT + highlightLines + 10,
+          height: headerLines * BASE_LINE_HEIGHT + 2 + highlightLines + (i < visibleProj.length - 1 ? ITEM_GAP : 0),
         };
       });
     }
     case 'educations': {
-      return (data.educations || []).map((_, i) => ({
+      return (data.educations || []).map((_, i, arr) => ({
         index: i,
-        height: Math.round(44 * scale) + 8,
+        height: BASE_LINE_HEIGHT * 2 + 2 + (i < arr.length - 1 ? ITEM_GAP : 0),
       }));
     }
     case 'references': {
-      return (data.references || []).map((_, i) => ({
+      return (data.references || []).map((_, i, arr) => ({
         index: i,
-        height: Math.round(36 * scale) + 8,
+        height: BASE_LINE_HEIGHT * 2 + 2 + (i < arr.length - 1 ? ITEM_GAP : 0),
       }));
     }
     default: {
       const customSec = (data.customSections || []).find((c) => c.id === key);
       if (!customSec || !customSec.items) return [];
-      return customSec.items.map((item, i) => {
+      return customSec.items.map((item, i, arr) => {
         const descLines = item.description
-          ? Math.max(1, Math.ceil(item.description.length / 75)) * BASE_LINE_HEIGHT
+          ? Math.max(1, Math.ceil(item.description.length / 92)) * BASE_LINE_HEIGHT
           : 0;
         const highlightLines = (item.highlights || [])
           .filter((h) => h.trim().length > 0)
           .reduce((hAcc, h) => {
-            return hAcc + Math.max(1, Math.ceil(h.length / 75)) * BASE_LINE_HEIGHT;
+            const isBullet = /^[\s]*[•\-\*]\s+/.test(h);
+            const clean = isBullet ? h.replace(/^[\s]*[•\-\*]\s+/, '') : h;
+            return hAcc + Math.max(1, Math.ceil(clean.length / 92)) * BASE_LINE_HEIGHT + 1.5;
           }, 0);
         return {
           index: i,
-          height: ITEM_HEADER_HEIGHT + descLines + highlightLines + 10,
+          height: BASE_LINE_HEIGHT + 2 + descLines + highlightLines + (i < arr.length - 1 ? ITEM_GAP : 0),
         };
       });
     }
@@ -263,21 +286,26 @@ function calculatePages(
   data: ResumeData,
   fontSize: number | string = 10,
   lineSpacing: number | string = 1.35,
-  sectionSpacing: number | string = 13.5
+  sectionSpacing: number | string = 13.5,
+  measuredData?: Record<string, MeasuredSection>
 ): ResumePage[] {
   if (visibleSections.length === 0) {
     return [{ slots: [], isFirstPage: true }];
   }
 
+  const PT_TO_PX = 96 / 72;
   const numSectionSpacing = resolveSectionSpacing(sectionSpacing);
   const numFontSize = resolveFontSize(fontSize);
+  const numLineSpacing = resolveLineSpacing(lineSpacing);
   const fontMultiplier = numFontSize / 10.0;
-  const lineMultiplier = resolveLineSpacing(lineSpacing) / 1.35;
+  const lineMultiplier = numLineSpacing / 1.35;
   const scale = fontMultiplier * lineMultiplier;
-  const BASE_LINE_HEIGHT = Math.round(18 * scale);
+  const BASE_LINE_HEIGHT = Math.round(13.33 * scale * numLineSpacing);
 
-  const TITLE_HEIGHT = Math.max(16, Math.round(numSectionSpacing + 18 * fontMultiplier));
-  const HEADER_MB_PX = 9.33; // 7pt in px
+  const sectionSpacingPx = numSectionSpacing * PT_TO_PX;
+  const TITLE_HEADER_HEIGHT = Math.round(sectionSpacingPx + numFontSize * 1.1 * PT_TO_PX * 1.25 + 11.33);
+  const FIRST_TITLE_HEADER_HEIGHT = Math.round(numFontSize * 1.1 * PT_TO_PX * 1.25 + 11.33);
+  const HEADER_MB_PX = 7 * PT_TO_PX; // 9.33px
 
   const manualBreakSet = new Set(manualBreaks);
   const pages: ResumePage[] = [];
@@ -295,15 +323,27 @@ function calculatePages(
       currentHeight = 0;
     }
 
+    const isFirstSecOnPage = currentSlots.length === 0;
+    const defaultTitleHeight = isFirstSecOnPage ? FIRST_TITLE_HEADER_HEIGHT : TITLE_HEADER_HEIGHT;
+
     if (secKey === 'profile') {
-      const lines = Math.max(1, Math.ceil((data.profile || '').length / 80));
-      const profileHeight = TITLE_HEIGHT + lines * BASE_LINE_HEIGHT + 8;
+      const measured = measuredData?.['profile'];
+      let profileHeight: number;
+      if (measured) {
+        profileHeight = isFirstSecOnPage
+          ? measured.totalHeight - sectionSpacingPx
+          : measured.totalHeight;
+      } else {
+        const textLen = (data.profile || '').length;
+        const lines = Math.max(1, Math.ceil(textLen / 95));
+        profileHeight = defaultTitleHeight + lines * BASE_LINE_HEIGHT + 4;
+      }
 
       if (currentSlots.length > 0 && currentHeight + profileHeight > usableHeight) {
         pages.push({ slots: currentSlots, isFirstPage });
         currentSlots = [{ sectionKey: secKey }];
         isFirstPage = false;
-        currentHeight = profileHeight;
+        currentHeight = FIRST_TITLE_HEADER_HEIGHT + (profileHeight - defaultTitleHeight);
       } else {
         currentSlots.push({ sectionKey: secKey });
         currentHeight += profileHeight;
@@ -311,52 +351,86 @@ function calculatePages(
       continue;
     }
 
-    const items = getItemEstimates(secKey, data, fontSize, lineSpacing, sectionSpacing);
+    // Multi-item sections: experiences, projects, skills, educations, references, custom
+    const measured = measuredData?.[secKey];
+    let items: { index: number; height: number }[];
+    let measuredTotalHeight: number | null = null;
+    let secHeaderHeight = defaultTitleHeight;
+
+    if (measured && measured.items && measured.items.length > 0) {
+      items = measured.items;
+      measuredTotalHeight = isFirstSecOnPage
+        ? measured.totalHeight - sectionSpacingPx
+        : measured.totalHeight;
+      secHeaderHeight = isFirstSecOnPage
+        ? Math.max(16, measured.headerHeight - sectionSpacingPx)
+        : measured.headerHeight;
+    } else {
+      items = getItemEstimates(secKey, data, fontSize, lineSpacing, sectionSpacing);
+    }
+
     if (items.length === 0) continue;
 
+    // Calculate total section height
+    const totalSectionHeight =
+      measuredTotalHeight ??
+      (secHeaderHeight + items.reduce((acc, it) => acc + it.height, 0));
+
+    // Case 1: The entire section fits on the current page
+    if (currentHeight + totalSectionHeight <= usableHeight) {
+      currentSlots.push({ sectionKey: secKey });
+      currentHeight += totalSectionHeight;
+      continue;
+    }
+
+    // Case 2: Entire section does not fit. Try item-level distribution
     let itemIdx = 0;
     let isContinuation = false;
 
     while (itemIdx < items.length) {
-      const activeHeaderReq = isContinuation ? 0 : TITLE_HEIGHT;
+      const currentFirstOnPage = currentSlots.length === 0;
+      const titleHeightForSlot = isContinuation
+        ? (currentFirstOnPage ? FIRST_TITLE_HEADER_HEIGHT : TITLE_HEADER_HEIGHT)
+        : (currentFirstOnPage ? FIRST_TITLE_HEADER_HEIGHT : TITLE_HEADER_HEIGHT);
 
-      // If current page cannot even fit the header + 1 item, break to new page
+      // If current page cannot even fit the section title + 1st remaining item, push to new page
       if (
         currentSlots.length > 0 &&
-        currentHeight + activeHeaderReq + items[itemIdx].height > usableHeight
+        currentHeight + titleHeightForSlot + items[itemIdx].height > usableHeight
       ) {
         pages.push({ slots: currentSlots, isFirstPage });
         currentSlots = [];
         isFirstPage = false;
         currentHeight = 0;
+        continue;
       }
 
-      const headerHeightForThisChunk = isContinuation ? 0 : TITLE_HEIGHT;
+      const activeTitleHeight = currentSlots.length === 0 ? FIRST_TITLE_HEADER_HEIGHT : TITLE_HEADER_HEIGHT;
       const fittingIndices: number[] = [];
-      let chunkHeight = headerHeightForThisChunk;
+      let accumulatedHeight = activeTitleHeight;
 
       while (itemIdx < items.length) {
         const nextItemHeight = items[itemIdx].height;
         if (
           fittingIndices.length > 0 &&
-          currentHeight + chunkHeight + nextItemHeight > usableHeight
+          currentHeight + accumulatedHeight + nextItemHeight > usableHeight
         ) {
           break;
         }
         fittingIndices.push(itemIdx);
-        chunkHeight += nextItemHeight;
+        accumulatedHeight += nextItemHeight;
         itemIdx++;
       }
 
       currentSlots.push({
         sectionKey: secKey,
-        itemIndices: fittingIndices,
+        itemIndices: fittingIndices.length === items.length && !isContinuation ? undefined : fittingIndices,
         isContinuation,
       });
-      currentHeight += chunkHeight;
+      currentHeight += accumulatedHeight;
       isContinuation = true;
 
-      // If there are still items left, start next page
+      // If more items remain, start next page
       if (itemIdx < items.length) {
         pages.push({ slots: currentSlots, isFirstPage });
         currentSlots = [];
@@ -486,8 +560,42 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
       if (typeof window === 'undefined') return;
 
       const container = document.getElementById('resume-print-node');
-      const headerEl = container?.querySelector('[data-resume-header]') as HTMLElement | null;
+      if (!container) return;
+
+      const headerEl = container.querySelector('[data-resume-header]') as HTMLElement | null;
       const headerHeight = headerEl ? headerEl.offsetHeight : estimateHeaderHeight(data, numFontSize);
+
+      const measuredData: Record<string, MeasuredSection> = {};
+      const sectionEls = container.querySelectorAll<HTMLElement>('[data-resume-section]');
+
+      sectionEls.forEach((secEl) => {
+        const key = secEl.getAttribute('data-resume-section');
+        if (!key) return;
+
+        const totalHeight = Math.max(secEl.offsetHeight, secEl.scrollHeight);
+        const headerEl = secEl.querySelector<HTMLElement>('[data-resume-section-header]');
+        const headerHeight = headerEl ? Math.max(headerEl.offsetHeight, headerEl.scrollHeight) : 28;
+
+        const itemEls = secEl.querySelectorAll<HTMLElement>('[data-resume-item]');
+        const items: MeasuredItem[] = [];
+        itemEls.forEach((itEl, idx) => {
+          items.push({
+            index: idx,
+            height: Math.max(itEl.offsetHeight, itEl.scrollHeight),
+          });
+        });
+
+        if (!measuredData[key]) {
+          measuredData[key] = {
+            totalHeight,
+            headerHeight,
+            items,
+          };
+        } else {
+          measuredData[key].items.push(...items);
+          measuredData[key].totalHeight += totalHeight;
+        }
+      });
 
       const nextPages = calculatePages(
         visibleSections,
@@ -497,7 +605,8 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
         data,
         numFontSize,
         numLineSpacing,
-        numSectionSpacing
+        numSectionSpacing,
+        measuredData
       );
 
       setPages((prev) => {
@@ -618,7 +727,11 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
               {renderSectionTitle(sectionTitle, isFirstOnPage)}
               <div className="flex flex-col gap-0">
                 {itemsToRender.map((s) => (
-                  <div key={s.id} className={`${fontSizeClasses.body} ${lineSpacingClasses} text-black`}>
+                  <div
+                    key={s.id}
+                    data-resume-item="true"
+                    className={`${fontSizeClasses.body} ${lineSpacingClasses} text-black`}
+                  >
                     <span className="font-bold text-black">{s.category}</span>
                     <span className="mx-1 text-black font-normal">—</span>
                     <FormattedText text={s.items} />
@@ -648,7 +761,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
               {renderSectionTitle(sectionTitle, isFirstOnPage)}
               <div className="flex flex-col gap-[8.4pt]">
                 {itemsToRender.map((exp) => (
-                  <div key={exp.id} className="experience-item w-full">
+                  <div key={exp.id} data-resume-item="true" className="experience-item w-full">
                     {/* Top right date & location floated so accomplishments text-wrap around it */}
                     {(exp.startDate || exp.endDate || exp.isCurrent || exp.location) && (
                       <div
@@ -757,7 +870,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
               {renderSectionTitle(sectionTitle, isFirstOnPage)}
               <div className="flex flex-col gap-[8.4pt]">
                 {itemsToRender.map((proj) => (
-                  <div key={proj.id} className="project-item w-full">
+                  <div key={proj.id} data-resume-item="true" className="project-item w-full">
                     <div className="flex justify-between items-baseline">
                       <div className={`${fontSizeClasses.itemTitle} ${lineSpacingClasses} flex-1 mr-4`}>
                         <span className="font-bold text-black">
@@ -852,7 +965,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
               {renderSectionTitle(sectionTitle, isFirstOnPage)}
               <div className="flex flex-col gap-[8.4pt]">
                 {itemsToRender.map((edu) => (
-                  <div key={edu.id} className="education-item w-full">
+                  <div key={edu.id} data-resume-item="true" className="education-item w-full">
                     <div className="flex justify-between items-baseline">
                       <div className={`${fontSizeClasses.itemTitle} ${lineSpacingClasses}`}>
                         <span className="font-bold text-black">{edu.degree}</span>
@@ -907,7 +1020,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
               {renderSectionTitle(sectionTitle, isFirstOnPage)}
               <div className="grid grid-cols-2 gap-4">
                 {itemsToRender.map((refItem) => (
-                  <div key={refItem.id} className="reference-item w-full">
+                  <div key={refItem.id} data-resume-item="true" className="reference-item w-full">
                     <div className={`${fontSizeClasses.itemTitle} ${lineSpacingClasses}`}>
                       <span className="font-bold text-black">{refItem.name}</span>
                       {refItem.role && (
@@ -975,7 +1088,7 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
                   }
 
                   return (
-                    <div key={item.id} className="custom-item w-full">
+                    <div key={item.id} data-resume-item="true" className="custom-item w-full">
                       {/* Top right date & location floated */}
                       {(item.date || item.location) && (
                         <div
