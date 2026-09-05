@@ -14,7 +14,7 @@ function LandingPageContent() {
   const searchParams = useSearchParams();
   const { user, signOut, isLoading } = useAuth();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
+  const [authMode, setAuthMode] = useState<'signin' | 'signup' | 'forgot-password'>('signup');
   const [verifiedBanner, setVerifiedBanner] = useState(false);
 
   // Auto redirect authenticated users to dashboard
@@ -27,7 +27,7 @@ function LandingPageContent() {
   useEffect(() => {
     const authParam = searchParams.get('auth');
     const errorParam = searchParams.get('error');
-    if (authParam === 'signin' || authParam === 'signup') {
+    if (authParam === 'signin' || authParam === 'signup' || authParam === 'forgot-password') {
       setAuthMode(authParam);
       setIsAuthOpen(true);
     } else if (errorParam) {
@@ -39,7 +39,7 @@ function LandingPageContent() {
     }
   }, [searchParams]);
 
-  const openAuth = (mode: 'signin' | 'signup' = 'signup') => {
+  const openAuth = (mode: 'signin' | 'signup' | 'forgot-password' = 'signup') => {
     setAuthMode(mode);
     setIsAuthOpen(true);
   };
