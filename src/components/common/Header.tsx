@@ -425,17 +425,18 @@ export const Header: React.FC<HeaderProps> = ({
         ) : (
           <Button
             size="sm"
+            variant="outline"
             onClick={handleClientPdfClick}
             disabled={isDownloading}
-            className="gap-1.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold cursor-pointer shadow-xs"
+            className="gap-1.5 font-semibold text-slate-800 cursor-pointer"
             title="Save as PDF via Browser Print Dialog (Instant & Vector Quality)"
           >
             {isDownloading ? (
-              <Loader2 size={13} className="animate-spin text-white" />
+              <Loader2 size={13} className="animate-spin text-slate-600" />
             ) : (
-              <Printer size={13} className="text-white" />
+              <Printer size={13} className="text-slate-700" />
             )}
-            <span>{isDownloading ? 'Opening Print...' : 'Save PDF'}</span>
+            <span>{isDownloading ? 'Exporting...' : 'Save PDF'}</span>
           </Button>
         )}
       </div>
