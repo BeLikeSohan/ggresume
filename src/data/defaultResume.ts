@@ -130,13 +130,6 @@ export const defaultResumeData: ResumeData = {
     },
   ],
   references: [
-    {
-      id: 'ref-1',
-      name: 'Dr. Sarah Jenkins',
-      role: 'Professor of Computer Science',
-      organization: 'University of California, Berkeley',
-      contact: 's.jenkins@berkeley.edu',
-    },
   ],
   customSections: [],
   settings: {
