@@ -13,6 +13,16 @@ interface ExportPdfRequestBody {
 }
 
 export async function POST(req: NextRequest) {
+  // Server-side PDF export API is temporarily disabled
+  return NextResponse.json(
+    {
+      error:
+        'Server-side PDF export is temporarily disabled. Please use client-side print / save to PDF instead.',
+    },
+    { status: 503 }
+  );
+
+  /*
   const isServerPdfEnabled =
     process.env.ENABLE_SERVER_PDF === 'true' ||
     process.env.ENABLE_SERVER_PDF === '1' ||
@@ -64,4 +74,5 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+  */
 }
