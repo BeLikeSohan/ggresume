@@ -20,6 +20,23 @@ export interface UserSession {
 }
 
 /**
+ * Validate redirect targets against an allowlist to prevent open-redirect vulnerabilities.
+ */
+const ALLOWED_REDIRECT_PREFIXES = ['/dashboard', '/editor', '/about-us', '/reset-password'];
+
+export function sanitizeRedirectPath(path: unknown): string {
+  if (typeof path !== 'string') return '/dashboard';
+  const trimmed = path.trim();
+  if (!trimmed.startsWith('/') || trimmed.startsWith('//') || trimmed.startsWith('/\\')) {
+    return '/dashboard';
+  }
+  const isAllowed = ALLOWED_REDIRECT_PREFIXES.some(
+    (prefix) => trimmed === prefix || trimmed.startsWith(`${prefix}/`) || trimmed.startsWith(`${prefix}?`)
+  );
+  return isAllowed ? trimmed : '/dashboard';
+}
+
+/**
  * Checks if Google OAuth is configured via environment variables.
  */
 export function isGoogleAuthEnabled(): boolean {

@@ -1,15 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 import {
   getGoogleAuthConfig,
   getAppUrl,
   GOOGLE_OAUTH_STATE_COOKIE,
   SESSION_COOKIE_NAME,
   createSessionToken,
+  sanitizeRedirectPath,
   UserSession,
 } from '@/lib/auth';
 import { upsertGoogleUserInDB } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
+
+function safeCompare(a: string, b: string): boolean {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const bufA = Buffer.from(a, 'utf-8');
+  const bufB = Buffer.from(b, 'utf-8');
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
+function clearStateAndRedirect(url: string) {
+  const res = NextResponse.redirect(url);
+  res.cookies.set({
+    name: GOOGLE_OAUTH_STATE_COOKIE,
+    value: '',
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 0,
+  });
+  return res;
+}
 
 export async function GET(req: NextRequest) {
   const origin = getAppUrl(req);
@@ -18,41 +42,38 @@ export async function GET(req: NextRequest) {
   const error = searchParams.get('error');
   if (error) {
     console.warn('Google OAuth returned error:', error);
-    return NextResponse.redirect(`${origin}/?auth=signin&error=google_access_denied`);
+    return clearStateAndRedirect(`${origin}/?auth=signin&error=google_access_denied`);
   }
 
   const code = searchParams.get('code');
   const state = searchParams.get('state');
 
   if (!code) {
-    return NextResponse.redirect(`${origin}/?auth=signin&error=google_no_code`);
+    return clearStateAndRedirect(`${origin}/?auth=signin&error=google_no_code`);
   }
 
-  // Validate state to prevent CSRF attacks
+  // Validate state to prevent CSRF attacks: reject if stored state is missing, state param is missing, or mismatch
   const storedState = req.cookies.get(GOOGLE_OAUTH_STATE_COOKIE)?.value;
-  let nextPath = '/dashboard';
-
-  if (state) {
-    try {
-      const decoded = JSON.parse(
-        Buffer.from(state, 'base64url').toString('utf-8')
-      );
-      if (decoded.next && typeof decoded.next === 'string' && decoded.next.startsWith('/')) {
-        nextPath = decoded.next;
-      }
-    } catch (_) {
-      // Keep default dashboard path
-    }
+  if (!storedState || !state || !safeCompare(storedState, state)) {
+    console.warn('Google OAuth state missing or mismatch');
+    return clearStateAndRedirect(`${origin}/?auth=signin&error=google_state_mismatch`);
   }
 
-  if (storedState && state && storedState !== state) {
-    console.warn('Google OAuth state mismatch');
-    return NextResponse.redirect(`${origin}/?auth=signin&error=google_state_mismatch`);
+  let nextPath = '/dashboard';
+  try {
+    const decoded = JSON.parse(
+      Buffer.from(state, 'base64url').toString('utf-8')
+    );
+    if (decoded.next) {
+      nextPath = sanitizeRedirectPath(decoded.next);
+    }
+  } catch (_) {
+    nextPath = '/dashboard';
   }
 
   const { clientId, clientSecret, enabled } = getGoogleAuthConfig();
   if (!enabled || !clientId || !clientSecret) {
-    return NextResponse.redirect(`${origin}/?auth=signin&error=google_not_configured`);
+    return clearStateAndRedirect(`${origin}/?auth=signin&error=google_not_configured`);
   }
 
   const redirectUri = `${origin}/api/auth/callback/google`;
@@ -76,7 +97,7 @@ export async function GET(req: NextRequest) {
     if (!tokenResponse.ok) {
       const errText = await tokenResponse.text();
       console.error('Google token exchange error:', errText);
-      return NextResponse.redirect(
+      return clearStateAndRedirect(
         `${origin}/?auth=signin&error=google_exchange_failed`
       );
     }
@@ -116,7 +137,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (!email) {
-      return NextResponse.redirect(
+      return clearStateAndRedirect(
         `${origin}/?auth=signin&error=google_no_email`
       );
     }
@@ -149,7 +170,7 @@ export async function GET(req: NextRequest) {
       maxAge: 30 * 24 * 60 * 60, // 30 days
     });
 
-    // Clear state cookie
+    // Clear state cookie to enforce single-use
     response.cookies.set({
       name: GOOGLE_OAUTH_STATE_COOKIE,
       value: '',
@@ -163,7 +184,7 @@ export async function GET(req: NextRequest) {
     return response;
   } catch (err: any) {
     console.error('Exception during Google OAuth callback:', err);
-    return NextResponse.redirect(
+    return clearStateAndRedirect(
       `${origin}/?auth=signin&error=google_callback_failed`
     );
   }

@@ -6,6 +6,7 @@ import {
   GOOGLE_OAUTH_STATE_COOKIE,
   SESSION_COOKIE_NAME,
   createSessionToken,
+  sanitizeRedirectPath,
   UserSession,
 } from '@/lib/auth';
 import { upsertGoogleUserInDB } from '@/lib/db';
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(`${origin}/?auth=signin&error=google_not_configured`);
   }
 
-  const nextUrl = req.nextUrl.searchParams.get('next') || '/dashboard';
+  const nextUrl = sanitizeRedirectPath(req.nextUrl.searchParams.get('next'));
   const stateToken = crypto.randomBytes(24).toString('hex');
   const stateData = JSON.stringify({ token: stateToken, next: nextUrl });
   const encodedState = Buffer.from(stateData).toString('base64url');
