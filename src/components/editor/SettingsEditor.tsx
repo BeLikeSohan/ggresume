@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ResumeSettings, TemplateId } from '@/types/resume';
+import { ResumeSettings } from '@/types/resume';
 import {
   Settings,
   ArrowUp,
@@ -14,8 +14,6 @@ import {
 } from 'lucide-react';
 import { HeaderStyleSelector } from '@/components/common/HeaderStyleSelector';
 import { NumericSliderControl } from '@/components/common/NumericSliderControl';
-import { TemplateSelector } from './TemplateSelector';
-import { getTemplate } from '@/templates/registry';
 import {
   resolveFontSize,
   resolveLineSpacing,
@@ -60,23 +58,6 @@ export const SettingsEditor: React.FC<SettingsEditorProps> = ({
       ...settings,
       [key]: value,
     });
-  };
-
-  const handleSelectTemplate = (
-    templateId: TemplateId,
-    applyDefaults: boolean = false
-  ) => {
-    if (applyDefaults) {
-      const templateDef = getTemplate(templateId);
-      const defaults = templateDef.defaultSettings || {};
-      onChange({
-        ...settings,
-        templateId,
-        ...defaults,
-      });
-    } else {
-      handleUpdate('templateId', templateId);
-    }
   };
 
   const handleMoveSection = (index: number, direction: 'up' | 'down') => {
@@ -146,16 +127,7 @@ export const SettingsEditor: React.FC<SettingsEditorProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* 1. Template & Layout Choice */}
-      <div className="pb-6 border-b border-slate-200">
-        <TemplateSelector
-          currentTemplateId={settings.templateId || 'classic'}
-          settings={settings}
-          onSelectTemplate={handleSelectTemplate}
-        />
-      </div>
-
-      {/* 2. Color Palette & Accent */}
+      {/* 1. Color Palette & Accent */}
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
           <Palette size={16} className="text-slate-500" />
@@ -207,7 +179,7 @@ export const SettingsEditor: React.FC<SettingsEditorProps> = ({
         </div>
       </div>
 
-      {/* 3. Typography & Sizing */}
+      {/* 2. Typography & Sizing */}
       <div className="space-y-4 pt-4 border-t border-slate-200">
         <div>
           <h3 className="text-sm font-semibold text-slate-800 mb-1 flex items-center gap-2">
