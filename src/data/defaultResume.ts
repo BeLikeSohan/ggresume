@@ -133,6 +133,7 @@ export const defaultResumeData: ResumeData = {
   ],
   customSections: [],
   settings: {
+    templateId: 'classic',
     fontSize: 10,
     lineSpacing: 1.35,
     pageMargin: 45,
@@ -167,6 +168,7 @@ export const emptyResumeData: ResumeData = {
   references: [],
   customSections: [],
   settings: {
+    templateId: 'classic',
     fontSize: 10,
     lineSpacing: 1.35,
     pageMargin: 45,

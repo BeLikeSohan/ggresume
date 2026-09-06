@@ -12,6 +12,8 @@ import { DownloadToast } from '@/components/common/DownloadToast';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { UnsavedChangesModal } from '@/components/common/UnsavedChangesModal';
 import { ServerPdfModal } from '@/components/common/ServerPdfModal';
+import { ThemeModal } from '@/components/common/ThemeModal';
+import { getTemplate } from '@/templates/registry';
 import {
   saveResumeAsPdfClient,
   downloadResumePdfServer,
@@ -47,6 +49,7 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
   const [mobileView, setMobileView] = useState<'editor' | 'preview'>('editor');
   const [isUnsavedModalOpen, setIsUnsavedModalOpen] = useState(false);
   const [isServerPdfModalOpen, setIsServerPdfModalOpen] = useState(false);
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
 
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -239,12 +242,14 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
             mobileView === 'preview' ? 'flex' : 'hidden lg:flex'
           }`}
         >
-          {/* Preview Toolbar with Zoom */}
+          {/* Preview Toolbar with Zoom & Theme Trigger */}
           <PreviewToolbar
             scale={scale}
             onZoomIn={zoomIn}
             onZoomOut={zoomOut}
             onZoomReset={resetZoom}
+            templateId={resumeData.settings?.templateId || 'classic'}
+            onOpenThemes={() => setIsThemeModalOpen(true)}
           />
 
           {/* Scrollable Viewport */}
@@ -259,6 +264,23 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
           </div>
         </div>
       </main>
+
+      {/* Theme Selection Modal with Live Generated Previews */}
+      <ThemeModal
+        isOpen={isThemeModalOpen}
+        onClose={() => setIsThemeModalOpen(false)}
+        currentTemplateId={resumeData.settings?.templateId || 'classic'}
+        resumeData={resumeData}
+        onSelectTemplate={(newTemplateId) => {
+          setResumeData({
+            ...resumeData,
+            settings: {
+              ...resumeData.settings,
+              templateId: newTemplateId,
+            },
+          });
+        }}
+      />
     </div>
   );
 }
