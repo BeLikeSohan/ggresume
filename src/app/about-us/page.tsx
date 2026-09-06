@@ -64,7 +64,7 @@ export default function AboutUsPage() {
               <span className="text-slate-700 font-bold">open.</span>
             </h1>
             <p className="text-base sm:text-lg text-slate-600 max-w-lg mx-auto font-normal leading-relaxed">
-              GGResume is a free, open-source ATS-friendly resume builder designed for developers and professionals to create high-impact resumes.
+              GGResume is a free, open-source ATS-friendly resume builder designed for engineers and professionals to create high-impact resumes.
             </p>
           </div>
         </div>
