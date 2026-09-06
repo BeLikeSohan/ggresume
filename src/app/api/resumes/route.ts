@@ -10,10 +10,6 @@ export const dynamic = 'force-dynamic';
 async function getAuthenticatedUserId(req: NextRequest): Promise<string | null> {
   const session = await getServerSession();
   if (session?.id) return session.id;
-
-  const headerUserId = req.headers.get('x-user-id');
-  if (headerUserId) return headerUserId;
-
   return null;
 }
 
