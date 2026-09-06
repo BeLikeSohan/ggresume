@@ -83,6 +83,14 @@ export interface CustomSection {
   items: CustomSectionItem[];
 }
 
+export type TemplateId =
+  | 'classic'
+  | 'modern'
+  | 'executive'
+  | 'compact'
+  | 'sidebar'
+  | 'minimal';
+
 export type FontFamily =
   | 'source-sans'
   | 'inter'
@@ -107,6 +115,7 @@ export type SectionSpacing = 'compact' | 'standard' | 'spacious';
 export type ReferenceStyle = 'grid' | 'stacked' | 'compact' | 'upon-request';
 
 export interface ResumeSettings {
+  templateId?: TemplateId | string;
   fontSize: number | 'compact' | 'standard' | 'spacious'; // e.g. 10.0 (in pt)
   lineSpacing: number | 'compact' | 'standard' | 'relaxed'; // e.g. 1.35 (multiplier)
   pageMargin: number | 'compact' | 'standard' | 'relaxed'; // e.g. 45.0 (in pt)

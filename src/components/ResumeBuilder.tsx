@@ -239,12 +239,22 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
             mobileView === 'preview' ? 'flex' : 'hidden lg:flex'
           }`}
         >
-          {/* Preview Toolbar with Zoom */}
+          {/* Preview Toolbar with Zoom & Template Switcher */}
           <PreviewToolbar
             scale={scale}
             onZoomIn={zoomIn}
             onZoomOut={zoomOut}
             onZoomReset={resetZoom}
+            templateId={resumeData.settings?.templateId || 'classic'}
+            onChangeTemplate={(newTemplateId) =>
+              setResumeData({
+                ...resumeData,
+                settings: {
+                  ...resumeData.settings,
+                  templateId: newTemplateId,
+                },
+              })
+            }
           />
 
           {/* Scrollable Viewport */}
