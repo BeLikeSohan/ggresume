@@ -3,16 +3,37 @@ import { cookies } from 'next/headers';
 
 export const SESSION_COOKIE_NAME = 'ggresume_session';
 export const GOOGLE_OAUTH_STATE_COOKIE = 'ggresume_oauth_state';
-export const SESSION_SECRET =
-  process.env.AUTH_SECRET ||
-  process.env.SESSION_SECRET ||
-  'ggresume-secret-session-key-fallback-32chars';
+const secret = process.env.AUTH_SECRET || process.env.SESSION_SECRET;
+if (!secret) {
+  throw new Error(
+    'AUTH_SECRET or SESSION_SECRET environment variable is missing. The application requires an authentication secret to start.'
+  );
+}
+
+export const SESSION_SECRET: string = secret;
 
 export interface UserSession {
   id: string;
   email: string;
   provider: string;
   emailVerified: boolean;
+}
+
+/**
+ * Validate redirect targets against an allowlist to prevent open-redirect vulnerabilities.
+ */
+const ALLOWED_REDIRECT_PREFIXES = ['/dashboard', '/editor', '/about-us', '/reset-password'];
+
+export function sanitizeRedirectPath(path: unknown): string {
+  if (typeof path !== 'string') return '/dashboard';
+  const trimmed = path.trim();
+  if (!trimmed.startsWith('/') || trimmed.startsWith('//') || trimmed.startsWith('/\\')) {
+    return '/dashboard';
+  }
+  const isAllowed = ALLOWED_REDIRECT_PREFIXES.some(
+    (prefix) => trimmed === prefix || trimmed.startsWith(`${prefix}/`) || trimmed.startsWith(`${prefix}?`)
+  );
+  return isAllowed ? trimmed : '/dashboard';
 }
 
 /**

@@ -4,7 +4,7 @@ const SESSION_COOKIE_NAME = 'ggresume_session';
 const SESSION_SECRET =
   process.env.AUTH_SECRET ||
   process.env.SESSION_SECRET ||
-  'ggresume-secret-session-key-fallback-32chars';
+  '';
 
 /**
  * Base64URL to ArrayBuffer decoder compatible with Edge Runtime
