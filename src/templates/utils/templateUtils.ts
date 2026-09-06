@@ -1,4 +1,4 @@
-import { ResumeData } from '@/types/resume';
+import { ResumeData, ResumeSettings } from '@/types/resume';
 import {
   resolveFontSize,
   resolveLineSpacing,
@@ -105,19 +105,32 @@ export function getPersonalContactItems(
 
 export function resolveFontFamilyStyle(fontFamily?: string): string {
   const fontFamilies: Record<string, string> = {
-    'source-sans': 'var(--font-source-sans), "Source Sans 3", "Source Sans Pro", -apple-system, BlinkMacSystemFont, sans-serif',
+    'source-sans':
+      'var(--font-source-sans), "Source Sans 3", "Source Sans Pro", -apple-system, BlinkMacSystemFont, sans-serif',
     inter: 'var(--font-inter), "Inter", -apple-system, BlinkMacSystemFont, sans-serif',
     roboto: 'var(--font-roboto), "Roboto", -apple-system, BlinkMacSystemFont, sans-serif',
-    'open-sans': 'var(--font-open-sans), "Open Sans", -apple-system, BlinkMacSystemFont, sans-serif',
+    'open-sans':
+      'var(--font-open-sans), "Open Sans", -apple-system, BlinkMacSystemFont, sans-serif',
     lato: 'var(--font-lato), "Lato", -apple-system, BlinkMacSystemFont, sans-serif',
-    'plus-jakarta-sans': 'var(--font-plus-jakarta-sans), "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif',
+    'plus-jakarta-sans':
+      'var(--font-plus-jakarta-sans), "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif',
     literata: 'var(--font-literata), "Literata", Georgia, serif',
     merriweather: 'var(--font-merriweather), "Merriweather", Georgia, serif',
     lora: 'var(--font-lora), "Lora", Georgia, serif',
-    'eb-garamond': 'var(--font-eb-garamond), "EB Garamond", "Garamond", Georgia, serif',
+    'eb-garamond':
+      'var(--font-eb-garamond), "EB Garamond", "Garamond", Georgia, serif',
   };
 
   return fontFamilies[fontFamily || ''] || fontFamilies['source-sans'];
+}
+
+export function getSectionTitle(
+  settings?: ResumeSettings,
+  sectionKey?: string,
+  fallback: string = ''
+): string {
+  if (!sectionKey) return fallback;
+  return settings?.sectionTitles?.[sectionKey] || fallback;
 }
 
 export function estimateHeaderHeight(
@@ -164,10 +177,6 @@ export function getItemEstimates(
   const PT_TO_PX = 96 / 72;
   const numFontSize = resolveFontSize(fontSize);
   const numLineSpacing = resolveLineSpacing(lineSpacing);
-  const fontMultiplier = numFontSize / 10.0;
-  const lineMultiplier = numLineSpacing / 1.35;
-  const scale = fontMultiplier * lineMultiplier;
-
   const BASE_LINE_HEIGHT = Math.round(numFontSize * PT_TO_PX * numLineSpacing);
   const ITEM_GAP = Math.round(8.4 * PT_TO_PX); // ~11px
 
@@ -471,7 +480,7 @@ export function calculateStandardPages(
           currentHeight = 0;
           continue;
         } else {
-          // If a single item is taller than the entire page, force it onto the page
+          // Force single oversized item onto page
           itemsForThisPage.push(remainingItems[0].index);
           usedItemSpace = remainingItems[0].height;
         }
