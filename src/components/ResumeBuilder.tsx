@@ -4,6 +4,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResumeData } from '@/hooks/useResumeData';
 import { useResumeZoom } from '@/hooks/useResumeZoom';
+import { useAuth } from '@/hooks/useAuth';
 import { Header } from '@/components/common/Header';
 import { ResumeEditor } from '@/components/editor/ResumeEditor';
 import { ResumePreview } from '@/components/preview/ResumePreview';
@@ -13,7 +14,8 @@ import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { UnsavedChangesModal } from '@/components/common/UnsavedChangesModal';
 import { ServerPdfModal } from '@/components/common/ServerPdfModal';
 import { ThemeModal } from '@/components/common/ThemeModal';
-import { getTemplate } from '@/templates/registry';
+import { AuthModal } from '@/components/landing/AuthModal';
+import { StartChoiceModal } from '@/components/editor/StartChoiceModal';
 import {
   saveResumeAsPdfClient,
   downloadResumePdfServer,
@@ -25,8 +27,10 @@ interface ResumeBuilderProps {
 
 export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
   const router = useRouter();
+  const { user, signOut, reloadSession } = useAuth();
 
   const {
+    resumeId: currentResumeId,
     resumeTitle,
     setResumeTitle,
     resumeData,
@@ -35,6 +39,9 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
     isSaving,
     hasUnsavedChanges,
     saveResume,
+    saveAsNewResume,
+    loadSample,
+    loadBlank,
     discardChanges,
     clearAll,
     exportJson,
@@ -51,6 +58,37 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
   const [isServerPdfModalOpen, setIsServerPdfModalOpen] = useState(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
 
+  // Auth modal trigger state for guests saving resume
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signup');
+  const [authModalTitle, setAuthModalTitle] = useState<string | undefined>(undefined);
+  const [authModalSubtitle, setAuthModalSubtitle] = useState<string | undefined>(undefined);
+
+  // Modal dialog asking user to choose between Sample or Blank Scratch
+  const [isStartChoiceModalOpen, setIsStartChoiceModalOpen] = useState(false);
+
+  // Check if starting fresh without a specific resume ID
+  React.useEffect(() => {
+    if (isInitialized && !resumeId) {
+      const choiceMade = sessionStorage.getItem('ggresume_choice_made');
+      if (!choiceMade) {
+        setIsStartChoiceModalOpen(true);
+      }
+    }
+  }, [isInitialized, resumeId]);
+
+  const handleSelectSample = () => {
+    loadSample();
+    sessionStorage.setItem('ggresume_choice_made', 'true');
+    setIsStartChoiceModalOpen(false);
+  };
+
+  const handleSelectScratch = () => {
+    loadBlank();
+    sessionStorage.setItem('ggresume_choice_made', 'true');
+    setIsStartChoiceModalOpen(false);
+  };
+
   const previewRef = useRef<HTMLDivElement>(null);
 
   // Helper to generate formatted filename
@@ -60,41 +98,94 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
     }-Resume.pdf`;
   };
 
+  // Open Auth Modal helper
+  const promptAuthToSave = (
+    mode: 'signin' | 'signup' = 'signup',
+    title?: string,
+    subtitle?: string
+  ) => {
+    setAuthModalMode(mode);
+    setAuthModalTitle(title || 'Save your resume');
+    setAuthModalSubtitle(
+      subtitle ||
+        'Create a free account or sign in to save your resume to the cloud and access it anytime.'
+    );
+    setIsAuthModalOpen(true);
+  };
+
   // Manual save handler from Header
   const handleSave = async () => {
-    const success = await saveResume();
-    if (success) {
+    if (!user) {
+      promptAuthToSave('signup');
+      return;
+    }
+
+    const result = await saveResume();
+    if (result.success) {
       setDownloadStatus('Changes saved');
       setTimeout(() => setDownloadStatus(null), 2500);
+    } else if (result.requiresAuth) {
+      promptAuthToSave('signup');
     } else {
       setDownloadStatus('Failed to save changes');
       setTimeout(() => setDownloadStatus(null), 3000);
     }
   };
 
+  // Callback when authentication succeeds inside the modal
+  const handleAuthSuccess = async (_authUser: any) => {
+    setIsAuthModalOpen(false);
+    await reloadSession();
+
+    // Immediately save the active in-memory resume under the authenticated user
+    const savedDoc = await saveAsNewResume();
+    if (savedDoc) {
+      setDownloadStatus('Resume saved to your account!');
+      if (typeof window !== 'undefined') {
+        window.history.replaceState(null, '', `/editor/${savedDoc.id}`);
+      }
+      setTimeout(() => setDownloadStatus(null), 3000);
+    }
+  };
+
   // Back button handler: intercept if dirty
   const handleBack = useCallback(() => {
+    const exitTarget = user ? '/dashboard' : '/';
     if (hasUnsavedChanges) {
       setIsUnsavedModalOpen(true);
     } else {
-      router.push('/dashboard');
+      router.push(exitTarget);
     }
-  }, [hasUnsavedChanges, router]);
+  }, [hasUnsavedChanges, user, router]);
 
   // Modal actions
   const handleDiscardAndExit = useCallback(() => {
     discardChanges();
     setIsUnsavedModalOpen(false);
-    router.push('/dashboard');
-  }, [discardChanges, router]);
+    const exitTarget = user ? '/dashboard' : '/';
+    router.push(exitTarget);
+  }, [discardChanges, user, router]);
 
   const handleSaveAndExit = useCallback(async () => {
-    const success = await saveResume();
-    if (success) {
+    if (!user) {
+      setIsUnsavedModalOpen(false);
+      promptAuthToSave(
+        'signup',
+        'Save and continue',
+        'Create an account or sign in to save your resume before leaving.'
+      );
+      return;
+    }
+
+    const result = await saveResume();
+    if (result.success) {
       setIsUnsavedModalOpen(false);
       router.push('/dashboard');
+    } else if (result.requiresAuth) {
+      setIsUnsavedModalOpen(false);
+      promptAuthToSave('signup');
     }
-  }, [saveResume, router]);
+  }, [saveResume, user, router]);
 
   // Client-Side PDF Save (Browser Print Dialog)
   const handleSavePdfClient = async () => {
@@ -166,6 +257,15 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
 
   // Duplicate current resume and transition to the new copy
   const handleDuplicate = async () => {
+    if (!user) {
+      promptAuthToSave(
+        'signup',
+        'Duplicate Resume',
+        'Sign in or create an account to duplicate and save multiple resumes.'
+      );
+      return;
+    }
+
     const duplicated = await duplicateCurrent();
     if (duplicated) {
       setDownloadStatus(`Duplicated as "${duplicated.title}"`);
@@ -202,6 +302,11 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
         isSaving={isSaving}
         onSave={handleSave}
         onBack={handleBack}
+        user={user}
+        onSignIn={() => {
+          promptAuthToSave('signin', 'Welcome back', 'Sign in to access your saved resumes and features.');
+        }}
+        onSignOut={signOut}
       />
 
       {/* Notification Toast */}
@@ -223,6 +328,24 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
         onUseClientSave={handleModalUseClientSave}
         onProceedServerDownload={handleModalProceedServerDownload}
         isDownloading={isDownloading}
+      />
+
+      {/* Start Choice Modal (Sample vs Start from Scratch) */}
+      <StartChoiceModal
+        isOpen={isStartChoiceModalOpen}
+        onSelectSample={handleSelectSample}
+        onSelectScratch={handleSelectScratch}
+      />
+
+      {/* Auth Modal for Unauthenticated Users trying to Save */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        initialMode={authModalMode}
+        title={authModalTitle}
+        subtitle={authModalSubtitle}
+        redirectUrl={currentResumeId ? `/editor/${currentResumeId}` : '/editor'}
+        onSuccess={handleAuthSuccess}
       />
 
       {/* Main Split Body: Left Editor / Right Preview */}

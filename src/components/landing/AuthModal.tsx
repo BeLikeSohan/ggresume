@@ -11,6 +11,10 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialMode?: 'signin' | 'signup' | 'forgot-password';
+  onSuccess?: (user: any) => void;
+  redirectUrl?: string | null;
+  title?: string;
+  subtitle?: string;
 }
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -33,6 +37,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
   onClose,
   initialMode = 'signin',
+  onSuccess,
+  redirectUrl,
+  title,
+  subtitle,
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -88,7 +96,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setError(null);
     setIsGoogleLoading(true);
     // Redirect to the backend OAuth initiation endpoint
-    window.location.href = '/api/auth/google';
+    const googleEndpoint = redirectUrl
+      ? `/api/auth/google?next=${encodeURIComponent(redirectUrl)}`
+      : '/api/auth/google';
+    window.location.href = googleEndpoint;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -174,8 +185,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
       setIsLoading(false);
       onClose();
-      router.push('/dashboard');
-      router.refresh();
+
+      if (onSuccess) {
+        onSuccess(data.user);
+      } else if (redirectUrl) {
+        router.push(redirectUrl);
+        router.refresh();
+      } else {
+        router.push('/dashboard');
+        router.refresh();
+      }
     } catch (err: any) {
       setIsLoading(false);
       setError(err.message || 'An error occurred during authentication.');
@@ -394,12 +413,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <GGLogo size="md" showWordmark={false} />
                 </div>
                 <h2 className="text-xl font-bold text-slate-950 tracking-tight">
-                  {mode === 'signin' ? 'Welcome back' : 'Create your account'}
+                  {title || (mode === 'signin' ? 'Welcome back' : 'Create your account')}
                 </h2>
                 <p className="text-xs text-slate-500 max-w-xs mx-auto">
-                  {mode === 'signin'
-                    ? 'Sign in to access your saved resumes and vector PDF exports.'
-                    : 'Get started with fast, ATS-optimized resume building.'}
+                  {subtitle ||
+                    (mode === 'signin'
+                      ? 'Sign in to access your saved resumes and vector PDF exports.'
+                      : 'Get started with fast, ATS-optimized resume building.')}
                 </p>
               </div>
 

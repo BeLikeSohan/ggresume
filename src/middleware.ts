@@ -87,13 +87,21 @@ export async function middleware(req: NextRequest) {
   }
 
   // 2. Protected paths check
-  const isProtectedPage =
-    pathname.startsWith('/dashboard') || pathname.startsWith('/editor');
-  const isProtectedApi =
-    pathname.startsWith('/api/resumes') ||
-    pathname.startsWith('/api/export-pdf');
+  const isProtectedPage = pathname.startsWith('/dashboard');
+  const isProtectedApi = pathname.startsWith('/api/resumes');
 
   if (!isProtectedPage && !isProtectedApi) {
+    // If user is authenticated on public/editor routes, attach user info headers
+    if (session) {
+      const requestHeaders = new Headers(req.headers);
+      requestHeaders.set('x-user-id', session.id);
+      requestHeaders.set('x-user-email', session.email);
+      return NextResponse.next({
+        request: {
+          headers: requestHeaders,
+        },
+      });
+    }
     return NextResponse.next();
   }
 
