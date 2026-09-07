@@ -156,9 +156,19 @@ export const SidebarTemplate = forwardRef<HTMLDivElement, TemplateProps>(
           );
           const itemsToRender = slot.itemIndices
             ? slot.itemIndices
-                .map((i) => visibleExperiences[i])
-                .filter(Boolean)
-            : visibleExperiences;
+                .map((i) =>
+                  visibleExperiences[i]
+                    ? { item: visibleExperiences[i], originalIndex: i }
+                    : null
+                )
+                .filter(Boolean) as {
+                item: (typeof visibleExperiences)[0];
+                originalIndex: number;
+              }[]
+            : visibleExperiences.map((item, i) => ({
+                item,
+                originalIndex: i,
+              }));
           if (itemsToRender.length === 0) return null;
           const sectionTitle = slot.isContinuation
             ? `${getSectionTitle('experiences', 'Experience')} (Cont.)`
@@ -172,10 +182,11 @@ export const SidebarTemplate = forwardRef<HTMLDivElement, TemplateProps>(
             >
               {renderRightSectionTitle(sectionTitle, isFirstOnPage)}
               <div className="flex flex-col gap-[8pt]">
-                {itemsToRender.map((exp) => (
+                {itemsToRender.map(({ item: exp, originalIndex }) => (
                   <div
                     key={exp.id}
                     data-resume-item="true"
+                    data-resume-item-index={originalIndex}
                     className="experience-item w-full"
                   >
                     <div className="flex justify-between items-baseline mb-0.5">
@@ -243,8 +254,17 @@ export const SidebarTemplate = forwardRef<HTMLDivElement, TemplateProps>(
         case 'projects': {
           const visibleProjects = (projects || []).filter((p) => !p.hidden);
           const itemsToRender = slot.itemIndices
-            ? slot.itemIndices.map((i) => visibleProjects[i]).filter(Boolean)
-            : visibleProjects;
+            ? slot.itemIndices
+                .map((i) =>
+                  visibleProjects[i]
+                    ? { item: visibleProjects[i], originalIndex: i }
+                    : null
+                )
+                .filter(Boolean) as {
+                item: (typeof visibleProjects)[0];
+                originalIndex: number;
+              }[]
+            : visibleProjects.map((item, i) => ({ item, originalIndex: i }));
           if (itemsToRender.length === 0) return null;
           const sectionTitle = slot.isContinuation
             ? `${getSectionTitle('projects', 'Projects')} (Cont.)`
@@ -258,10 +278,11 @@ export const SidebarTemplate = forwardRef<HTMLDivElement, TemplateProps>(
             >
               {renderRightSectionTitle(sectionTitle, isFirstOnPage)}
               <div className="flex flex-col gap-[8pt]">
-                {itemsToRender.map((proj) => (
+                {itemsToRender.map(({ item: proj, originalIndex }) => (
                   <div
                     key={proj.id}
                     data-resume-item="true"
+                    data-resume-item-index={originalIndex}
                     className="project-item w-full"
                   >
                     <div className="flex justify-between items-baseline mb-0.5">
@@ -353,8 +374,17 @@ export const SidebarTemplate = forwardRef<HTMLDivElement, TemplateProps>(
           if (!customSec || !customSec.items) return null;
 
           const itemsToRender = slot.itemIndices
-            ? slot.itemIndices.map((i) => customSec.items[i]).filter(Boolean)
-            : customSec.items;
+            ? slot.itemIndices
+                .map((i) =>
+                  customSec.items[i]
+                    ? { item: customSec.items[i], originalIndex: i }
+                    : null
+                )
+                .filter(Boolean) as {
+                item: (typeof customSec.items)[0];
+                originalIndex: number;
+              }[]
+            : customSec.items.map((item, i) => ({ item, originalIndex: i }));
           if (itemsToRender.length === 0) return null;
 
           return (
@@ -368,10 +398,11 @@ export const SidebarTemplate = forwardRef<HTMLDivElement, TemplateProps>(
                 isFirstOnPage
               )}
               <div className="flex flex-col gap-[7pt]">
-                {itemsToRender.map((item) => (
+                {itemsToRender.map(({ item, originalIndex }) => (
                   <div
                     key={item.id}
                     data-resume-item="true"
+                    data-resume-item-index={originalIndex}
                     className="custom-item w-full"
                   >
                     <div className="flex justify-between items-baseline">

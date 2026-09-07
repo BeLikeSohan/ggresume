@@ -113,8 +113,17 @@ export const ExecutiveTemplate = forwardRef<HTMLDivElement, TemplateProps>(
         case 'skills': {
           const visibleSkills = (skills || []).filter((s) => !s.hidden);
           const itemsToRender = slot.itemIndices
-            ? slot.itemIndices.map((i) => visibleSkills[i]).filter(Boolean)
-            : visibleSkills;
+            ? slot.itemIndices
+                .map((i) =>
+                  visibleSkills[i]
+                    ? { item: visibleSkills[i], originalIndex: i }
+                    : null
+                )
+                .filter(Boolean) as {
+                item: (typeof visibleSkills)[0];
+                originalIndex: number;
+              }[]
+            : visibleSkills.map((item, i) => ({ item, originalIndex: i }));
           if (itemsToRender.length === 0) return null;
           const sectionTitle = slot.isContinuation
             ? `${getSectionTitle('skills', 'Areas of Expertise')} (Continued)`
@@ -128,10 +137,11 @@ export const ExecutiveTemplate = forwardRef<HTMLDivElement, TemplateProps>(
             >
               {renderSectionTitle(sectionTitle, isFirstOnPage)}
               <div className="grid grid-cols-1 gap-1">
-                {itemsToRender.map((s) => (
+                {itemsToRender.map(({ item: s, originalIndex }) => (
                   <div
                     key={s.id}
                     data-resume-item="true"
+                    data-resume-item-index={originalIndex}
                     className={`${fontSizeClasses.body} ${lineSpacingClasses} text-slate-850 flex items-baseline`}
                   >
                     <span
@@ -156,9 +166,19 @@ export const ExecutiveTemplate = forwardRef<HTMLDivElement, TemplateProps>(
           );
           const itemsToRender = slot.itemIndices
             ? slot.itemIndices
-                .map((i) => visibleExperiences[i])
-                .filter(Boolean)
-            : visibleExperiences;
+                .map((i) =>
+                  visibleExperiences[i]
+                    ? { item: visibleExperiences[i], originalIndex: i }
+                    : null
+                )
+                .filter(Boolean) as {
+                item: (typeof visibleExperiences)[0];
+                originalIndex: number;
+              }[]
+            : visibleExperiences.map((item, i) => ({
+                item,
+                originalIndex: i,
+              }));
           if (itemsToRender.length === 0) return null;
           const sectionTitle = slot.isContinuation
             ? `${getSectionTitle('experiences', 'Professional Leadership & Experience')} (Continued)`
@@ -175,10 +195,11 @@ export const ExecutiveTemplate = forwardRef<HTMLDivElement, TemplateProps>(
             >
               {renderSectionTitle(sectionTitle, isFirstOnPage)}
               <div className="flex flex-col gap-[9pt]">
-                {itemsToRender.map((exp) => (
+                {itemsToRender.map(({ item: exp, originalIndex }) => (
                   <div
                     key={exp.id}
                     data-resume-item="true"
+                    data-resume-item-index={originalIndex}
                     className="experience-item w-full"
                   >
                     <div className="flex justify-between items-baseline mb-0.5">
@@ -252,8 +273,17 @@ export const ExecutiveTemplate = forwardRef<HTMLDivElement, TemplateProps>(
         case 'projects': {
           const visibleProjects = (projects || []).filter((p) => !p.hidden);
           const itemsToRender = slot.itemIndices
-            ? slot.itemIndices.map((i) => visibleProjects[i]).filter(Boolean)
-            : visibleProjects;
+            ? slot.itemIndices
+                .map((i) =>
+                  visibleProjects[i]
+                    ? { item: visibleProjects[i], originalIndex: i }
+                    : null
+                )
+                .filter(Boolean) as {
+                item: (typeof visibleProjects)[0];
+                originalIndex: number;
+              }[]
+            : visibleProjects.map((item, i) => ({ item, originalIndex: i }));
           if (itemsToRender.length === 0) return null;
           const sectionTitle = slot.isContinuation
             ? `${getSectionTitle('projects', 'Key Initiatives & Projects')} (Continued)`
@@ -267,10 +297,11 @@ export const ExecutiveTemplate = forwardRef<HTMLDivElement, TemplateProps>(
             >
               {renderSectionTitle(sectionTitle, isFirstOnPage)}
               <div className="flex flex-col gap-[9pt]">
-                {itemsToRender.map((proj) => (
+                {itemsToRender.map(({ item: proj, originalIndex }) => (
                   <div
                     key={proj.id}
                     data-resume-item="true"
+                    data-resume-item-index={originalIndex}
                     className="project-item w-full"
                   >
                     <div className="flex justify-between items-baseline mb-0.5">
@@ -341,8 +372,17 @@ export const ExecutiveTemplate = forwardRef<HTMLDivElement, TemplateProps>(
         case 'educations': {
           const visibleEdu = educations || [];
           const itemsToRender = slot.itemIndices
-            ? slot.itemIndices.map((i) => visibleEdu[i]).filter(Boolean)
-            : visibleEdu;
+            ? slot.itemIndices
+                .map((i) =>
+                  visibleEdu[i]
+                    ? { item: visibleEdu[i], originalIndex: i }
+                    : null
+                )
+                .filter(Boolean) as {
+                item: (typeof visibleEdu)[0];
+                originalIndex: number;
+              }[]
+            : visibleEdu.map((item, i) => ({ item, originalIndex: i }));
           if (itemsToRender.length === 0) return null;
           const sectionTitle = slot.isContinuation
             ? `${getSectionTitle('educations', 'Education & Credentials')} (Continued)`
@@ -356,10 +396,11 @@ export const ExecutiveTemplate = forwardRef<HTMLDivElement, TemplateProps>(
             >
               {renderSectionTitle(sectionTitle, isFirstOnPage)}
               <div className="flex flex-col gap-[8pt]">
-                {itemsToRender.map((edu) => (
+                {itemsToRender.map(({ item: edu, originalIndex }) => (
                   <div
                     key={edu.id}
                     data-resume-item="true"
+                    data-resume-item-index={originalIndex}
                     className="education-item w-full"
                   >
                     <div className="flex justify-between items-baseline">
@@ -422,6 +463,7 @@ export const ExecutiveTemplate = forwardRef<HTMLDivElement, TemplateProps>(
                 {renderSectionTitle(sectionTitle, isFirstOnPage)}
                 <p
                   data-resume-item="true"
+                  data-resume-item-index={0}
                   className={`${fontSizeClasses.body} ${lineSpacingClasses} text-slate-600 italic text-center`}
                 >
                   {settings.referenceCustomText ||
@@ -433,8 +475,17 @@ export const ExecutiveTemplate = forwardRef<HTMLDivElement, TemplateProps>(
 
           const visibleRefs = (references || []).filter((r) => !r.hidden);
           const itemsToRender = slot.itemIndices
-            ? slot.itemIndices.map((i) => visibleRefs[i]).filter(Boolean)
-            : visibleRefs;
+            ? slot.itemIndices
+                .map((i) =>
+                  visibleRefs[i]
+                    ? { item: visibleRefs[i], originalIndex: i }
+                    : null
+                )
+                .filter(Boolean) as {
+                item: (typeof visibleRefs)[0];
+                originalIndex: number;
+              }[]
+            : visibleRefs.map((item, i) => ({ item, originalIndex: i }));
           if (itemsToRender.length === 0) return null;
 
           return (
@@ -445,10 +496,11 @@ export const ExecutiveTemplate = forwardRef<HTMLDivElement, TemplateProps>(
             >
               {renderSectionTitle(sectionTitle, isFirstOnPage)}
               <div className="grid grid-cols-2 gap-4">
-                {itemsToRender.map((refItem) => (
+                {itemsToRender.map(({ item: refItem, originalIndex }) => (
                   <div
                     key={refItem.id}
                     data-resume-item="true"
+                    data-resume-item-index={originalIndex}
                     className="flex flex-col"
                   >
                     <div
@@ -482,8 +534,17 @@ export const ExecutiveTemplate = forwardRef<HTMLDivElement, TemplateProps>(
           if (!customSec || !customSec.items) return null;
 
           const itemsToRender = slot.itemIndices
-            ? slot.itemIndices.map((i) => customSec.items[i]).filter(Boolean)
-            : customSec.items;
+            ? slot.itemIndices
+                .map((i) =>
+                  customSec.items[i]
+                    ? { item: customSec.items[i], originalIndex: i }
+                    : null
+                )
+                .filter(Boolean) as {
+                item: (typeof customSec.items)[0];
+                originalIndex: number;
+              }[]
+            : customSec.items.map((item, i) => ({ item, originalIndex: i }));
           if (itemsToRender.length === 0) return null;
 
           return (
@@ -497,10 +558,11 @@ export const ExecutiveTemplate = forwardRef<HTMLDivElement, TemplateProps>(
                 isFirstOnPage
               )}
               <div className="flex flex-col gap-[8pt]">
-                {itemsToRender.map((item) => (
+                {itemsToRender.map(({ item, originalIndex }) => (
                   <div
                     key={item.id}
                     data-resume-item="true"
+                    data-resume-item-index={originalIndex}
                     className="custom-item w-full"
                   >
                     <div className="flex justify-between items-baseline">

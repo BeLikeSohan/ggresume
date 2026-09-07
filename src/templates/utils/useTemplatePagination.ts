@@ -118,8 +118,11 @@ export function useTemplatePagination(
       );
       const items: MeasuredItem[] = [];
       itemEls.forEach((itEl, idx) => {
+        const rawIdx = itEl.getAttribute('data-resume-item-index');
+        const parsedIdx = rawIdx !== null ? parseInt(rawIdx, 10) : NaN;
+        const itemIdx = !isNaN(parsedIdx) ? parsedIdx : idx;
         items.push({
-          index: idx,
+          index: itemIdx,
           height: Math.max(itEl.offsetHeight, itEl.scrollHeight),
         });
       });
@@ -157,6 +160,7 @@ export function useTemplatePagination(
             p.slots.some(
               (s, si) =>
                 s.sectionKey !== prevPages[i]?.slots[si]?.sectionKey ||
+                s.isContinuation !== prevPages[i]?.slots[si]?.isContinuation ||
                 s.itemIndices?.join(',') !==
                   prevPages[i]?.slots[si]?.itemIndices?.join(',')
             )
