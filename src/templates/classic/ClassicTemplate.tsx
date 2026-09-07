@@ -105,8 +105,17 @@ export const ClassicTemplate = forwardRef<HTMLDivElement, TemplateProps>(
         case 'skills': {
           const visibleSkills = (skills || []).filter((s) => !s.hidden);
           const itemsToRender = slot.itemIndices
-            ? slot.itemIndices.map((i) => visibleSkills[i]).filter(Boolean)
-            : visibleSkills;
+            ? slot.itemIndices
+                .map((i) =>
+                  visibleSkills[i]
+                    ? { item: visibleSkills[i], originalIndex: i }
+                    : null
+                )
+                .filter(Boolean) as {
+                item: (typeof visibleSkills)[0];
+                originalIndex: number;
+              }[]
+            : visibleSkills.map((item, i) => ({ item, originalIndex: i }));
           if (itemsToRender.length === 0) return null;
           const sectionTitle = slot.isContinuation
             ? `${getSectionTitle('skills', 'Skills')} (Continued)`
@@ -120,10 +129,11 @@ export const ClassicTemplate = forwardRef<HTMLDivElement, TemplateProps>(
             >
               {renderSectionTitle(sectionTitle, isFirstOnPage)}
               <div className="flex flex-col gap-0">
-                {itemsToRender.map((s) => (
+                {itemsToRender.map(({ item: s, originalIndex }) => (
                   <div
                     key={s.id}
                     data-resume-item="true"
+                    data-resume-item-index={originalIndex}
                     className={`${fontSizeClasses.body} ${lineSpacingClasses} text-black`}
                   >
                     <span className="font-bold text-black">{s.category}</span>
@@ -142,9 +152,19 @@ export const ClassicTemplate = forwardRef<HTMLDivElement, TemplateProps>(
           );
           const itemsToRender = slot.itemIndices
             ? slot.itemIndices
-                .map((i) => visibleExperiences[i])
-                .filter(Boolean)
-            : visibleExperiences;
+                .map((i) =>
+                  visibleExperiences[i]
+                    ? { item: visibleExperiences[i], originalIndex: i }
+                    : null
+                )
+                .filter(Boolean) as {
+                item: (typeof visibleExperiences)[0];
+                originalIndex: number;
+              }[]
+            : visibleExperiences.map((item, i) => ({
+                item,
+                originalIndex: i,
+              }));
           if (itemsToRender.length === 0) return null;
           const sectionTitle = slot.isContinuation
             ? `${getSectionTitle('experiences', 'Professional Experience')} (Continued)`
@@ -158,10 +178,11 @@ export const ClassicTemplate = forwardRef<HTMLDivElement, TemplateProps>(
             >
               {renderSectionTitle(sectionTitle, isFirstOnPage)}
               <div className="flex flex-col gap-[8.4pt]">
-                {itemsToRender.map((exp) => (
+                {itemsToRender.map(({ item: exp, originalIndex }) => (
                   <div
                     key={exp.id}
                     data-resume-item="true"
+                    data-resume-item-index={originalIndex}
                     className="experience-item w-full"
                   >
                     {(exp.startDate ||
@@ -268,8 +289,17 @@ export const ClassicTemplate = forwardRef<HTMLDivElement, TemplateProps>(
         case 'projects': {
           const visibleProjects = (projects || []).filter((p) => !p.hidden);
           const itemsToRender = slot.itemIndices
-            ? slot.itemIndices.map((i) => visibleProjects[i]).filter(Boolean)
-            : visibleProjects;
+            ? slot.itemIndices
+                .map((i) =>
+                  visibleProjects[i]
+                    ? { item: visibleProjects[i], originalIndex: i }
+                    : null
+                )
+                .filter(Boolean) as {
+                item: (typeof visibleProjects)[0];
+                originalIndex: number;
+              }[]
+            : visibleProjects.map((item, i) => ({ item, originalIndex: i }));
           if (itemsToRender.length === 0) return null;
           const sectionTitle = slot.isContinuation
             ? `${getSectionTitle('projects', 'Projects')} (Continued)`
@@ -283,10 +313,11 @@ export const ClassicTemplate = forwardRef<HTMLDivElement, TemplateProps>(
             >
               {renderSectionTitle(sectionTitle, isFirstOnPage)}
               <div className="flex flex-col gap-[8.4pt]">
-                {itemsToRender.map((proj) => (
+                {itemsToRender.map(({ item: proj, originalIndex }) => (
                   <div
                     key={proj.id}
                     data-resume-item="true"
+                    data-resume-item-index={originalIndex}
                     className="project-item w-full"
                   >
                     {(proj.startDate || proj.endDate) && (
@@ -388,8 +419,17 @@ export const ClassicTemplate = forwardRef<HTMLDivElement, TemplateProps>(
         case 'educations': {
           const visibleEdu = educations || [];
           const itemsToRender = slot.itemIndices
-            ? slot.itemIndices.map((i) => visibleEdu[i]).filter(Boolean)
-            : visibleEdu;
+            ? slot.itemIndices
+                .map((i) =>
+                  visibleEdu[i]
+                    ? { item: visibleEdu[i], originalIndex: i }
+                    : null
+                )
+                .filter(Boolean) as {
+                item: (typeof visibleEdu)[0];
+                originalIndex: number;
+              }[]
+            : visibleEdu.map((item, i) => ({ item, originalIndex: i }));
           if (itemsToRender.length === 0) return null;
           const sectionTitle = slot.isContinuation
             ? `${getSectionTitle('educations', 'Education')} (Continued)`
@@ -403,10 +443,11 @@ export const ClassicTemplate = forwardRef<HTMLDivElement, TemplateProps>(
             >
               {renderSectionTitle(sectionTitle, isFirstOnPage)}
               <div className="flex flex-col gap-[8.4pt]">
-                {itemsToRender.map((edu) => (
+                {itemsToRender.map(({ item: edu, originalIndex }) => (
                   <div
                     key={edu.id}
                     data-resume-item="true"
+                    data-resume-item-index={originalIndex}
                     className="education-item w-full"
                   >
                     <div className="flex justify-between items-baseline">
@@ -472,6 +513,7 @@ export const ClassicTemplate = forwardRef<HTMLDivElement, TemplateProps>(
                 {renderSectionTitle(sectionTitle, isFirstOnPage)}
                 <p
                   data-resume-item="true"
+                  data-resume-item-index={0}
                   className={`${fontSizeClasses.body} ${lineSpacingClasses} text-black italic`}
                 >
                   {settings.referenceCustomText || 'Available upon request.'}
@@ -482,8 +524,17 @@ export const ClassicTemplate = forwardRef<HTMLDivElement, TemplateProps>(
 
           const visibleRefs = (references || []).filter((r) => !r.hidden);
           const itemsToRender = slot.itemIndices
-            ? slot.itemIndices.map((i) => visibleRefs[i]).filter(Boolean)
-            : visibleRefs;
+            ? slot.itemIndices
+                .map((i) =>
+                  visibleRefs[i]
+                    ? { item: visibleRefs[i], originalIndex: i }
+                    : null
+                )
+                .filter(Boolean) as {
+                item: (typeof visibleRefs)[0];
+                originalIndex: number;
+              }[]
+            : visibleRefs.map((item, i) => ({ item, originalIndex: i }));
           if (itemsToRender.length === 0) return null;
 
           return (
@@ -496,10 +547,11 @@ export const ClassicTemplate = forwardRef<HTMLDivElement, TemplateProps>(
 
               {refStyle === 'stacked' ? (
                 <div className="flex flex-col gap-2">
-                  {itemsToRender.map((refItem) => (
+                  {itemsToRender.map(({ item: refItem, originalIndex }) => (
                     <div
                       key={refItem.id}
                       data-resume-item="true"
+                      data-resume-item-index={originalIndex}
                       className="reference-item w-full flex justify-between items-baseline"
                     >
                       <div
@@ -546,10 +598,11 @@ export const ClassicTemplate = forwardRef<HTMLDivElement, TemplateProps>(
                 </div>
               ) : refStyle === 'compact' ? (
                 <div className="flex flex-col gap-0.5">
-                  {itemsToRender.map((refItem) => (
+                  {itemsToRender.map(({ item: refItem, originalIndex }) => (
                     <div
                       key={refItem.id}
                       data-resume-item="true"
+                      data-resume-item-index={originalIndex}
                       className={`${fontSizeClasses.body} ${lineSpacingClasses} text-black flex items-start`}
                     >
                       {renderBullet()}
@@ -590,10 +643,11 @@ export const ClassicTemplate = forwardRef<HTMLDivElement, TemplateProps>(
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-x-8 gap-y-2">
-                  {itemsToRender.map((refItem) => (
+                  {itemsToRender.map(({ item: refItem, originalIndex }) => (
                     <div
                       key={refItem.id}
                       data-resume-item="true"
+                      data-resume-item-index={originalIndex}
                       className="reference-item flex flex-col"
                     >
                       <div
@@ -647,8 +701,17 @@ export const ClassicTemplate = forwardRef<HTMLDivElement, TemplateProps>(
           if (!customSec || !customSec.items) return null;
 
           const itemsToRender = slot.itemIndices
-            ? slot.itemIndices.map((i) => customSec.items[i]).filter(Boolean)
-            : customSec.items;
+            ? slot.itemIndices
+                .map((i) =>
+                  customSec.items[i]
+                    ? { item: customSec.items[i], originalIndex: i }
+                    : null
+                )
+                .filter(Boolean) as {
+                item: (typeof customSec.items)[0];
+                originalIndex: number;
+              }[]
+            : customSec.items.map((item, i) => ({ item, originalIndex: i }));
           if (itemsToRender.length === 0) return null;
           const sectionTitle = slot.isContinuation
             ? `${getSectionTitle(customSec.id, customSec.title)} (Continued)`
@@ -662,7 +725,7 @@ export const ClassicTemplate = forwardRef<HTMLDivElement, TemplateProps>(
             >
               {renderSectionTitle(sectionTitle, isFirstOnPage)}
               <div className="flex flex-col gap-[8.4pt]">
-                {itemsToRender.map((item) => {
+                {itemsToRender.map(({ item, originalIndex }) => {
                   const hasHeaderRow =
                     Boolean(item.title && item.title.trim()) ||
                     Boolean(item.subtitle && item.subtitle.trim()) ||
@@ -673,6 +736,7 @@ export const ClassicTemplate = forwardRef<HTMLDivElement, TemplateProps>(
                     <div
                       key={item.id}
                       data-resume-item="true"
+                      data-resume-item-index={originalIndex}
                       className="custom-item w-full"
                     >
                       {hasHeaderRow && (

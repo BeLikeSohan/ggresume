@@ -398,27 +398,42 @@ export function calculateStandardPages(
     // Itemized sections
     const measured = measuredData?.[secKey];
     let titleHeight = defaultTitleHeight;
-    let itemEstimates: { index: number; height: number }[] = [];
 
-    if (measured && measured.items.length > 0) {
+    const estimatedItems = getItemEstimates(
+      secKey,
+      data,
+      fontSize,
+      lineSpacing,
+      sectionSpacing
+    );
+
+    if (estimatedItems.length === 0) continue;
+
+    const measuredMap = new Map<number, number>();
+    if (measured && Array.isArray(measured.items)) {
+      for (const it of measured.items) {
+        if (
+          typeof it.index === 'number' &&
+          typeof it.height === 'number' &&
+          it.height > 0
+        ) {
+          measuredMap.set(it.index, it.height);
+        }
+      }
+    }
+
+    if (measured && measured.headerHeight > 0) {
       titleHeight = isFirstSecOnPage
         ? measured.headerHeight
         : measured.headerHeight + sectionSpacingPx;
-      itemEstimates = measured.items.map((it) => ({
-        index: it.index,
-        height: it.height,
-      }));
-    } else {
-      itemEstimates = getItemEstimates(
-        secKey,
-        data,
-        fontSize,
-        lineSpacing,
-        sectionSpacing
-      );
     }
 
-    if (itemEstimates.length === 0) continue;
+    const itemEstimates = estimatedItems.map((est) => ({
+      index: est.index,
+      height: measuredMap.has(est.index)
+        ? measuredMap.get(est.index)!
+        : est.height,
+    }));
 
     const totalSectionHeight =
       titleHeight + itemEstimates.reduce((acc, it) => acc + it.height, 0);
