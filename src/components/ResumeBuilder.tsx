@@ -255,6 +255,18 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
     handleDownloadPdfServerDirect();
   };
 
+  // Load sample resume data handler
+  const handleLoadSample = useCallback(() => {
+    if (
+      typeof window !== 'undefined' &&
+      window.confirm('Load sample resume data? Any unsaved edits will be replaced with the sample content.')
+    ) {
+      loadSample();
+      setDownloadStatus('Loaded sample resume');
+      setTimeout(() => setDownloadStatus(null), 2500);
+    }
+  }, [loadSample]);
+
   // Duplicate current resume and transition to the new copy
   const handleDuplicate = async () => {
     if (!user) {
@@ -292,6 +304,7 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
         onSavePdfClient={handleSavePdfClient}
         onDownloadPdfServer={handleTriggerServerDownload}
         onDownloadPdf={handleSavePdfClient}
+        onLoadSample={handleLoadSample}
         onClear={clearAll}
         onExportJson={exportJson}
         onImportJson={importJson}

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import {
   Upload,
   FileDown,
+  FileText,
   Eye,
   Edit3,
   Loader2,
@@ -33,6 +34,7 @@ export interface HeaderProps {
   onSavePdfClient?: () => void;
   onDownloadPdfServer?: () => void;
   onDownloadPdf?: () => void;
+  onLoadSample?: () => void;
   onClear: () => void;
   onExportJson: () => void;
   onImportJson: (jsonData: string) => void;
@@ -55,6 +57,7 @@ export const Header: React.FC<HeaderProps> = ({
   onSavePdfClient,
   onDownloadPdfServer,
   onDownloadPdf,
+  onLoadSample,
   onClear,
   onExportJson,
   onImportJson,
@@ -284,6 +287,18 @@ export const Header: React.FC<HeaderProps> = ({
               title="Duplicate this resume"
             >
               Duplicate
+            </Button>
+          )}
+
+          {onLoadSample && (
+            <Button
+              size="sm"
+              variant="ghost"
+              icon={<FileText size={14} />}
+              onClick={onLoadSample}
+              title="Load sample resume data"
+            >
+              Sample
             </Button>
           )}
 
