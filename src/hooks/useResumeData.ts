@@ -106,13 +106,44 @@ export function useResumeData(targetResumeId?: string) {
             targetDoc = null;
           }
         } else {
-          // No specific ID requested - check if authenticated user has existing resumes
+          // No specific ID requested
+          // 1. Check if there is a pending guest draft in localStorage
+          let pendingDraft: { title: string; data: ResumeData } | null = null;
+          if (typeof window !== 'undefined') {
+            try {
+              const stored = localStorage.getItem(GUEST_DRAFT_KEY);
+              if (stored) {
+                const parsed = JSON.parse(stored);
+                if (parsed.data) {
+                  pendingDraft = {
+                    title: parsed.title || 'Software Engineer Resume',
+                    data: normalizeResumeData(parsed.data),
+                  };
+                }
+              }
+            } catch (_) {}
+          }
+
+          // 2. Check if user is authenticated
           try {
             const allResumes = await fetchResumesFromDB();
-            if (allResumes.length > 0) {
+
+            if (pendingDraft) {
+              // User just signed in with a guest draft! Automatically save it to DB
+              targetDoc = await createResumeInDB({
+                title: pendingDraft.title,
+                data: pendingDraft.data,
+              });
+              try {
+                localStorage.removeItem(GUEST_DRAFT_KEY);
+              } catch (_) {}
+              if (typeof window !== 'undefined' && targetDoc?.id) {
+                window.history.replaceState(null, '', `/editor/${targetDoc.id}`);
+              }
+            } else if (allResumes.length > 0) {
               targetDoc = allResumes[0];
             } else {
-              // User is authenticated but has 0 resumes -> create default in DB
+              // User is authenticated with 0 resumes -> create initial in DB
               targetDoc = await createResumeInDB({
                 title: 'Software Engineer Resume',
                 template: 'sample',
@@ -275,8 +306,19 @@ export function useResumeData(targetResumeId?: string) {
       setIsSaving(true);
       setError(null);
 
-      const titleToSave = overrideTitle || resumeTitle;
-      const dataToSave = overrideData || resumeData;
+      let titleToSave = overrideTitle || resumeTitle;
+      let dataToSave = overrideData || resumeData;
+
+      if (!overrideTitle && !overrideData && typeof window !== 'undefined') {
+        try {
+          const stored = localStorage.getItem(GUEST_DRAFT_KEY);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed.title) titleToSave = parsed.title;
+            if (parsed.data) dataToSave = normalizeResumeData(parsed.data);
+          }
+        } catch (_) {}
+      }
 
       try {
         const newDoc = await createResumeInDB({

@@ -71,7 +71,12 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
   React.useEffect(() => {
     if (isInitialized && !resumeId) {
       const choiceMade = sessionStorage.getItem('ggresume_choice_made');
-      if (!choiceMade) {
+      let hasDraft = false;
+      try {
+        hasDraft = Boolean(localStorage.getItem('ggresume_guest_draft'));
+      } catch (_) {}
+
+      if (!choiceMade && !hasDraft) {
         setIsStartChoiceModalOpen(true);
       }
     }
@@ -138,7 +143,7 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
     await reloadSession();
 
     // Immediately save the active in-memory resume under the authenticated user
-    const savedDoc = await saveAsNewResume();
+    const savedDoc = await saveAsNewResume(resumeTitle, resumeData);
     if (savedDoc) {
       setDownloadStatus('Resume saved to your account!');
       if (typeof window !== 'undefined') {
