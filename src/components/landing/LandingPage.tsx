@@ -188,7 +188,7 @@ function LandingPageContent() {
                   aria-hidden="true"
                 />
                 <span className="relative z-10 flex items-center gap-2">
-                  <span>Get Started</span>
+                  <span>Create My Resume</span>
                   <ArrowRight
                     size={16}
                     className="group-hover/btn:translate-x-1.5 transition-transform duration-150"

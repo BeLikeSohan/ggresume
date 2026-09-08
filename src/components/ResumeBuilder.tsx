@@ -67,30 +67,20 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
   // Modal dialog asking user to choose between Sample or Blank Scratch
   const [isStartChoiceModalOpen, setIsStartChoiceModalOpen] = useState(false);
 
-  // Check if starting fresh without a specific resume ID
+  // Show starting choice modal whenever visiting editor fresh without a specific resume ID
   React.useEffect(() => {
     if (isInitialized && !resumeId) {
-      const choiceMade = sessionStorage.getItem('ggresume_choice_made');
-      let hasDraft = false;
-      try {
-        hasDraft = Boolean(localStorage.getItem('ggresume_guest_draft'));
-      } catch (_) {}
-
-      if (!choiceMade && !hasDraft) {
-        setIsStartChoiceModalOpen(true);
-      }
+      setIsStartChoiceModalOpen(true);
     }
   }, [isInitialized, resumeId]);
 
   const handleSelectSample = () => {
     loadSample();
-    sessionStorage.setItem('ggresume_choice_made', 'true');
     setIsStartChoiceModalOpen(false);
   };
 
   const handleSelectScratch = () => {
     loadBlank();
-    sessionStorage.setItem('ggresume_choice_made', 'true');
     setIsStartChoiceModalOpen(false);
   };
 
@@ -353,6 +343,7 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
         isOpen={isStartChoiceModalOpen}
         onSelectSample={handleSelectSample}
         onSelectScratch={handleSelectScratch}
+        onClose={() => setIsStartChoiceModalOpen(false)}
       />
 
       {/* Auth Modal for Unauthenticated Users trying to Save */}
