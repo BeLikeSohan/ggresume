@@ -57,7 +57,7 @@ export const defaultResumeData: ResumeData = {
   experiences: [
     {
       id: 'exp-1',
-      role: 'Senior Backend Engineer',
+      role: 'Backend Engineer',
       company: 'ABC Systems',
       location: 'San Francisco, CA',
       startDate: '2023',

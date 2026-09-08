@@ -56,6 +56,24 @@ export const DashboardView: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
+      // If there is an unsaved guest draft from guest session, save it into user's account
+      if (typeof window !== 'undefined') {
+        const guestDraft = localStorage.getItem('ggresume_guest_draft');
+        if (guestDraft) {
+          try {
+            const parsed = JSON.parse(guestDraft);
+            if (parsed.data) {
+              await createResumeInDB({
+                title: parsed.title || 'Software Engineer Resume',
+                data: parsed.data,
+              });
+              localStorage.removeItem('ggresume_guest_draft');
+              showToast('Guest resume saved to your account!');
+            }
+          } catch (_) {}
+        }
+      }
+
       const data = await fetchResumesFromDB();
       setResumes(data);
     } catch (err: any) {

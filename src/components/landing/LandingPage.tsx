@@ -178,9 +178,8 @@ function LandingPageContent() {
                 className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-blue-500/30 via-indigo-500/25 to-sky-400/30 bg-[length:200%_200%] animate-gradient-flow opacity-50 blur-md group-hover:opacity-100 group-hover:scale-105 transition-all duration-150 ease-out"
                 aria-hidden="true"
               />
-              <button
-                type="button"
-                onClick={() => openAuth('signup')}
+              <Link
+                href="/editor"
                 className="relative w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 bg-[length:200%_200%] animate-gradient-flow text-white font-semibold text-sm sm:text-base transition-all duration-150 ease-out transform hover:scale-105 shadow-md hover:shadow-xl hover:shadow-blue-500/25 active:scale-95 flex items-center justify-center gap-2 group/btn cursor-pointer overflow-hidden border border-blue-400/20"
               >
                 {/* Subtle sweeping light shimmer overlay */}
@@ -189,13 +188,13 @@ function LandingPageContent() {
                   aria-hidden="true"
                 />
                 <span className="relative z-10 flex items-center gap-2">
-                  <span>Get Started</span>
+                  <span>Create My Resume</span>
                   <ArrowRight
                     size={16}
                     className="group-hover/btn:translate-x-1.5 transition-transform duration-150"
                   />
                 </span>
-              </button>
+              </Link>
             </div>
           )}
         </div>

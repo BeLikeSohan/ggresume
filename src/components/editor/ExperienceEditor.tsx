@@ -173,7 +173,7 @@ export const ExperienceEditor: React.FC<ExperienceEditorProps> = ({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Input
                       label="Job Title / Role"
-                      placeholder="e.g. Senior Backend Engineer"
+                      placeholder="e.g. Backend Engineer"
                       value={exp.role}
                       onChange={(e) => handleUpdate(exp.id, 'role', e.target.value)}
                     />
