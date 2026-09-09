@@ -13,7 +13,7 @@ import { DownloadToast } from '@/components/common/DownloadToast';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { UnsavedChangesModal } from '@/components/common/UnsavedChangesModal';
 import { ServerPdfModal } from '@/components/common/ServerPdfModal';
-import { ThemeModal } from '@/components/common/ThemeModal';
+import { ThemePanel } from '@/components/common/ThemePanel';
 import { AuthModal } from '@/components/landing/AuthModal';
 import { StartChoiceModal } from '@/components/editor/StartChoiceModal';
 import {
@@ -56,7 +56,7 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
   const [mobileView, setMobileView] = useState<'editor' | 'preview'>('editor');
   const [isUnsavedModalOpen, setIsUnsavedModalOpen] = useState(false);
   const [isServerPdfModalOpen, setIsServerPdfModalOpen] = useState(false);
-  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
+  const [isThemePanelOpen, setIsThemePanelOpen] = useState(false);
 
   // Auth modal trigger state for guests saving resume
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -381,7 +381,7 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
             onZoomOut={zoomOut}
             onZoomReset={resetZoom}
             templateId={resumeData.settings?.templateId || 'classic'}
-            onOpenThemes={() => setIsThemeModalOpen(true)}
+            onOpenThemes={() => setIsThemePanelOpen(true)}
           />
 
           {/* Scrollable Viewport */}
@@ -397,10 +397,10 @@ export function ResumeBuilder({ resumeId }: ResumeBuilderProps = {}) {
         </div>
       </main>
 
-      {/* Theme Selection Modal with Live Generated Previews */}
-      <ThemeModal
-        isOpen={isThemeModalOpen}
-        onClose={() => setIsThemeModalOpen(false)}
+      {/* Theme Selection Slide-over Right Panel */}
+      <ThemePanel
+        isOpen={isThemePanelOpen}
+        onClose={() => setIsThemePanelOpen(false)}
         currentTemplateId={resumeData.settings?.templateId || 'classic'}
         resumeData={resumeData}
         onSelectTemplate={(newTemplateId) => {
